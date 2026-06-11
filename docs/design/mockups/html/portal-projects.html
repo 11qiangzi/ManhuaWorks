@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1440"><title>portal-projects — 我的项目</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1440px; height: 900px; overflow: hidden; }
+  .portal-layout { display: flex; height: 100vh; }
+  .portal-sidebar { width: 240px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+  .ps-brand { padding: 16px 16px 12px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+  .ps-user { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .ps-avatar { width: 36px; height: 36px; border-radius: 10px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+  .ps-user-info { flex: 1; } .ps-user-name { font-size: 13px; font-weight: 600; } .ps-user-plan { font-size: 10px; color: var(--accent); }
+  .ps-nav { flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+  .ps-nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; font-size: 13px; color: var(--text-secondary); text-decoration: none; }
+  .ps-nav-item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+  .ps-nav-item.active { background: rgba(99,102,241,.12); color: var(--accent); font-weight: 600; }
+  .ps-nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .ps-nav-badge { margin-left: auto; font-size: 10px; padding: 1px 6px; border-radius: 8px; background: var(--accent); color: #fff; }
+  .ps-credits { padding: 12px 16px; border-top: 1px solid var(--border); }
+  .ps-credits-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+  .ps-credits-bar { height: 4px; background: var(--bg-tertiary); border-radius: 2px; overflow: hidden; }
+  .ps-credits-fill { height: 100%; background: var(--gradient); border-radius: 2px; }
+  .main-content { flex: 1; padding: 28px 32px; overflow-y: auto; }
+  .pp-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+  .pp-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; cursor: pointer; }
+  .pp-card:hover { border-color: var(--accent); }
+  .pp-cover { height: 100px; display: flex; align-items: center; justify-content: center; font-size: 48px; position: relative; }
+  .pp-status { position: absolute; top: 8px; right: 8px; }
+  .pp-body { padding: 16px; }
+  .pp-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .pp-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+  .pp-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid var(--border); font-size: 11px; }
+</style></head><body>
+<div class="portal-layout">
+<div class="portal-sidebar">
+  <div class="ps-brand"><div class="navbar-logo">M</div><span class="navbar-name">ManhuaWorks</span></div>
+  <div class="ps-user"><div class="ps-avatar">梁</div><div class="ps-user-info"><div class="ps-user-name">创作者</div><div class="ps-user-plan">Pro 会员</div></div></div>
+  <div class="ps-nav">
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">🏠</span>首页</a>
+    <a href="#" class="ps-nav-item active"><span class="ps-nav-icon">📁</span>我的项目<span class="ps-nav-badge">12</span></a>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">🎞️</span>我的作品</a>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">🗃️</span>素材库</a>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">👥</span>团队</a>
+    <div style="margin:8px 0 4px;padding:0 12px;font-size:10px;color:var(--text-muted);letter-spacing:.05em">创作工具</div>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">🎬</span>创作者工作台</a>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">🔑</span>BYOK 设置</a>
+    <div style="margin:8px 0 4px;padding:0 12px;font-size:10px;color:var(--text-muted);letter-spacing:.05em">账户</div>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">⚙️</span>账号设置</a>
+  </div>
+  <div class="ps-credits"><div class="ps-credits-label"><span>本月积分</span><span>342/500 · 68%</span></div><div class="ps-credits-bar"><div class="ps-credits-fill" style="width:68%"></div></div></div>
+</div>
+<div class="main-content">
+  <div class="flex justify-between items-center mb-4">
+    <div><span class="page-title">我的项目</span><span style="font-size:14px;color:var(--text-muted);font-weight:400;margin-left:8px">共 12 个项目</span></div>
+    <div class="flex items-center gap-2"><button class="btn btn-xs btn-secondary">📋</button><button class="btn btn-xs btn-ghost">📄</button><div class="search-box"><input class="input" placeholder="搜索项目..." style="width:160px;font-size:12px;padding:6px 10px"></div><button class="btn btn-primary btn-sm">➕ 新建项目</button></div>
+  </div>
+  <div class="flex gap-2 mb-4"><span class="chip active">🗂 全部 <small>12</small></span><span class="chip">📝 草稿 <small>3</small></span><span class="chip">🔥 进行中 <small>5</small></span><span class="chip">✨ 已发布 <small>3</small></span><span class="chip">📦 已归档 <small>1</small></span></div>
+  <div class="pp-grid">
+    <div class="pp-card"><div class="pp-cover" style="background:linear-gradient(135deg,rgba(102,126,234,.25),rgba(118,75,162,.1))">🌙<div class="pp-status"><span class="badge badge-green">进行中</span></div></div><div class="pp-body"><div class="pp-name">长安月下</div><div class="pp-desc">古风宫廷长篇漫改，24 集 · 已编辑 8 章分镜</div><div class="pp-footer"><span style="color:var(--text-muted)">2 小时前</span><div class="flex gap-1"><button class="btn btn-xs btn-secondary">打开</button><button class="btn btn-xs btn-ghost">编辑</button><button class="btn btn-xs btn-danger">归档</button></div></div></div></div>
+    <div class="pp-card"><div class="pp-cover" style="background:linear-gradient(135deg,rgba(240,147,251,.25),rgba(245,87,108,.1))">⚔️<div class="pp-status"><span class="badge badge-green">进行中</span></div></div><div class="pp-body"><div class="pp-name">剑破苍穹</div><div class="pp-desc">古风仙侠冒险，96 镜头 · 少年宗主成长史</div><div class="pp-footer"><span style="color:var(--text-muted)">昨天</span><div class="flex gap-1"><button class="btn btn-xs btn-secondary">打开</button><button class="btn btn-xs btn-ghost">编辑</button><button class="btn btn-xs btn-danger">归档</button></div></div></div></div>
+    <div class="pp-card"><div class="pp-cover" style="background:linear-gradient(135deg,rgba(52,211,153,.25),rgba(16,185,129,.1))">🎒<div class="pp-status"><span class="badge badge-amber">草稿</span></div></div><div class="pp-body"><div class="pp-name">校园青春</div><div class="pp-desc">现代校园系列合集，AI 配音 + 多角色</div><div class="pp-footer"><span style="color:var(--text-muted)">3 天前</span><div class="flex gap-1"><button class="btn btn-xs btn-secondary">打开</button><button class="btn btn-xs btn-ghost">编辑</button><button class="btn btn-xs btn-danger">归档</button></div></div></div></div>
+    <div class="pp-card"><div class="pp-cover" style="background:linear-gradient(135deg,rgba(96,165,250,.25),rgba(59,130,246,.1))">🚀<div class="pp-status"><span class="badge badge-blue">已发布</span></div></div><div class="pp-body"><div class="pp-name">深空遗民</div><div class="pp-desc">近未来科幻首章 8 集已完结 · 观众 12.3 万</div><div class="pp-footer"><span style="color:var(--text-muted)">1 周前</span><div class="flex gap-1"><button class="btn btn-xs btn-secondary">打开</button><button class="btn btn-xs btn-ghost">编辑</button><button class="btn btn-xs btn-danger">归档</button></div></div></div></div>
+    <div class="pp-card" style="opacity:.6"><div class="pp-cover" style="background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(217,119,6,.05))">🏯<div class="pp-status"><span class="badge badge-amber">已归档</span></div></div><div class="pp-body"><div class="pp-name">古代宫廷</div><div class="pp-desc">已归档项目 · 不可编辑</div><div class="pp-footer"><span style="color:var(--text-muted)">5 天前</span></div></div></div>
+    <div class="pp-card"><div class="pp-cover" style="background:linear-gradient(135deg,rgba(248,113,113,.25),rgba(239,68,68,.1))">🔥<div class="pp-status"><span class="badge badge-green">进行中</span></div></div><div class="pp-body"><div class="pp-name">逆袭少女</div><div class="pp-desc">都市成长故事，AI 配音 + 真人风格</div><div class="pp-footer"><span style="color:var(--text-muted)">6 小时前</span><div class="flex gap-1"><button class="btn btn-xs btn-secondary">打开</button><button class="btn btn-xs btn-ghost">编辑</button><button class="btn btn-xs btn-danger">归档</button></div></div></div></div>
+  </div>
+</div>
+</div>
+</body></html>

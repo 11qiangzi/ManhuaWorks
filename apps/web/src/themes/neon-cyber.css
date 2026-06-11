@@ -1,0 +1,53 @@
+/* =========================================================
+ * Theme: Neon Cyber · 霓虹赛博（备选）
+ * ManhuaWorks · 赛博朋克题材、AI 主题、视觉冲击
+ * 灵感：Cyberpunk 2077 / 赛博城市 / 霓虹
+ * ========================================================= */
+
+.theme-neon-cyber,
+.theme-cyber {
+  --bg-primary: #0a0014;        /* 主背景 — 深紫黑 */
+  --bg-secondary: #150828;      /* 次背景 — 暗紫 */
+  --text-primary: #f0e6ff;      /* 主文字 — 银白 */
+  --text-secondary: #a99cc8;    /* 次文字 — 淡紫 */
+  --accent: #ff00aa;            /* 强调色 — 霓虹粉 */
+  --accent-soft: #ff4dc4;       /* 强调柔色 */
+  --accent-deep: #cc0088;       /* 强调深色 */
+  --border: #2a1845;            /* 暗紫分割线 */
+  --border-strong: #4a2e75;     /* 强分割线 */
+  --shadow: 0 0 24px rgba(255, 0, 170, 0.25), 0 4px 12px rgba(0, 0, 0, 0.5);
+  --glow: 0 0 0 2px rgba(255, 0, 170, 0.4), 0 0 16px rgba(255, 0, 170, 0.3);
+  --code-bg: #1a0a2e;
+  --success: #00ffaa;
+  --warning: #ffd700;
+  --danger: #ff3355;
+  --gradient: linear-gradient(135deg, #ff00aa 0%, #00d4ff 100%);
+  --font-display: 'Orbitron', 'Rajdhani', -apple-system, monospace;
+  --neon-secondary: #00d4ff;    /* 副霓虹 — 青蓝 */
+  --neon-tertiary: #b14eff;     /* 第三霓虹 — 紫光 */
+}
+
+/* 霓虹赛博特有：底部扫描线 */
+.theme-neon-cyber .app-root::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    transparent 0,
+    transparent 3px,
+    rgba(255, 0, 170, 0.015) 3px,
+    rgba(255, 0, 170, 0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 霓虹赛博：所有按钮带霓虹辉光 */
+.theme-neon-cyber .btn-primary,
+.theme-neon-cyber .btn-neon {
+  text-shadow: 0 0 8px currentColor;
+}

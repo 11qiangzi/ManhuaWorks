@@ -1,0 +1,39 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1440"><title>web-login — 登录</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1440px; height: 900px; overflow: hidden; display: flex; flex-direction: column; }
+  .login-page { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .login-card { width: 420px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; }
+  .login-tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+  .login-tab { flex: 1; padding: 10px; text-align: center; font-size: 14px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; }
+  .login-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+  .code-row { display: flex; gap: 8px; }
+  .code-row .input { flex: 1; }
+  .code-btn { padding: 10px 14px; border-radius: var(--radius-sm); background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--accent); font-size: 13px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+  .code-btn:hover { border-color: var(--accent); }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); margin-bottom: 20px; }
+  .login-btn { width: 100%; padding: 12px; font-size: 15px; }
+  .divider-text { text-align: center; font-size: 12px; color: var(--text-muted); margin: 16px 0; position: relative; }
+  .divider-text::before, .divider-text::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: var(--border); }
+  .divider-text::before { left: 0; } .divider-text::after { right: 0; }
+  .error-msg { padding: 8px 12px; border-radius: 6px; background: rgba(239,68,68,.1); color: #fca5a5; font-size: 12px; margin-bottom: 12px; display: none; }
+</style></head><body>
+<header class="navbar">
+  <div class="navbar-brand"><a href="#" style="color:var(--text-primary);text-decoration:none;font-size:14px">← 返回首页</a></div>
+  <span style="font-size:14px;font-weight:700">M · ManhuaWorks</span>
+</header>
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-tabs"><div class="login-tab active">📱 手机验证码</div><div class="login-tab">📧 邮箱密码</div></div>
+    <div class="form-group"><label class="form-label">手机号</label><input class="input" type="text" placeholder="请输入手机号" value="13812345678"></div>
+    <div class="form-group"><label class="form-label">验证码</label><div class="code-row"><input class="input" type="text" placeholder="6 位验证码"><button class="code-btn">获取验证码</button></div></div>
+    <div class="checkbox-row"><input type="checkbox" id="agree" checked><label for="agree">同意 <a href="#" style="color:var(--accent)">服务条款</a> 和 <a href="#" style="color:var(--accent)">隐私政策</a></label></div>
+    <button class="btn btn-primary login-btn">登录</button>
+    <div class="divider-text">其他登录方式</div>
+    <div class="form-group"><label class="form-label">邮箱</label><input class="input" type="email" placeholder="请输入邮箱"></div>
+    <div class="form-group"><label class="form-label">密码</label><input class="input" type="password" placeholder="至少 8 位密码"></div>
+    <button class="btn btn-secondary" style="width:100%">邮箱登录</button>
+  </div>
+</div>
+<footer class="footer"><p>© 2026 ManhuaWorks · <a href="#" style="color:var(--text-muted)">服务条款</a> · <a href="#" style="color:var(--text-muted)">隐私政策</a></p></footer>
+</body></html>

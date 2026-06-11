@@ -1,0 +1,82 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>studio-workflow — 工作流设计器</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; }
+  .wf-toolbar { display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
+  .wf-toolbar-title { font-size: 14px; font-weight: 600; margin-right: 16px; }
+  .canvas-area { flex: 1; background: radial-gradient(circle,rgba(99,102,241,.03) 1px,transparent 1px); background-size: 24px 24px; position: relative; overflow: hidden; }
+  .node-palette { width: 200px; background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 12px; overflow-y: auto; }
+  .palette-search { margin-bottom: 10px; }
+  .palette-cat { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin: 10px 0 6px; font-weight: 600; }
+  .palette-node { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; margin-bottom: 2px; }
+  .palette-node:hover { background: var(--bg-tertiary); }
+  .palette-node-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .pnode {
+    position: absolute; background: var(--bg-card); border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; min-width: 140px;
+  }
+  .pnode.selected { border-color: var(--accent); }
+  .pnode-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .pnode-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .pnode-name { font-size: 12px; font-weight: 600; }
+  .pnode-type { font-size: 10px; color: var(--text-muted); }
+  .agent-panel { width: 300px; background: var(--bg-secondary); border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+  .agent-header { padding: 12px 14px; font-size: 13px; font-weight: 700; border-bottom: 1px solid var(--border); }
+  .agent-msgs { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+  .agent-msg { padding: 8px 10px; border-radius: 8px; font-size: 11px; line-height: 1.5; max-width: 90%; }
+  .agent-msg.agent { background: rgba(99,102,241,.1); align-self: flex-start; }
+  .agent-msg.user { background: var(--bg-tertiary); align-self: flex-end; }
+  .agent-quick { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px; border-top: 1px solid var(--border); }
+  .agent-input { display: flex; padding: 10px; border-top: 1px solid var(--border); gap: 6px; }
+</style></head><body style="display:flex;flex-direction:column;">
+<div class="wf-toolbar">
+  <span class="wf-toolbar-title">🔄 我的第一个工作流</span>
+  <button class="btn btn-sm btn-secondary">📂 加载</button>
+  <button class="btn btn-sm btn-secondary">💾 保存</button>
+  <button class="btn btn-sm btn-primary">▶ 运行</button>
+  <button class="btn btn-sm btn-ghost">🐛 调试</button>
+  <span style="margin-left:auto;font-size:11px;color:var(--text-muted)">节点: 6 · 连线: 5 · 缩放: 100%</span>
+  <button class="btn btn-xs btn-ghost">🔍+</button><button class="btn btn-xs btn-ghost">🔍−</button>
+</div>
+<div style="display:flex;flex:1;overflow:hidden">
+<div class="node-palette">
+  <input class="input palette-search" placeholder="搜索节点..." style="font-size:12px;padding:6px 10px">
+  <div class="palette-cat">📖 剧本处理</div>
+  <div class="palette-node"><div class="palette-node-icon" style="background:rgba(102,126,234,.2);color:#667eea">📄</div><div>章节拆解</div></div>
+  <div class="palette-node"><div class="palette-node-icon" style="background:rgba(102,126,234,.2);color:#667eea">🧠</div><div>情景理解</div></div>
+  <div class="palette-cat">🎭 角色管理</div>
+  <div class="palette-node"><div class="palette-node-icon" style="background:rgba(16,185,129,.2);color:#34d399">👤</div><div>角色提取</div></div>
+  <div class="palette-node"><div class="palette-node-icon" style="background:rgba(16,185,129,.2);color:#34d399">🔗</div><div>关系图谱</div></div>
+  <div class="palette-cat">🎨 风格迁移</div>
+  <div class="palette-node"><div class="palette-node-icon" style="background:rgba(245,158,11,.2);color:#fbbf24">🖼</div><div>图像生成</div></div>
+  <div class="palette-cat">🌐 翻译</div>
+  <div class="palette-node"><div class="palette-node-icon" style="background:rgba(59,130,246,.2);color:#60a5fa">🌍</div><div>多语翻译</div></div>
+</div>
+<div class="canvas-area">
+  <div class="pnode" style="top:40px;left:60px"><div class="pnode-header"><div class="pnode-dot" style="background:#667eea"></div><span class="pnode-name">章节拆解</span></div><div class="pnode-type">📖 剧本处理</div></div>
+  <div class="pnode" style="top:40px;left:280px"><div class="pnode-header"><div class="pnode-dot" style="background:#34d399"></div><span class="pnode-name">角色提取</span></div><div class="pnode-type">🎭 角色管理</div></div>
+  <div class="pnode" style="top:160px;left:280px"><div class="pnode-header"><div class="pnode-dot" style="background:#34d399"></div><span class="pnode-name">关系图谱</span></div><div class="pnode-type">🎭 角色管理</div></div>
+  <div class="pnode selected" style="top:280px;left:60px"><div class="pnode-header"><div class="pnode-dot" style="background:#fbbf24"></div><span class="pnode-name">图像生成</span></div><div class="pnode-type">🎨 风格迁移</div></div>
+  <div class="pnode" style="top:280px;left:280px"><div class="pnode-header"><div class="pnode-dot" style="background:#f59e0b"></div><span class="pnode-name">视频合片</span></div><div class="pnode-type">🎥 视频</div></div>
+  <div class="pnode" style="top:400px;left:280px"><div class="pnode-header"><div class="pnode-dot" style="background:#10b981"></div><span class="pnode-name">多格式导出</span></div><div class="pnode-type">📤 导出</div></div>
+  <svg style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none">
+    <path d="M205,70 C240,70 240,70 275,70" stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+    <path d="M340,70 C340,120 340,120 340,190" stroke="#475569" stroke-width="1.5" fill="none"/>
+    <path d="M205,300 C240,300 240,300 275,300" stroke="#475569" stroke-width="1.5" fill="none"/>
+  </svg>
+</div>
+<div class="agent-panel">
+  <div class="agent-header">🤖 AI 工作流助手</div>
+  <div class="agent-msgs">
+    <div class="agent-msg agent">你好！我是 AI 工作流助手 🤖<br>你可以用自然语言描述想要的工作流，我会帮你自动搭建。</div>
+    <div class="agent-msg user">帮我建一个漫画生成流水线</div>
+    <div class="agent-msg agent">好的！已为你创建漫画生成流水线：<br>1. 章节拆解 → 2. 角色提取 → 3. 图像生成 → 4. 视频合片 → 5. 导出</div>
+  </div>
+  <div class="agent-quick">
+    <button class="btn btn-xs btn-secondary">建漫画流</button>
+    <button class="btn btn-xs btn-secondary">加翻译</button>
+    <button class="btn btn-xs btn-secondary">优化布局</button>
+    <button class="btn btn-xs btn-secondary">列出节点</button>
+  </div>
+  <div class="agent-input"><input class="input" placeholder="输入指令..." style="flex:1;font-size:12px;padding:6px 10px"><button class="btn btn-primary btn-xs">发送</button></div>
+</div>
+</div>
+</body></html>

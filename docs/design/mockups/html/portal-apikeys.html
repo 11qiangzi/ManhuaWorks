@@ -1,0 +1,196 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1440"><title>portal-apikeys — API 密钥</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1440px; height: 900px; overflow: hidden; }
+  .portal-layout { display: flex; height: 100vh; }
+  .portal-sidebar { width: 240px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+  .ps-brand { padding: 16px 16px 12px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+  .ps-user { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .ps-avatar { width: 36px; height: 36px; border-radius: 10px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+  .ps-user-info { flex: 1; } .ps-user-name { font-size: 13px; font-weight: 600; } .ps-user-plan { font-size: 10px; color: var(--accent); }
+  .ps-nav { flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+  .ps-nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; font-size: 13px; color: var(--text-secondary); text-decoration: none; }
+  .ps-nav-item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+  .ps-nav-item.active { background: rgba(99,102,241,.12); color: var(--accent); font-weight: 600; }
+  .ps-nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .ps-nav-badge { margin-left: auto; font-size: 10px; padding: 1px 6px; border-radius: 8px; background: var(--accent); color: #fff; }
+  .ps-credits { padding: 12px 16px; border-top: 1px solid var(--border); }
+  .ps-credits-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+  .ps-credits-bar { height: 4px; background: var(--bg-tertiary); border-radius: 2px; overflow: hidden; }
+  .ps-credits-fill { height: 100%; background: var(--gradient); border-radius: 2px; }
+  .main-content { flex: 1; padding: 24px 28px; overflow-y: auto; }
+  .kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 18px; }
+  .kpi-card { padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); }
+  .kpi-label { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .05em; }
+  .kpi-value { font-size: 24px; font-weight: 800; }
+  .add-section { padding: 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 14px; }
+  .provider-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; margin-bottom: 12px; }
+  .provider-chip { padding: 8px; border-radius: 8px; background: var(--bg-tertiary); border: 1px solid var(--border); cursor: pointer; text-align: center; font-size: 11px; color: var(--text-secondary); transition: all .15s; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .provider-chip:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .provider-chip.active { border-color: var(--accent); background: rgba(99,102,241,.08); color: var(--accent); }
+  .provider-chip-icon { font-size: 18px; }
+  .key-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 6px; }
+  .provider-badge { padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; color: #fff; min-width: 80px; text-align: center; flex-shrink: 0; }
+  .key-value { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); flex:1; }
+  .health-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .health-dot.green { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,.4); }
+  .health-dot.red { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,.3); }
+  .health-dot.gray { background: #64748b; }
+  .health-dot.amber { background: #f59e0b; }
+  .health-text { font-size: 11px; flex-shrink: 0; }
+  .test-btn { padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-size: 10px; cursor: pointer; flex-shrink: 0; }
+  .test-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .test-btn.testing { color: #fbbf24; border-color: #fbbf24; }
+  .section-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 0; margin-top: -6px; }
+</style></head><body>
+<div class="portal-layout">
+<div class="portal-sidebar">
+  <div class="ps-brand"><div class="navbar-logo">M</div><span class="navbar-name">ManhuaWorks</span></div>
+  <div class="ps-user"><div class="ps-avatar">梁</div><div class="ps-user-info"><div class="ps-user-name">创作者</div><div class="ps-user-plan">Pro 会员</div></div></div>
+  <div class="ps-nav">
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">🏠</span>首页</a>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">📁</span>我的项目<span class="ps-nav-badge">12</span></a>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">🎞️</span>我的作品</a>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">🗃️</span>素材库</a>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">👥</span>团队</a>
+    <div style="margin:8px 0 4px;padding:0 12px;font-size:10px;color:var(--text-muted);letter-spacing:.05em">创作工具</div>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">🎬</span>创作者工作台</a>
+    <a href="#" class="ps-nav-item active"><span class="ps-nav-icon">🔑</span>BYOK 设置</a>
+    <div style="margin:8px 0 4px;padding:0 12px;font-size:10px;color:var(--text-muted);letter-spacing:.05em">账户</div>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">⚙️</span>账号设置</a>
+  </div>
+  <div class="ps-credits"><div class="ps-credits-label"><span>本月积分</span><span>342/500 · 68%</span></div><div class="ps-credits-bar"><div class="ps-credits-fill" style="width:68%"></div></div></div>
+</div>
+<div class="main-content">
+  <div class="section-title">🔑 API 密钥管理 <span style="font-size:12px;color:var(--text-muted);font-weight:400">BYOK · 自带密钥 · 自动测活</span></div>
+  <p class="section-desc mb-3">添加你自己的 AI 模型 Key，系统自动检测连通性和延迟。不通的 Key 不会被调用。</p>
+
+  <!-- KPI -->
+  <div class="kpi-row">
+    <div class="kpi-card"><div class="kpi-label">已用 / 总额积分</div><div class="kpi-value">342/500</div><div class="progress-bar mt-4" style="height:4px"><div class="progress-fill" style="width:68%"></div></div></div>
+    <div class="kpi-card"><div class="kpi-label">已配置 Provider</div><div class="kpi-value">4</div><div style="font-size:12px;color:var(--text-muted)">3 连通 · 1 离线</div></div>
+    <div class="kpi-card"><div class="kpi-label">密钥总数</div><div class="kpi-value">6</div><div style="font-size:12px;color:var(--text-muted)">4 活跃 · 2 已撤销</div></div>
+    <div class="kpi-card"><div class="kpi-label">最后测活</div><div class="kpi-value" style="font-size:16px">3 分钟前</div><div style="font-size:12px;color:var(--text-muted)">下次: 27 分钟后</div></div>
+  </div>
+
+  <!-- 添加密钥 -->
+  <div class="add-section"><div class="section-title">➕ 添加密钥</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">选择模型服务商 (支持 15+ 家)</div>
+    <div class="provider-grid">
+      <div class="provider-chip active"><span class="provider-chip-icon">🟢</span>OpenAI</div>
+      <div class="provider-chip"><span class="provider-chip-icon">🔵</span>Azure</div>
+      <div class="provider-chip"><span class="provider-chip-icon">🟠</span>Anthropic</div>
+      <div class="provider-chip"><span class="provider-chip-icon">🔴</span>Google</div>
+      <div class="provider-chip"><span class="provider-chip-icon">🟣</span>DeepSeek</div>
+      <div class="provider-chip"><span class="provider-chip-icon">🔷</span>Qwen (通义)</div>
+      <div class="provider-chip"><span class="provider-chip-icon">💎</span>智谱 GLM</div>
+      <div class="provider-chip"><span class="provider-chip-icon">🌙</span>Moonshot</div>
+      <div class="provider-chip"><span class="provider-chip-icon">🎵</span>字节豆包</div>
+      <div class="provider-chip"><span class="provider-chip-icon">📡</span>百度文心</div>
+      <div class="provider-chip"><span class="provider-chip-icon">⭐</span>讯飞星火</div>
+      <div class="provider-chip"><span class="provider-chip-icon">🐧</span>腾讯混元</div>
+      <div class="provider-chip"><span class="provider-chip-icon">💜</span>MiniMax</div>
+      <div class="provider-chip"><span class="provider-chip-icon">🔥</span>零一万物</div>
+      <div class="provider-chip"><span class="provider-chip-icon">⚡</span>硅基流动</div>
+      <div class="provider-chip"><span class="provider-chip-icon">🔗</span>自定义代理</div>
+    </div>
+    <!-- 🆕 自定义 Endpoint -->
+    <div style="display:flex;gap:10px;margin-bottom:10px;padding:8px 12px;border-radius:8px;background:var(--bg-tertiary);border:1px dashed var(--accent)">
+      <div style="flex:2"><div class="form-label">🔗 代理 Endpoint URL</div><input class="input" placeholder="https://api.openrouter.ai/v1" style="font-size:12px;padding:8px 12px"></div>
+      <div style="flex:1"><div class="form-label">协议类型</div><select style="padding:8px 12px;border-radius:8px;background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);font-size:12px;width:100%"><option>OpenAI 兼容</option><option>Anthropic 兼容</option></select></div>
+      <div style="flex:1"><div class="form-label">自定义名称</div><input class="input" placeholder="我的代理" style="font-size:12px;padding:8px 12px"></div>
+    </div>
+    <div class="flex gap-2 items-end">
+      <div style="flex:2"><div class="form-label">API Key</div><input class="input" type="password" placeholder="sk-..." style="font-size:12px;padding:8px 12px"></div>
+      <div style="flex:1"><div class="form-label">标签 (可选)</div><input class="input" placeholder="我的 Key" style="font-size:12px;padding:8px 12px"></div>
+      <button class="btn btn-primary btn-sm">➕ 添加并测试</button>
+    </div>
+  </div>
+
+  <!-- 密钥列表 -->
+  <div class="section-title">📋 现有密钥 <span style="font-size:11px;color:var(--text-muted);font-weight:400">4 活跃</span></div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:11px;color:var(--text-muted)">
+    <span style="display:flex;align-items:center;gap:4px"><span class="health-dot green"></span> 连通</span>
+    <span style="display:flex;align-items:center;gap:4px"><span class="health-dot red"></span> 不可用</span>
+    <span style="display:flex;align-items:center;gap:4px"><span class="health-dot gray"></span> 未测</span>
+    <button class="btn btn-xs btn-ghost" style="margin-left:auto">🔄 全部测活</button>
+  </div>
+
+  <div class="key-card">
+    <div class="provider-badge" style="background:#10b981">OpenAI</div>
+    <div class="key-value">sk-proj-...a8xK</div>
+    <span class="health-dot green"></span>
+    <span class="health-text" style="color:#34d399">连通 · 326ms</span>
+    <div style="font-size:11px;color:var(--text-muted);flex-shrink:0">2 小时前</div>
+    <button class="test-btn">🔄 重测</button>
+    <button class="btn btn-xs btn-secondary">👁</button>
+    <button class="btn btn-xs btn-danger">撤销</button>
+  </div>
+
+  <div class="key-card">
+    <div class="provider-badge" style="background:#8b5cf6">DeepSeek</div>
+    <div class="key-value">sk-ds-...mP3w</div>
+    <span class="health-dot green"></span>
+    <span class="health-text" style="color:#34d399">连通 · 189ms</span>
+    <div style="font-size:11px;color:var(--text-muted);flex-shrink:0">30 分钟前</div>
+    <button class="test-btn">🔄 重测</button>
+    <button class="btn btn-xs btn-secondary">👁</button>
+    <button class="btn btn-xs btn-danger">撤销</button>
+  </div>
+
+  <div class="key-card">
+    <div class="provider-badge" style="background:#6366f1">Qwen 通义</div>
+    <div class="key-value">sk-qw-...vN7y</div>
+    <span class="health-dot green"></span>
+    <span class="health-text" style="color:#34d399">连通 · 412ms</span>
+    <div style="font-size:11px;color:var(--text-muted);flex-shrink:0">昨天</div>
+    <button class="test-btn">🔄 重测</button>
+    <button class="btn btn-xs btn-secondary">👁</button>
+    <button class="btn btn-xs btn-danger">撤销</button>
+  </div>
+
+  <div class="key-card" style="border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.02)">
+    <div class="provider-badge" style="background:#ef4444">字节豆包</div>
+    <div class="key-value">sk-db-...kR2j</div>
+    <span class="health-dot red"></span>
+    <span class="health-text" style="color:#fca5a5">不可用 · 401</span>
+    <div style="font-size:11px;color:var(--text-muted);flex-shrink:0">6 分钟前</div>
+    <button class="test-btn">🔄 重测</button>
+    <button class="btn btn-xs btn-secondary">👁</button>
+    <button class="btn btn-xs btn-danger">撤销</button>
+  </div>
+
+  <div class="key-card" style="opacity:.6">
+    <div class="provider-badge" style="background:#475569">Anthropic</div>
+    <div class="key-value">sk-ant-...xxxx<span style="color:#ef4444"> 已撤销</span></div>
+    <span class="health-dot gray"></span>
+    <span class="health-text" style="color:var(--text-muted)">未测</span>
+    <div style="font-size:11px;color:var(--text-muted);flex-shrink:0">3 天前</div>
+  </div>
+
+  <div class="key-card">
+    <div class="provider-badge" style="background:#f59e0b">Moonshot</div>
+    <div class="key-value">sk-mt-...pL9f</div>
+    <span class="health-dot green"></span>
+    <span class="health-text" style="color:#34d399">连通 · 256ms</span>
+    <div style="font-size:11px;color:var(--text-muted);flex-shrink:0">1 小时前</div>
+    <button class="test-btn" style="color:#fbbf24;border-color:#fbbf24">⏳ 测试中</button>
+    <button class="btn btn-xs btn-secondary">👁</button>
+    <button class="btn btn-xs btn-danger">撤销</button>
+  </div>
+
+  <div class="key-card">
+    <div class="provider-badge" style="background:#06b6d4">OpenRouter</div>
+    <div class="key-value">sk-or-...yH7k <span style="color:var(--text-muted);font-size:10px">→ api.openrouter.ai</span></div>
+    <span class="health-dot green"></span>
+    <span class="health-text" style="color:#34d399">连通 · 488ms</span>
+    <div style="font-size:11px;color:var(--text-muted);flex-shrink:0">4 小时前</div>
+    <button class="test-btn">🔄 重测</button>
+    <button class="btn btn-xs btn-secondary">👁</button>
+    <button class="btn btn-xs btn-danger">撤销</button>
+  </div>
+
+  <div style="margin-top:10px;padding:10px 14px;border-radius:8px;background:var(--bg-tertiary);border:1px dashed var(--border);font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px">
+    <span>💡</span> 支持所有 OpenAI 兼容接口的代理服务：<strong style="color:var(--text-primary)">OpenRouter</strong> · <strong style="color:var(--text-primary)">OneAPI</strong> · <strong style="color:var(--text-primary)">API2D</strong> · <strong style="color:var(--text-primary)">LiteLLM</strong> · 自建网关等。选「自定义代理」后填入 Endpoint URL 即可。
+  </div>
+</div>
+</div>
+</body></html>

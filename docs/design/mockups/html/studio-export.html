@@ -1,0 +1,49 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>studio-export — 导出中心</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; }
+  .export-layout { display: flex; flex: 1; overflow: hidden; }
+  .export-main { flex: 1; padding: 20px; overflow-y: auto; }
+  .export-sidebar { width: 340px; background: var(--bg-secondary); border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+  .export-card { padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; display: flex; flex-direction: column; gap: 10px; }
+  .export-card:hover { border-color: var(--accent); }
+  .export-icon-box { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .export-name { font-size: 14px; font-weight: 700; }
+  .export-desc { font-size: 11px; color: var(--text-muted); }
+  .export-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 10px; font-size: 10px; color: var(--text-muted); }
+  .history-item { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .history-status { font-size: 10px; }
+</style></head><body style="display:flex;flex-direction:column;">
+<header style="display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;background:var(--bg-secondary);border-bottom:1px solid var(--border)">
+  <div class="flex items-center gap-3"><span class="page-title">📤 导出中心</span><span style="font-size:11px;color:var(--text-muted)">4 大类 · 13 格式</span></div>
+  <div class="flex items-center gap-4" style="font-size:11px;color:var(--text-muted)">
+    <span>🟡 运行 <strong style="color:#fbbf24">2</strong></span>
+    <span>🟢 完成 <strong style="color:#34d399">8</strong></span>
+    <span>📦 总计 <strong>2.3 GB</strong></span>
+  </div>
+</header>
+<div class="flex" style="flex:1;overflow:hidden">
+<div class="sidebar" style="width:auto">
+  <div class="flex gap-2 mb-4" style="flex-direction:column">
+    <span class="chip active" style="display:block;text-align:center">✨ 全部</span><span class="chip" style="display:block;text-align:center">📺 剧集</span><span class="chip" style="display:block;text-align:center">👤 角色</span><span class="chip" style="display:block;text-align:center">📁 项目</span><span class="chip" style="display:block;text-align:center">🗂 素材</span>
+  </div>
+</div>
+<div class="export-main">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+    <div class="export-card"><div class="flex justify-between"><div class="export-icon-box" style="background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff">📄</div><span style="font-size:10px;color:var(--text-muted);font-family:monospace">.mp4</span></div><div class="export-name">视频导出</div><div class="export-desc">导出完整视频，含字幕/音频/转场</div><div class="export-footer"><span>~120 MB</span><button class="btn btn-xs" style="background:var(--gradient);color:#fff">📤 导出</button></div></div>
+    <div class="export-card"><div class="flex justify-between"><div class="export-icon-box" style="background:linear-gradient(135deg,#34d399,#10b981);color:#fff">📝</div><span style="font-size:10px;color:var(--text-muted);font-family:monospace">.md</span></div><div class="export-name">剧本 Markdown</div><div class="export-desc">导出完整剧本为 Markdown 格式</div><div class="export-footer"><span>~2 MB</span><button class="btn btn-xs" style="background:var(--gradient);color:#fff">📤 导出</button></div></div>
+    <div class="export-card"><div class="flex justify-between"><div class="export-icon-box" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff">📕</div><span style="font-size:10px;color:var(--text-muted);font-family:monospace">.pdf</span></div><div class="export-name">分镜 PDF</div><div class="export-desc">分镜脚本 + 缩略图导出为 PDF</div><div class="export-footer"><span>~8 MB</span><button class="btn btn-xs" style="background:var(--gradient);color:#fff">📤 导出</button></div></div>
+    <div class="export-card"><div class="flex justify-between"><div class="export-icon-box" style="background:linear-gradient(135deg,#ec4899,#be185d);color:#fff">🖼</div><span style="font-size:10px;color:var(--text-muted);font-family:monospace">.png</span></div><div class="export-name">图片序列</div><div class="export-desc">导出所有分镜为 PNG 序列</div><div class="export-footer"><span>~200 MB</span><button class="btn btn-xs" style="background:var(--gradient);color:#fff">📤 导出</button></div></div>
+  </div>
+</div>
+<div class="export-sidebar">
+  <div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:13px;font-weight:700">历史记录</span><span style="font-size:10px;color:var(--text-muted)">最近 10 条</span>
+  </div>
+  <div style="flex:1;overflow-y:auto">
+    <div class="history-item"><div class="flex justify-between mb-2"><span class="badge badge-green">完成</span><span style="font-size:12px;font-weight:600">视频导出 .mp4</span><span style="font-size:10px;color:var(--text-muted)">5m 前</span></div><div style="font-size:10px;color:var(--text-muted)">128 MB · 完成 10:25</div><div class="flex gap-2 mt-2"><button class="btn btn-xs" style="background:rgba(16,185,129,.15);color:#34d399">⬇ 下载</button></div></div>
+    <div class="history-item"><div class="flex justify-between mb-2"><span class="badge badge-amber">进行中</span><span style="font-size:12px;font-weight:600">分镜 PDF .pdf</span><span style="font-size:10px;color:var(--text-muted)">12m 前</span></div><div class="progress-bar mb-2"><div class="progress-fill" style="width:68%"></div></div><div style="font-size:10px;color:var(--text-muted);display:flex;justify-content:space-between"><span>渲染中</span><span>68%</span></div></div>
+    <div class="history-item"><div class="flex justify-between mb-2"><span class="badge badge-red">失败</span><span style="font-size:12px;font-weight:600">图片序列 .png</span><span style="font-size:10px;color:var(--text-muted)">30m 前</span></div><div style="font-size:10px;color:#fca5a5">磁盘空间不足</div><div class="flex gap-2 mt-2"><button class="btn btn-xs" style="background:rgba(59,130,246,.15);color:#60a5fa">🔄 重试</button></div></div>
+    <div class="history-item"><div class="flex justify-between mb-2"><span class="badge badge-green">完成</span><span style="font-size:12px;font-weight:600">剧本 Markdown .md</span><span style="font-size:10px;color:var(--text-muted)">1h 前</span></div><div style="font-size:10px;color:var(--text-muted)">1.8 MB · 完成 09:12</div><div class="flex gap-2 mt-2"><button class="btn btn-xs" style="background:rgba(16,185,129,.15);color:#34d399">⬇ 下载</button></div></div>
+  </div>
+</div>
+</div>
+</body></html>

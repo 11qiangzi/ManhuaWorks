@@ -1,0 +1,60 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>studio-characters — 角色管理</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; }
+  .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .filter-chips { display: flex; gap: 6px; }
+  .chip { padding: 5px 12px; border-radius: 16px; background: var(--bg-tertiary); border: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); cursor: pointer; }
+  .chip.active { background: rgba(99,102,241,.15); border-color: var(--accent); color: var(--accent); }
+  .char-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 16px; }
+  .char-card { display: flex; gap: 14px; padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; }
+  .char-card:hover { border-color: var(--accent); }
+  .char-avatar { width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; }
+  .char-info { flex: 1; }
+  .char-name { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .char-stats { display: flex; gap: 12px; font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .detail-panel { width: 300px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; flex-shrink: 0; }
+  .detail-name { font-size: 20px; font-weight: 800; margin-bottom: 2px; }
+  .detail-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px; }
+  .detail-meta { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .detail-item { display: flex; justify-content: space-between; font-size: 12px; }
+  .detail-item-label { color: var(--text-muted); }
+  .tag-list { display: flex; flex-wrap: wrap; gap: 4px; }
+</style></head><body>
+<div class="layout-sidebar">
+<div class="sidebar">
+  <div style="font-size:10px;color:var(--text-muted);padding:0 12px;margin-bottom:4px">创作全链路</div>
+  <div class="sidebar-item">🏠 首页</div><div class="sidebar-item">① 剧本创作</div><div class="sidebar-item active">② 素材库</div><div class="sidebar-item">③ 工作流</div><div class="sidebar-item">④ 工具箱</div><div class="sidebar-item">⑤ 导出</div>
+</div>
+<div class="main-content" style="display:flex;gap:20px;">
+<div style="flex:1">
+  <div class="toolbar">
+    <div class="flex items-center gap-3"><span class="page-title">角色管理</span><div class="search-box"><input class="input" placeholder="搜索角色..." style="width:220px"></div></div>
+    <div class="flex items-center gap-3">
+      <div class="filter-chips"><span class="chip active">全部</span><span class="chip">主角</span><span class="chip">反派</span><span class="chip">配角</span><span class="chip">路人</span></div>
+      <button class="btn btn-primary btn-sm">➕ 新成员</button>
+    </div>
+  </div>
+  <div class="alert alert-warning">⚠️ API 连接失败，已回退本地 mock 数据 — 请检查网络连接</div>
+  <div class="char-grid">
+    <div class="char-card"><div class="char-avatar" style="background:linear-gradient(135deg,#667eea,#764ba2)">🗡️</div><div class="char-info"><div class="char-name">林启 <span class="badge badge-purple">主角</span><span class="badge badge-amber">owner</span></div><div class="char-stats">表情 12 · 场景 24</div></div></div>
+    <div class="char-card"><div class="char-avatar" style="background:linear-gradient(135deg,#34d399,#10b981)">🌸</div><div class="char-info"><div class="char-name">苏婉 <span class="badge badge-purple">主角</span><span class="badge badge-blue">editor</span></div><div class="char-stats">表情 8 · 场景 18</div></div></div>
+    <div class="char-card"><div class="char-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706)">🔥</div><div class="char-info"><div class="char-name">暗影尊 <span class="badge badge-red">反派</span><span class="badge badge-blue">editor</span></div><div class="char-stats">表情 6 · 场景 12</div></div></div>
+    <div class="char-card"><div class="char-avatar" style="background:linear-gradient(135deg,#60a5fa,#3b82f6)">🧙</div><div class="char-info"><div class="char-name">老魏 <span class="badge badge-blue">配角</span><span class="badge badge-blue">editor</span></div><div class="char-stats">表情 4 · 场景 8</div></div></div>
+    <div class="char-card"><div class="char-avatar" style="background:linear-gradient(135deg,#f472b6,#ec4899)">🎭</div><div class="char-info"><div class="char-name">陈琳 <span class="badge badge-green">路人</span><span class="badge badge-amber">viewer</span></div><div class="char-stats">表情 2 · 场景 4</div></div></div>
+    <div class="char-card"><div class="char-avatar" style="background:linear-gradient(135deg,#a78bfa,#8b5cf6)">🎪</div><div class="char-info"><div class="char-name">苏锦年 <span class="badge badge-purple">主角</span><span class="badge badge-blue">editor</span></div><div class="char-stats">表情 6 · 场景 10</div></div></div>
+  </div>
+</div>
+<div class="detail-panel">
+  <div class="detail-name">🗡️ 林启</div>
+  <div class="detail-desc">本作男主角，少年剑修。出身没落宗门，凭一柄断剑踏上复仇与觉醒之路。</div>
+  <div class="detail-meta">
+    <div class="detail-item"><span class="detail-item-label">Archetype</span><span>主角 · 剑修</span></div>
+    <div class="detail-item"><span class="detail-item-label">一致性</span><span style="color:#34d399">99.2%</span></div>
+    <div class="detail-item"><span class="detail-item-label">表情数</span><span>12 种</span></div>
+    <div class="detail-item"><span class="detail-item-label">涉及场景</span><span>24 个</span></div>
+  </div>
+  <div class="section-title">标签</div>
+  <div class="tag-list"><span class="tag">主角</span><span class="tag">剑修</span><span class="tag">少年</span><span class="tag">复仇</span><span class="tag">白衣</span></div>
+</div>
+</div>
+</div>
+</body></html>

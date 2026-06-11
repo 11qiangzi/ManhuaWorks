@@ -1,0 +1,39 @@
+{
+  "name": "@manhuaworks/user-portal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ManhuaWorks · 用户后台 (L1+L2) — 创作者的日常入口：项目管理 / 作品发布 / 素材库 / 团队协作",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5180",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview --port 5180",
+    "lint": "eslint . --ext .vue,.js,.ts,.jsx,.tsx --fix",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@manhuaworks/api-client": "workspace:^",
+    "@manhuaworks/ui": "workspace:^",
+    "@vueuse/core": "^10.9.0",
+    "axios": "^1.6.8",
+    "pinia": "^2.1.7",
+    "tailwindcss": "^3.4.3",
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "@typescript-eslint/eslint-plugin": "^7.7.0",
+    "@typescript-eslint/parser": "^7.7.0",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.10",
+    "vite-plugin-compression": "^0.5.1",
+    "vitest": "^1.5.0",
+    "vue-tsc": "^2.0.13"
+  }
+}

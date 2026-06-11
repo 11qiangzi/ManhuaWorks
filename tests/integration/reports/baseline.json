@@ -1,0 +1,75 @@
+{
+  "$comment": "ManhuaWorks W5 性能基线：6 pipeline × 3 mode × 1 集耗时 + 成本",
+  "version": "2026-06-08",
+  "author": "陈远枢 + 钟帧",
+  "generatedAt": "2026-06-08T09:00:00+08:00",
+  "environment": {
+    "node": "v22.11.0",
+    "os": "Windows 11 x64",
+    "mode": "dev (5 services, no production caching)"
+  },
+  "pipelines": [
+    "novel-to-drama",
+    "novel-to-manga",
+    "novel-to-audio",
+    "image-to-video",
+    "text-to-image",
+    "voice-clone"
+  ],
+  "modes": ["fast", "standard", "high-quality"],
+  "unit": {
+    "durationMs": "毫秒",
+    "costUsd": "美元",
+    "shots": "镜头数",
+    "tokens": "token 数"
+  },
+  "thresholds": {
+    "fast": { "maxDurationMs": 10000, "maxCostUsd": 0.5 },
+    "standard": { "maxDurationMs": 30000, "maxCostUsd": 1.5 },
+    "high-quality": { "maxDurationMs": 60000, "maxCostUsd": 4.0 }
+  },
+  "baseline": [
+    { "pipeline": "novel-to-drama",        "mode": "fast",         "durationMs": 8200,  "costUsd": 0.32, "shots": 6,  "tokensIn": 4200,  "tokensOut": 1800 },
+    { "pipeline": "novel-to-drama",        "mode": "standard",     "durationMs": 22500, "costUsd": 0.95, "shots": 10, "tokensIn": 4200,  "tokensOut": 3200 },
+    { "pipeline": "novel-to-drama",        "mode": "high-quality", "durationMs": 48000, "costUsd": 2.80, "shots": 16, "tokensIn": 4200,  "tokensOut": 5400 },
+
+    { "pipeline": "novel-to-manga",        "mode": "fast",         "durationMs": 6500,  "costUsd": 0.18, "shots": 4,  "tokensIn": 2800,  "tokensOut": 900  },
+    { "pipeline": "novel-to-manga",        "mode": "standard",     "durationMs": 19000, "costUsd": 0.55, "shots": 8,  "tokensIn": 2800,  "tokensOut": 1800 },
+    { "pipeline": "novel-to-manga",        "mode": "high-quality", "durationMs": 42000, "costUsd": 1.80, "shots": 12, "tokensIn": 2800,  "tokensOut": 3600 },
+
+    { "pipeline": "novel-to-audio",        "mode": "fast",         "durationMs": 4800,  "costUsd": 0.08, "shots": 0,  "tokensIn": 1800,  "tokensOut": 600  },
+    { "pipeline": "novel-to-audio",        "mode": "standard",     "durationMs": 12000, "costUsd": 0.22, "shots": 0,  "tokensIn": 1800,  "tokensOut": 1200 },
+    { "pipeline": "novel-to-audio",        "mode": "high-quality", "durationMs": 28000, "costUsd": 0.65, "shots": 0,  "tokensIn": 1800,  "tokensOut": 2400 },
+
+    { "pipeline": "image-to-video",        "mode": "fast",         "durationMs": 12000, "costUsd": 0.45, "shots": 1,  "tokensIn": 200,   "tokensOut": 0    },
+    { "pipeline": "image-to-video",        "mode": "standard",     "durationMs": 35000, "costUsd": 1.20, "shots": 1,  "tokensIn": 200,   "tokensOut": 0    },
+    { "pipeline": "image-to-video",        "mode": "high-quality", "durationMs": 58000, "costUsd": 3.50, "shots": 1,  "tokensIn": 200,   "tokensOut": 0    },
+
+    { "pipeline": "text-to-image",         "mode": "fast",         "durationMs": 3500,  "costUsd": 0.04, "shots": 1,  "tokensIn": 120,   "tokensOut": 0    },
+    { "pipeline": "text-to-image",         "mode": "standard",     "durationMs": 8500,  "costUsd": 0.12, "shots": 1,  "tokensIn": 120,   "tokensOut": 0    },
+    { "pipeline": "text-to-image",         "mode": "high-quality", "durationMs": 18000, "costUsd": 0.35, "shots": 1,  "tokensIn": 120,   "tokensOut": 0    },
+
+    { "pipeline": "voice-clone",           "mode": "fast",         "durationMs": 5500,  "costUsd": 0.06, "shots": 0,  "tokensIn": 600,   "tokensOut": 0    },
+    { "pipeline": "voice-clone",           "mode": "standard",     "durationMs": 14000, "costUsd": 0.18, "shots": 0,  "tokensIn": 600,   "tokensOut": 0    },
+    { "pipeline": "voice-clone",           "mode": "high-quality", "durationMs": 32000, "costUsd": 0.55, "shots": 0,  "tokensIn": 600,   "tokensOut": 0    }
+  ],
+  "services": ["ai-router:8083", "ai-keys:8088", "workflow-engine:8084", "asset-service:8085", "ai-orchestrator:8087"],
+  "loadTest": {
+    "concurrency": 50,
+    "targetErrorRate": 0.01,
+    "p95Ms": 4200,
+    "p99Ms": 6800,
+    "rps": 18.5
+  },
+  "regressionRules": {
+    "durationRegressionPct": 15,
+    "costRegressionPct": 20,
+    "errorRateRegressionPct": 50
+  },
+  "notes": [
+    "基线数据来自 dev mode + mock providers，非真实生产",
+    "W6 起接入真实 provider 后需要重新校准",
+    "CI 跑 perf-bench.test.ts 时如偏离基线 > 15% 会标红",
+    "load-test 数据仅供回归参考，生产环境需要 k6 重测"
+  ]
+}

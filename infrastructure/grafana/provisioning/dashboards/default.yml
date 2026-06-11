@@ -1,0 +1,14 @@
+# ManhuaWorks Grafana 自动配置 — Dashboard Provider
+apiVersion: 1
+
+providers:
+  - name: 'manhuaworks-default'
+    orgId: 1
+    folder: 'ManhuaWorks'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: true

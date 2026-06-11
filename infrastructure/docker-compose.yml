@@ -1,0 +1,553 @@
+# ManhuaWorks — Full Stack (Production)
+# 2026-06-08 谢擎 L2-task-12
+# 15 services: postgres, redis, 4 backend, api-gateway, monitor,
+#             prometheus, alertmanager, grafana, 4 frontend.
+#
+# Usage:
+#   cp .env.example .env  &&  $EDITOR .env
+#   ./start-prod.sh       # 或 docker compose -f docker-compose.yml up -d
+#   ./smoke-test.sh
+#
+# 端口分配（HOST 端口；容器内端口见各自 ports 短横线后段）：
+#   postgres      5432
+#   redis         6379
+#   user-service  8088
+#   project-service 8089
+#   billing-service 8090
+#   collab-service (HTTP+WS) 8091
+#   api-gateway   8080
+#   monitor       8092
+#   prometheus    9090
+#   alertmanager  9093
+#   grafana       3010   (容器内 3000)
+#   web           3000
+#   studio        3001
+#   admin-portal  3002
+#   user-portal   3003
+#
+# 网络：manhuaworks_net (custom bridge)
+# 数据卷：postgres-data / redis-data / grafana-data / prometheus-data / alertmanager-data
+# 健康检查：30s interval / 5s timeout / 3 retries (postgres 单独 5s/5s/5 启动重试)
+# 启动顺序：postgres → redis → 4 backend → api-gateway → monitor → 4 frontend / prom / grafana
+
+name: manhuaworks
+
+# 兼容 docker compose v2（v3.9 schema）
+version: "3.9"
+
+# ============================================================
+# 全局默认（被各 service 字段覆盖）
+# ============================================================
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+x-restart: &default-restart
+  restart: unless-stopped
+
+services:
+  # ============================================================
+  # 1. Postgres 16 (主数据)
+  # ============================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: mhw-postgres
+    <<: *default-restart
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mhw}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mhw_dev_only}
+      POSTGRES_DB: ${POSTGRES_DB:-manhuaworks}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mhw} -d ${POSTGRES_DB:-manhuaworks}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    logging: *default-logging
+
+  # ============================================================
+  # 2. Redis 7 (缓存 / 限流 / WS pubsub)
+  # ============================================================
+  redis:
+    image: redis:7-alpine
+    container_name: mhw-redis
+    <<: *default-restart
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    logging: *default-logging
+
+  # ============================================================
+  # 3. user-service :8088
+  # ============================================================
+  user-service:
+    build:
+      context: ..
+      dockerfile: services/user-service/Dockerfile
+    container_name: mhw-user-service
+    <<: *default-restart
+    ports:
+      - "8088:8088"
+    environment:
+      NODE_ENV: production
+      PORT: "8088"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mhw}:${POSTGRES_PASSWORD:-mhw_dev_only}@postgres:5432/${POSTGRES_DB:-manhuaworks}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-900}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-2592000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:8088/health', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging: *default-logging
+
+  # ============================================================
+  # 4. project-service :8089
+  # ============================================================
+  project-service:
+    build:
+      context: ..
+      dockerfile: services/project-service/Dockerfile
+    container_name: mhw-project-service
+    <<: *default-restart
+    ports:
+      - "8089:8089"
+    environment:
+      NODE_ENV: production
+      PORT: "8089"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mhw}:${POSTGRES_PASSWORD:-mhw_dev_only}@postgres:5432/${POSTGRES_DB:-manhuaworks}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:8089/health', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging: *default-logging
+
+  # ============================================================
+  # 5. billing-service :8090
+  # ============================================================
+  billing-service:
+    build:
+      context: ..
+      dockerfile: services/billing-service/Dockerfile
+    container_name: mhw-billing-service
+    <<: *default-restart
+    ports:
+      - "8090:8090"
+    environment:
+      NODE_ENV: production
+      PORT: "8090"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mhw}:${POSTGRES_PASSWORD:-mhw_dev_only}@postgres:5432/${POSTGRES_DB:-manhuaworks}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      QUOTA_RESET_INTERVAL_SEC: ${QUOTA_RESET_INTERVAL_SEC:-86400}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:8090/health', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging: *default-logging
+
+  # ============================================================
+  # 6. collab-service :8091 (HTTP + WS 同一端口)
+  # ============================================================
+  collab-service:
+    build:
+      context: ..
+      dockerfile: services/collab-service/Dockerfile
+    container_name: mhw-collab-service
+    <<: *default-restart
+    ports:
+      - "8091:8091"
+    environment:
+      NODE_ENV: production
+      PORT: "8091"
+      WS_PATH: /ws
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mhw}:${POSTGRES_PASSWORD:-mhw_dev_only}@postgres:5432/${POSTGRES_DB:-manhuaworks}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:8091/health', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging: *default-logging
+
+  # ============================================================
+  # 7. api-gateway :8080 (统一入口 / 限流 / 路由)
+  # ============================================================
+  api-gateway:
+    build:
+      context: ..
+      dockerfile: services/api-gateway/Dockerfile
+    container_name: mhw-api-gateway
+    <<: *default-restart
+    ports:
+      - "8080:8080"
+    environment:
+      NODE_ENV: production
+      PORT: "8080"
+      HOST: "0.0.0.0"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mhw}:${POSTGRES_PASSWORD:-mhw_dev_only}@postgres:5432/${POSTGRES_DB:-manhuaworks}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      USER_SERVICE_URL: http://user-service:8088
+      PROJECT_SERVICE_URL: http://project-service:8089
+      BILLING_SERVICE_URL: http://billing-service:8090
+      COLLAB_SERVICE_URL: http://collab-service:8091
+      MONITOR_SERVICE_URL: http://monitor:8092
+      RATE_LIMIT_PER_MIN: ${RATE_LIMIT_PER_MIN:-120}
+    depends_on:
+      user-service:
+        condition: service_healthy
+      project-service:
+        condition: service_healthy
+      billing-service:
+        condition: service_healthy
+      collab-service:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging: *default-logging
+
+  # ============================================================
+  # 8. monitor :8092 (健康探针 / 指标采集 / 告警路由)
+  # ============================================================
+  monitor:
+    build:
+      context: ..
+      dockerfile: services/monitor/Dockerfile
+    container_name: mhw-monitor
+    <<: *default-restart
+    ports:
+      - "8092:8092"
+    environment:
+      NODE_ENV: production
+      PORT: "8092"
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mhw}:${POSTGRES_PASSWORD:-mhw_dev_only}@postgres:5432/${POSTGRES_DB:-manhuaworks}
+      REDIS_URL: redis://redis:6379
+      FEISHU_WEBHOOK_URL: ${FEISHU_WEBHOOK_URL:-}
+      FEISHU_WEBHOOK_SECRET: ${FEISHU_WEBHOOK_SECRET:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      ALERT_FROM: ${ALERT_FROM:-alerts@manhuaworks.local}
+      ALERT_TO: ${ALERT_TO:-ops@manhuaworks.local}
+      PROMETHEUS_URL: http://prometheus:9090
+      USER_SERVICE_URL: http://user-service:8088
+      PROJECT_SERVICE_URL: http://project-service:8089
+      BILLING_SERVICE_URL: http://billing-service:8090
+      COLLAB_SERVICE_URL: http://collab-service:8091
+      API_GATEWAY_URL: http://api-gateway:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8092/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging: *default-logging
+
+  # ============================================================
+  # 9. prometheus :9090
+  # ============================================================
+  prometheus:
+    image: prom/prometheus:v2.55.0
+    container_name: mhw-prometheus
+    <<: *default-restart
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alertmanager/rules.yml:/etc/prometheus/rules.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - alertmanager
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging: *default-logging
+
+  # ============================================================
+  # 10. alertmanager :9093
+  # ============================================================
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: mhw-alertmanager
+    <<: *default-restart
+    ports:
+      - "9093:9093"
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9093/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging: *default-logging
+
+  # ============================================================
+  # 11. grafana :3000 (host 3010)
+  # ============================================================
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: mhw-grafana
+    <<: *default-restart
+    ports:
+      - "3010:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin_change_me}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: ${GF_SERVER_ROOT_URL:-http://localhost:3010}
+      GF_INSTALL_PLUGINS: ""
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+  # ============================================================
+  # 12. web :3000 (主门户)
+  # ============================================================
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    container_name: mhw-web
+    <<: *default-restart
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+      VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8091/ws}
+    depends_on:
+      - api-gateway
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging: *default-logging
+
+  # ============================================================
+  # 13. studio :3001
+  # ============================================================
+  studio:
+    build:
+      context: ..
+      dockerfile: apps/studio/Dockerfile
+    container_name: mhw-studio
+    <<: *default-restart
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+    depends_on:
+      - api-gateway
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3001/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging: *default-logging
+
+  # ============================================================
+  # 14. admin-portal :3002
+  # ============================================================
+  admin-portal:
+    build:
+      context: ..
+      dockerfile: apps/admin-portal/Dockerfile
+    container_name: mhw-admin-portal
+    <<: *default-restart
+    ports:
+      - "3002:3002"
+    environment:
+      NODE_ENV: production
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+    depends_on:
+      - api-gateway
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3002/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging: *default-logging
+
+  # ============================================================
+  # 15. user-portal :3003
+  # ============================================================
+  user-portal:
+    build:
+      context: ..
+      dockerfile: apps/user-portal/Dockerfile
+    container_name: mhw-user-portal
+    <<: *default-restart
+    ports:
+      - "3003:3003"
+    environment:
+      NODE_ENV: production
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+    depends_on:
+      - api-gateway
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3003/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging: *default-logging
+
+# ============================================================
+# Volumes (持久化)
+# ============================================================
+volumes:
+  postgres-data:
+    name: mhw-postgres-data
+  redis-data:
+    name: mhw-redis-data
+  prometheus-data:
+    name: mhw-prometheus-data
+  alertmanager-data:
+    name: mhw-alertmanager-data
+  grafana-data:
+    name: mhw-grafana-data
+
+# ============================================================
+# Networks
+# ============================================================
+networks:
+  manhuaworks_net:
+    name: manhuaworks_net
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16

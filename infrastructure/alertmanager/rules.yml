@@ -1,0 +1,382 @@
+# ManhuaWorks Prometheus 告警规则 (30+ 规则)
+# 覆盖：4 业务后端 + monitor + api-gateway + 业务指标
+
+groups:
+  # ============================================================
+  # 1. HTTP 通用
+  # ============================================================
+  - name: http_general
+    interval: 30s
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+            /
+          sum(rate(http_requests_total[5m])) by (service) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.service }} 5xx 错误率 > 5%"
+          description: "服务 {{ $labels.service }} 5xx 错误率持续高于 5%"
+
+      - alert: ElevatedErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+            /
+          sum(rate(http_requests_total[5m])) by (service) > 0.01
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }} 5xx 错误率 > 1%"
+          description: "服务 {{ $labels.service }} 5xx 错误率偏高"
+
+      - alert: SlowRequestP99
+        expr: |
+          histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }} P99 > 1s"
+          description: "服务 {{ $labels.service }} P99 响应时间超过 1 秒"
+
+      - alert: SlowRequestP99Critical
+        expr: |
+          histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)) > 3
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.service }} P99 > 3s"
+          description: "服务 {{ $labels.service }} P99 响应时间严重"
+
+      - alert: HighActiveConnections
+        expr: |
+          http_active_connections > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }} 活跃连接 > 1000"
+
+  # ============================================================
+  # 2. user-service
+  # ============================================================
+  - name: user_service
+    interval: 30s
+    rules:
+      - alert: UserLoginFailures
+        expr: |
+          sum(rate(user_login_failures_total[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: user-service
+        annotations:
+          summary: "登录失败 > 10/min"
+
+      - alert: UserRegistrationDrop
+        expr: |
+          sum(rate(user_registration_total[1h])) < 1
+        for: 1h
+        labels:
+          severity: warning
+          service: user-service
+        annotations:
+          summary: "注册量 1h 低于 1"
+
+      - alert: UserAuthErrors
+        expr: |
+          sum(rate(user_auth_errors_total[5m])) by (kind) > 5
+        for: 5m
+        labels:
+          severity: critical
+          service: user-service
+        annotations:
+          summary: "鉴权错误 > 5/min"
+
+  # ============================================================
+  # 3. project-service
+  # ============================================================
+  - name: project_service
+    interval: 30s
+    rules:
+      - alert: ProjectCreateSlow
+        expr: |
+          histogram_quantile(0.95, sum(rate(project_create_duration_seconds_bucket[5m])) by (le)) > 2
+        for: 10m
+        labels:
+          severity: warning
+          service: project-service
+        annotations:
+          summary: "创建项目 P95 > 2s"
+
+      - alert: ShotRenderQueueHigh
+        expr: |
+          shot_render_queue_size > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: project-service
+        annotations:
+          summary: "分镜渲染队列 > 100"
+
+      - alert: ShotRenderStuck
+        expr: |
+          sum(shot_render_inflight{status="running"}) > 0
+            and
+          sum(rate(shot_render_completed_total[10m])) == 0
+        for: 15m
+        labels:
+          severity: critical
+          service: project-service
+        annotations:
+          summary: "分镜渲染卡住 (15min 无完成)"
+
+  # ============================================================
+  # 4. billing-service
+  # ============================================================
+  - name: billing_service
+    interval: 30s
+    rules:
+      - alert: PaymentFailure
+        expr: |
+          sum(rate(billing_payment_failures_total[5m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: billing-service
+        annotations:
+          summary: "支付失败率 > 0"
+
+      - alert: PaymentFailureHigh
+        expr: |
+          sum(rate(billing_payment_failures_total[5m])) by (reason) > 5
+        for: 5m
+        labels:
+          severity: critical
+          service: billing-service
+        annotations:
+          summary: "支付失败 > 5/min (按原因分)"
+
+      - alert: SubscriptionExpired
+        expr: |
+          sum(increase(billing_subscription_expired_total[1h])) > 0
+        for: 5m
+        labels:
+          severity: warning
+          service: billing-service
+        annotations:
+          summary: "订阅过期事件"
+
+      - alert: RefundSpike
+        expr: |
+          sum(rate(billing_refund_total[10m])) > 5
+        for: 10m
+        labels:
+          severity: warning
+          service: billing-service
+        annotations:
+          summary: "退款激增 (> 5/10min)"
+
+      - alert: InvoiceGenerationFails
+        expr: |
+          sum(rate(billing_invoice_errors_total[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+          service: billing-service
+        annotations:
+          summary: "发票生成失败"
+
+  # ============================================================
+  # 5. collab-service
+  # ============================================================
+  - name: collab_service
+    interval: 30s
+    rules:
+      - alert: WSConnectionHigh
+        expr: |
+          ws_connections > 5000
+        for: 5m
+        labels:
+          severity: warning
+          service: collab-service
+        annotations:
+          summary: "WebSocket 连接 > 5000"
+
+      - alert: WSConnectionDrop
+        expr: |
+          abs(
+            sum(rate(ws_messages_total[5m]))
+          ) < 0.1
+            and
+          ws_connections > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: collab-service
+        annotations:
+          summary: "WS 消息流停滞但仍有连接"
+
+      - alert: CommentVolumeHigh
+        expr: |
+          sum(rate(collab_comments_total[5m])) > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: collab-service
+        annotations:
+          summary: "评论流量 > 100/min"
+
+      - alert: PresenceSyncDelay
+        expr: |
+          histogram_quantile(0.95, sum(rate(collab_presence_sync_seconds_bucket[5m])) by (le)) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: collab-service
+        annotations:
+          summary: "Presence 同步延迟 P95 > 5s"
+
+  # ============================================================
+  # 6. monitor 自监控
+  # ============================================================
+  - name: monitor_self
+    interval: 30s
+    rules:
+      - alert: MonitorDown
+        expr: |
+          up{job="monitor"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: monitor
+        annotations:
+          summary: "monitor 服务下线"
+
+      - alert: AlertmanagerDown
+        expr: |
+          up{job="alertmanager"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "alertmanager 服务下线"
+
+      - alert: PrometheusDown
+        expr: |
+          up{job="prometheus"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "prometheus 服务下线"
+
+      - alert: ScrapeTargetDown
+        expr: |
+          up == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "抓取目标 {{ $labels.job }} 下线"
+
+  # ============================================================
+  # 7. 资源 (节点 / 进程)
+  # ============================================================
+  - name: resources
+    interval: 30s
+    rules:
+      - alert: HighCPUUsage
+        expr: |
+          process_cpu_seconds_total > 0.85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }} CPU > 85%"
+
+      - alert: HighMemoryUsage
+        expr: |
+          process_resident_memory_bytes > 2 * 1024 * 1024 * 1024
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }} 内存 > 2GB"
+
+      - alert: EventLoopLag
+        expr: |
+          nodejs_eventloop_lag_seconds > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }} 事件循环滞后 > 1s"
+
+      - alert: HeapGrowth
+        expr: |
+          rate(nodejs_heap_size_total_bytes[10m]) > 100 * 1024 * 1024
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }} 堆增长 > 100MB/10min"
+
+  # ============================================================
+  # 8. 业务指标
+  # ============================================================
+  - name: business
+    interval: 60s
+    rules:
+      - alert: ZeroQPSForLongTime
+        expr: |
+          sum(rate(http_requests_total[5m])) by (service) == 0
+            and
+          sum(http_requests_total) by (service) > 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }} 长时间无 QPS (但历史上活跃)"
+
+      - alert: QPSSpike
+        expr: |
+          sum(rate(http_requests_total[1m])) by (service)
+            >
+          5 * sum(rate(http_requests_total[1h] offset 1h)) by (service)
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }} QPS 5x 突发"
+
+      - alert: AuthFailureHigh
+        expr: |
+          sum(rate(http_requests_total{status="401"}[5m])) by (service) > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }} 401 > 50/min"
+
+      - alert: DatabaseConnectionHigh
+        expr: |
+          db_pool_used / db_pool_total > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }} DB 连接池使用 > 90%"
+
+      - alert: RedisMemoryHigh
+        expr: |
+          redis_memory_used_bytes / redis_memory_max_bytes > 0.85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis 内存 > 85%"

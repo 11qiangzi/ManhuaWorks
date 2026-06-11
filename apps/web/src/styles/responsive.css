@@ -1,0 +1,95 @@
+/* =========================================================
+ * ManhuaWorks · Web · Responsive + Theme
+ * Mobile-first; mobile = 1 col, tablet = 2, desktop = 3, 4k = 5
+ * ========================================================= */
+
+/* ---- 隐藏/显示工具类 ---- */
+.h-mobile { display: initial; }
+.h-tablet, .h-desktop, .h-4k { display: none; }
+@media (min-width: 768px) { .h-mobile { display: none; } .h-tablet { display: initial; } }
+@media (min-width: 1024px) { .h-tablet { display: none; } .h-desktop { display: initial; } }
+@media (min-width: 2560px) { .h-desktop { display: none; } .h-4k { display: initial; } }
+
+/* ---- 容器 ---- */
+.app-container {
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-4);
+  max-width: 100%;
+}
+@media (min-width: 768px) { .app-container { padding: var(--space-5); max-width: 720px; } }
+@media (min-width: 1024px) { .app-container { padding: var(--space-6); max-width: 1200px; } }
+@media (min-width: 2560px) { .app-container { max-width: 2400px; padding: var(--space-7); } }
+
+/* ---- 网格 ---- */
+.rg-app {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+@media (min-width: 768px)  { .rg-app { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .rg-app { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 2560px) { .rg-app { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+
+/* ---- 移动端 touch 优化 ---- */
+@media (max-width: 767px) {
+  button, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .desktop-only { display: none; }
+  input, select, textarea { font-size: 16px; }
+}
+@media (min-width: 768px) { .mobile-only { display: none; } }
+
+/* ---- 全局基础 ---- */
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-display, system-ui, sans-serif);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+a { color: var(--text-link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---- 卡片 ---- */
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-4);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-2);
+  transition: box-shadow var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.card.mi-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-4);
+}
+
+/* ---- 按钮 ---- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--primary); color: white;
+  border: none; border-radius: var(--radius-3);
+  cursor: pointer; font-size: var(--text-sm);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.btn:hover { background: var(--primary-hover); }
+.btn:active { background: var(--primary-active); transform: scale(0.98); }
+.btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary { background: var(--secondary); }
+.btn-secondary:hover { background: var(--secondary-hover); }
+.btn-ghost { background: transparent; color: var(--text-primary); border: 1px solid var(--border-default); }
+.btn-ghost:hover { background: var(--bg-tertiary); }
+
+/* ---- prefers-reduced-motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

@@ -1,0 +1,41 @@
+/* =========================================================
+ * Theme: National Ink · 国风墨
+ * ManhuaWorks · 古风漫改、汉化、东方题材
+ * 灵感：水墨画 / 故宫文创 / 宣纸
+ * ========================================================= */
+
+.theme-national-ink,
+.theme-ink {
+  --bg-primary: #f5efe1;        /* 主背景 — 宣纸 */
+  --bg-secondary: #ebe2cd;      /* 次背景 — 旧纸 */
+  --text-primary: #1a1612;      /* 主文字 — 浓墨 */
+  --text-secondary: #6b5d4a;    /* 次文字 — 灰墨 */
+  --accent: #a8302b;            /* 强调色 — 朱砂 */
+  --accent-soft: #c14540;       /* 强调柔色 */
+  --accent-deep: #8a2620;       /* 强调深色 */
+  --border: #d4c5a8;            /* 浅米分割线 */
+  --border-strong: #b8a787;     /* 强分割线 */
+  --shadow: 0 2px 12px rgba(26, 22, 18, 0.08);
+  --glow: 0 0 0 2px rgba(168, 48, 43, 0.18);
+  --code-bg: #e3d8be;
+  --success: #5d7c3a;
+  --warning: #c89a3a;
+  --danger: #a8302b;
+  --gradient: linear-gradient(135deg, #1a1612 0%, #a8302b 100%);
+  --font-display: 'KaiTi', 'STKaiti', 'PingFang SC', 'Microsoft YaHei', serif;
+}
+
+/* 国风墨特有：右下角水印印章 */
+.theme-national-ink .app-root::after {
+  content: '墨';
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  font-family: 'STKaiti', 'KaiTi', serif;
+  font-size: 64px;
+  color: var(--accent);
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+  user-select: none;
+}

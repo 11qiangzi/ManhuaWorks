@@ -1,0 +1,40 @@
+/* =========================================================
+ * Theme: Dark Workshop · 暗夜工坊
+ * ManhuaWorks · 深夜沉浸式创作
+ * 灵感：剪辑师工坊、漫改绘制台、低光护眼
+ * ========================================================= */
+
+.theme-dark-workshop,
+.theme-dark {
+  --bg-primary: #0e0f12;        /* 主背景 — 炭黑 */
+  --bg-secondary: #1a1c21;      /* 次背景 — 卡片/面板 */
+  --text-primary: #e8eaed;      /* 主文字 — 雾白 */
+  --text-secondary: #8a8f99;    /* 次文字 — 灰雾 */
+  --accent: #ff7a45;            /* 强调色 — 落日橙 */
+  --accent-soft: #ff9a6e;       /* 强调柔色（hover/光晕） */
+  --accent-deep: #d35a2a;       /* 强调深色（按下/边框） */
+  --border: #2a2d33;            /* 分割线 */
+  --border-strong: #3a3e46;     /* 强分割线（卡片边框） */
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --glow: 0 0 0 1px rgba(255, 122, 69, 0.18);
+  --code-bg: #14161a;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --gradient: linear-gradient(135deg, #ff7a45 0%, #ff4d6d 100%);
+  --font-display: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+}
+
+/* 暗夜工坊特有：左侧微光竖条 — 像工坊的台灯光晕 */
+.theme-dark-workshop .app-root::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 100vh;
+  background: linear-gradient(180deg, transparent, var(--accent) 50%, transparent);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 50;
+}

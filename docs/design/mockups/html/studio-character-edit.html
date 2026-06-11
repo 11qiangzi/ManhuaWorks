@@ -1,0 +1,58 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>角色详情编辑</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; }
+  .cd-layout { display: flex; gap: 20px; padding: 20px; flex: 1; overflow: hidden; }
+  .cd-left { flex: 1; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+  .cd-right { width: 340px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+  .cd-preview { aspect-ratio: 4/3; border-radius: var(--radius); background: linear-gradient(135deg,rgba(102,126,234,.2),rgba(118,75,162,.1)); display: flex; align-items: center; justify-content: center; font-size: 80px; border: 1px solid var(--border); }
+  .expression-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+  .expr-card { aspect-ratio: 1; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-size: 32px; cursor: pointer; }
+  .expr-card:hover { border-color: var(--accent); }
+  .expr-card.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+  .consistency-bar { display: flex; align-items: center; gap: 10px; }
+  .form-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+</style></head><body>
+<div class="layout-sidebar">
+<div class="sidebar">
+  <div class="sidebar-item">🏠 首页</div><div class="sidebar-item">① 剧本创作</div><div class="sidebar-item active">② 素材库</div><div class="sidebar-item">③ 工作流</div><div class="sidebar-item">④ 工具箱</div><div class="sidebar-item">⑤ 导出</div>
+</div>
+<div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+<div style="padding:12px 20px;background:var(--bg-secondary);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+  <div class="flex items-center gap-3"><a href="#" style="color:var(--text-secondary);text-decoration:none">← 返回素材库</a><span style="font-size:15px;font-weight:700">🗡️ 编辑角色 · 林启</span><span class="badge badge-purple">主角</span></div>
+  <div class="flex gap-2"><button class="btn btn-sm btn-secondary">🔄 重置</button><button class="btn btn-sm btn-primary">💾 保存</button></div>
+</div>
+<div class="cd-layout">
+<div class="cd-left">
+  <div class="cd-preview">🗡️</div>
+  <div class="section-title">😊 表情集 (12)</div>
+  <div class="expression-grid">
+    <div class="expr-card">😐</div><div class="expr-card">😤</div><div class="expr-card active">😊</div><div class="expr-card">😢</div>
+    <div class="expr-card">😠</div><div class="expr-card">😨</div><div class="expr-card">🤔</div><div class="expr-card">😎</div>
+    <div class="expr-card">😏</div><div class="expr-card">😲</div><div class="expr-card">😴</div><div class="expr-card" style="border-style:dashed">➕</div>
+  </div>
+</div>
+<div class="cd-right">
+  <div class="form-section">
+    <div class="section-title">基本信息</div>
+    <div class="flex flex-col gap-3">
+      <div><div class="form-label">名称</div><input class="input" value="林启"></div>
+      <div><div class="form-label">Archetype</div><select class="input"><option>主角 · 剑修</option><option>主角 · 法师</option><option>反派</option><option>配角</option></select></div>
+      <div><div class="form-label">描述</div><textarea class="input" rows="3">本作男主角。少年剑修，出身没落宗门，凭一柄断剑踏上复仇与觉醒之路。</textarea></div>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="section-title">🎨 一致性参数</div>
+    <div class="flex flex-col gap-3">
+      <div><div class="form-label">主视觉图 Prompt</div><textarea class="input" rows="2">少年剑修，白衣黑发，眼神坚定，古风仙侠风格</textarea></div>
+      <div><div class="form-label">Negative Prompt</div><input class="input" value="女性, 现代服饰, 眼镜, 双人"></div>
+      <div class="consistency-bar"><span class="form-label" style="width:60px;flex-shrink:0">一致性</span><div style="flex:1"><div class="progress-bar" style="height:6px"><div class="progress-fill" style="width:99%"></div></div></div><span style="font-size:12px;color:#34d399;font-weight:700">99.2%</span></div>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="section-title">🏷️ 标签</div>
+    <div class="flex gap-2 flex-wrap"><span class="tag">主角</span><span class="tag">剑修</span><span class="tag">少年</span><span class="tag">白衣</span><span class="tag">复仇</span><span class="tag">成长</span><span class="tag" style="border-style:dashed">+ 添加</span></div>
+  </div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

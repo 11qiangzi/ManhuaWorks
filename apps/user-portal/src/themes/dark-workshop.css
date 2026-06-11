@@ -1,0 +1,41 @@
+/* =========================================================
+ * Theme: Dark Workshop · 暗夜工坊
+ * ManhuaWorks · 深夜沉浸式创作
+ * ========================================================= */
+
+.theme-dark-workshop,
+.theme-dark {
+  --bg-primary: #0e0f12;
+  --bg-secondary: #1a1c21;
+  --bg-tertiary: #232730;
+  --text-primary: #e8eaed;
+  --text-secondary: #8a8f99;
+  --accent: #ff7a45;
+  --accent-2: #ff4d6d;
+  --accent-soft: #ff9a6e;
+  --accent-deep: #d35a2a;
+  --border: #2a2d33;
+  --border-strong: #3a3e46;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --glow: 0 0 0 1px rgba(255, 122, 69, 0.18);
+  --code-bg: #14161a;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --error: #f87171;
+  --gradient: linear-gradient(135deg, #ff7a45 0%, #ff4d6d 100%);
+  --font-display: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+}
+
+.theme-dark-workshop .app-root::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 100vh;
+  background: linear-gradient(180deg, transparent, var(--accent) 50%, transparent);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 50;
+}

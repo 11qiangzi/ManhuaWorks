@@ -1,0 +1,256 @@
+{
+  "annotations": { "list": [] },
+  "description": "ManhuaWorks 业务指标 — 注册/登录/项目/计费/协作",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "注册数 (per hour)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(increase(user_registration_total[1h]))",
+          "legendFormat": "registrations",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "title": "登录数 (per hour)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(increase(user_login_total[1h]))",
+          "legendFormat": "logins",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "title": "活跃用户 (DAU)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "user_active_dau",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "title": "活跃用户 (MAU)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "user_active_mau",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 6 },
+      "id": 5,
+      "title": "项目创建数 (per hour)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(increase(project_create_total[1h]))",
+          "legendFormat": "creates",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 6 },
+      "id": 6,
+      "title": "活跃项目数",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "project_active_count",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 6 },
+      "id": 7,
+      "title": "分镜渲染队列",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "shot_render_queue_size",
+          "legendFormat": "queue",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 6 },
+      "id": 8,
+      "title": "分镜渲染完成 (per hour)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(increase(shot_render_completed_total[1h]))",
+          "legendFormat": "completed",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 12 },
+      "id": 9,
+      "title": "支付成功数 (per hour)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(increase(billing_payment_success_total[1h]))",
+          "legendFormat": "success",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 12 },
+      "id": 10,
+      "title": "支付失败数 (per hour)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(increase(billing_payment_failures_total[1h]))",
+          "legendFormat": "failures",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 12 },
+      "id": 11,
+      "title": "MRR (Monthly Recurring Revenue)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "billing_mrr_total",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 12 },
+      "id": 12,
+      "title": "活跃订阅数",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "billing_subscription_active",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 18 },
+      "id": 13,
+      "title": "评论数 (per hour)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(increase(collab_comments_total[1h]))",
+          "legendFormat": "comments",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 18 },
+      "id": 14,
+      "title": "活跃协作会话",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "collab_active_sessions",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 18 },
+      "id": 15,
+      "title": "未读通知数",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(notification_unread_total)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 18 },
+      "id": 16,
+      "title": "退款数 (per hour)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(increase(billing_refund_total[1h]))",
+          "legendFormat": "refunds",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["manhuaworks", "business"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Business",
+  "uid": "manhuaworks-business",
+  "version": 1,
+  "weekStart": ""
+}

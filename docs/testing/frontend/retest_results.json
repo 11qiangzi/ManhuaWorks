@@ -1,0 +1,597 @@
+{
+  "timestamp": "2026-06-11T08:06:11.209Z",
+  "tester": "林染",
+  "summary": {
+    "totalPages": 45,
+    "passedPages": 0,
+    "failPages": 45,
+    "passRate": "0.0%"
+  },
+  "results": [
+    {
+      "site": "web",
+      "route": "/",
+      "name": "首页 HomeView",
+      "url": "http://localhost:3000/",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\web\\web_01_index.png",
+      "notes": [
+        "Fatal: timeout"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "web",
+      "route": "/showcase",
+      "name": "案例展示 ShowcaseView",
+      "url": "http://localhost:3000/showcase",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\web\\web_02_showcase.png",
+      "notes": [
+        "Fatal: timeout"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "web",
+      "route": "/login",
+      "name": "登录页 LoginView",
+      "url": "http://localhost:3000/login",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\web\\web_03_login.png",
+      "notes": [
+        "Fatal: timeout"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "web",
+      "route": "/dashboard",
+      "name": "仪表盘 DashboardView",
+      "url": "http://localhost:3000/dashboard",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\web\\web_04_dashboard.png",
+      "notes": [
+        "Fatal: timeout"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "web",
+      "route": "/studio",
+      "name": "创作工作台 StudioHomeView",
+      "url": "http://localhost:3000/studio",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\web\\web_05_studio.png",
+      "notes": [
+        "Fatal: timeout"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "web",
+      "route": "/studio/project/1",
+      "name": "项目编辑器 ProjectEditorView",
+      "url": "http://localhost:3000/studio/project/1",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\web\\web_06_studio_project_1.png",
+      "notes": [
+        "Fatal: timeout"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "web",
+      "route": "/studio/models",
+      "name": "模型选择器 ModelSelectorView",
+      "url": "http://localhost:3000/studio/models",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\web\\web_07_studio_models.png",
+      "notes": [
+        "Fatal: timeout"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "web",
+      "route": "/studio/byok",
+      "name": "BYOK设置 ByokSettingsView",
+      "url": "http://localhost:3000/studio/byok",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\web\\web_08_studio_byok.png",
+      "notes": [
+        "Fatal: timeout"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "web",
+      "route": "/studio/progress",
+      "name": "生成进度 GenerationProgressView",
+      "url": "http://localhost:3000/studio/progress",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\web\\web_09_studio_progress.png",
+      "notes": [
+        "Fatal: timeout"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "web",
+      "route": "/studio/storyboard/1",
+      "name": "分镜编辑器 StoryboardEditorView",
+      "url": "http://localhost:3000/studio/storyboard/1",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\web\\web_10_studio_storyboard_1.png",
+      "notes": [
+        "Fatal: timeout"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "web",
+      "route": "/studio/characters",
+      "name": "角色库 CharacterLibraryView",
+      "url": "http://localhost:3000/studio/characters",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\web\\web_11_studio_characters.png",
+      "notes": [
+        "Fatal: timeout"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "web",
+      "route": "/studio/scenes",
+      "name": "场景库 SceneLibraryView",
+      "url": "http://localhost:3000/studio/scenes",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\web\\web_12_studio_scenes.png",
+      "notes": [
+        "Fatal: timeout"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "web",
+      "route": "/studio/assets",
+      "name": "资产货架 AssetShelfView",
+      "url": "http://localhost:3000/studio/assets",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\web\\web_13_studio_assets.png",
+      "notes": [
+        "Fatal: timeout"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "web",
+      "route": "/studio/export",
+      "name": "导出 ExportView",
+      "url": "http://localhost:3000/studio/export",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\web\\web_14_studio_export.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "admin",
+      "route": "/dashboard",
+      "name": "仪表盘 DashboardView",
+      "url": "http://localhost:5174/dashboard",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\admin\\admin_01_dashboard.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "admin",
+      "route": "/users",
+      "name": "用户管理 UsersView",
+      "url": "http://localhost:5174/users",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\admin\\admin_02_users.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "admin",
+      "route": "/billing",
+      "name": "计费管理 BillingView",
+      "url": "http://localhost:5174/billing",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\admin\\admin_03_billing.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "admin",
+      "route": "/audit",
+      "name": "审计日志 AuditView",
+      "url": "http://localhost:5174/audit",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\admin\\admin_04_audit.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "admin",
+      "route": "/settings",
+      "name": "系统设置 SettingsView",
+      "url": "http://localhost:5174/settings",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\admin\\admin_05_settings.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "admin",
+      "route": "/ops",
+      "name": "业务运营 OpsView",
+      "url": "http://localhost:5174/ops",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\admin\\admin_06_ops.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "admin",
+      "route": "/compliance",
+      "name": "合规审计 ComplianceView",
+      "url": "http://localhost:5174/compliance",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\admin\\admin_07_compliance.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "admin",
+      "route": "/projects",
+      "name": "项目审核 AdminProjectsView",
+      "url": "http://localhost:5174/projects",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\admin\\admin_08_projects.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "admin",
+      "route": "/logs",
+      "name": "系统日志 AdminLogsView",
+      "url": "http://localhost:5174/logs",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\admin\\admin_09_logs.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "ops",
+      "route": "/dashboard",
+      "name": "数据看板 DashboardView",
+      "url": "http://localhost:5176/dashboard",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\ops\\ops_01_dashboard.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "ops",
+      "route": "/users",
+      "name": "用户管理 UsersView",
+      "url": "http://localhost:5176/users",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\ops\\ops_02_users.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "ops",
+      "route": "/billing",
+      "name": "计费充值 BillingView",
+      "url": "http://localhost:5176/billing",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\ops\\ops_03_billing.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "ops",
+      "route": "/monitoring",
+      "name": "系统监控 MonitoringView",
+      "url": "http://localhost:5176/monitoring",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\ops\\ops_04_monitoring.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "ops",
+      "route": "/system",
+      "name": "系统管理 SystemView",
+      "url": "http://localhost:5176/system",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\ops\\ops_05_system.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "ops",
+      "route": "/logs",
+      "name": "运维日志 LogsView",
+      "url": "http://localhost:5176/logs",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\ops\\ops_06_logs.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "user",
+      "route": "/dashboard",
+      "name": "首页 HomeView",
+      "url": "http://localhost:5180/dashboard",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\user\\user_01_dashboard.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "user",
+      "route": "/projects",
+      "name": "我的项目 MyProjectsView",
+      "url": "http://localhost:5180/projects",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\user\\user_02_projects.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "user",
+      "route": "/works",
+      "name": "我的作品 MyWorksView",
+      "url": "http://localhost:5180/works",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\user\\user_03_works.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "user",
+      "route": "/assets",
+      "name": "素材库 AssetLibraryView",
+      "url": "http://localhost:5180/assets",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\user\\user_04_assets.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "user",
+      "route": "/settings",
+      "name": "设置 SettingsView",
+      "url": "http://localhost:5180/settings",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\user\\user_05_settings.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "user",
+      "route": "/byok",
+      "name": "API Key管理 ApiKeysView",
+      "url": "http://localhost:5180/byok",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\user\\user_06_byok.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "user",
+      "route": "/team",
+      "name": "团队 TeamView",
+      "url": "http://localhost:5180/team",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\user\\user_07_team.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "user",
+      "route": "/profile",
+      "name": "编辑资料 ProfileView",
+      "url": "http://localhost:5180/profile",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\user\\user_08_profile.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "studio",
+      "route": "/",
+      "name": "首页 HomeView",
+      "url": "http://localhost:5175/",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\studio\\studio_01_index.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "studio",
+      "route": "/materials",
+      "name": "素材库 MaterialLibraryView",
+      "url": "http://localhost:5175/materials",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\studio\\studio_02_materials.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "studio",
+      "route": "/workflow",
+      "name": "工作流 WorkflowDesignerView",
+      "url": "http://localhost:5175/workflow",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\studio\\studio_03_workflow.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "studio",
+      "route": "/project",
+      "name": "项目编辑器 ProjectEditorView",
+      "url": "http://localhost:5175/project",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\studio\\studio_04_project.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "studio",
+      "route": "/tools",
+      "name": "工具箱 ToolboxView",
+      "url": "http://localhost:5175/tools",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\studio\\studio_05_tools.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "studio",
+      "route": "/export",
+      "name": "导出 ExportView",
+      "url": "http://localhost:5175/export",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\studio\\studio_06_export.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "studio",
+      "route": "/project/1/shots",
+      "name": "分镜网格 StoryboardGridView",
+      "url": "http://localhost:5175/project/1/shots",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\studio\\studio_07_project_1_shots.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "site": "studio",
+      "route": "/project/1/shots/1",
+      "name": "分镜编辑器 ShotEditorView",
+      "url": "http://localhost:5175/project/1/shots/1",
+      "status": "FAIL",
+      "screenshot": "D:\\ManhuaWorks\\docs\\testing\\frontend\\screenshots\\studio\\studio_08_project_1_shots_1.png",
+      "notes": [
+        "Fatal: Unexpected server response: 500"
+      ],
+      "consoleErrors": 0,
+      "pageErrors": 0
+    }
+  ]
+}

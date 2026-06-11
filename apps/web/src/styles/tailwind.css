@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════
+ * ManhuaWorks 品牌设计系统 — P0 林知行审定 (2026-06-10)
+ * 5 站统一: web / studio / user-portal / admin-portal / ops-portal
+ * 规范来源: packages/shared/design-tokens/tokens.css
+ * ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* ═══ 品牌色 Brand Colors ═══ */
+  --color-brand-primary: #7C3AED;
+  --color-brand-primary-hover: #6D28D9;
+  --color-brand-primary-light: #EDE9FE;
+  --color-brand-secondary: #06B6D4;
+  --color-brand-secondary-hover: #0891B2;
+  --color-brand-secondary-light: #CFFAFE;
+
+  /* ═══ 背景 Backgrounds ═══ */
+  --bg-primary: #0F0F23;
+  --bg-secondary: #1A1A3E;
+  --bg-tertiary: #2D2D5E;
+  --bg-card: #141A2E;
+  --border: #1E293B;
+  --border-strong: #334155;
+
+  /* ═══ 文字 Typography ═══ */
+  --text-primary: #E2E8F0;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+
+  /* ═══ 强调色 Accent ═══ */
+  --accent: #7C3AED;
+  --accent-strong: #6D28D9;
+  --accent-glow: rgba(124, 58, 237, 0.3);
+
+  /* ═══ 渐变 Gradients ═══ */
+  --gradient: linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%);
+  --gradient-blue: linear-gradient(135deg, #06B6D4 0%, #22D3EE 100%);
+  --gradient-purple: linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%);
+
+  /* ═══ 语义色 Semantic ═══ */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --info: #3B82F6;
+
+  /* ═══ 阴影 Shadows ═══ */
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --glow: 0 0 20px rgba(124, 58, 237, 0.25);
+
+  /* ═══ 圆角 Radius ═══ */
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+
+  /* ═══ 字体 Font Stack ═══ */
+  --font-sans: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont,
+               'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono',
+               'Consolas', 'Courier New', monospace;
+  --font-display: var(--font-sans);
+
+  /* ═══ 字号 Font Size ═══ */
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.25rem;
+  --text-2xl:  1.5rem;
+  --text-3xl:  1.875rem;
+  --text-4xl:  3rem;
+
+  /* ═══ 间距 Spacing ═══ */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ═══ 布局 Layout ═══ */
+  --sidebar-expanded: 240px;
+  --sidebar-collapsed: 64px;
+  --header-height: 56px;
+}
+
+@layer base {
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+  * { box-sizing: border-box; }
+
+  /* VIS-001: 全站可点击元素最小触控区 44×44 */
+  button, a, select, input[type="checkbox"], input[type="radio"],
+  .qh-btn, .btn-primary, .btn-secondary, .btn-login,
+  [role="button"], [role="tab"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  /* 内联链接和小图标例外 */
+  a:has(> img:only-child),
+  button.btn-icon-only,
+  nav a, footer a, p a, li a { min-height: auto; min-width: auto; }
+}

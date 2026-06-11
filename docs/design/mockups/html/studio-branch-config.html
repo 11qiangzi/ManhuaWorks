@@ -1,0 +1,117 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>条件分支设置</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; display: flex; flex-direction: column; }
+  .br-toolbar { display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
+  .br-layout { display: flex; flex: 1; overflow: hidden; }
+  .br-canvas { flex: 1; background: radial-gradient(circle,rgba(99,102,241,.03) 1px,transparent 1px); background-size: 24px 24px; position: relative; }
+  .br-node { position: absolute; background: var(--bg-card); border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 12px; }
+  .br-node.selected { border-color: var(--accent); }
+  .br-panel { width: 440px; background: var(--bg-secondary); border-left: 1px solid var(--border); padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+  .branch-list { display: flex; flex-direction: column; gap: 8px; }
+  .branch-item { padding: 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); }
+  .branch-item.active { border-color: var(--accent); }
+  .branch-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .branch-label { font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .branch-label-num { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; }
+  .condition-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .condition-select { padding: 5px 8px; border-radius: 6px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); font-size: 11px; }
+  .condition-value { padding: 5px 8px; border-radius: 6px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); font-size: 11px; flex: 1; }
+  .target-node { display: flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 10px; border-radius: 6px; background: var(--bg-tertiary); border: 1px solid var(--border); font-size: 11px; }
+  .add-branch { padding: 10px; border: 1px dashed var(--border-strong); border-radius: 8px; text-align: center; cursor: pointer; color: var(--text-muted); font-size: 12px; }
+  .add-branch:hover { border-color: var(--accent); color: var(--accent); }
+  .default-route { padding: 12px; background: rgba(245,158,11,.05); border: 1px dashed rgba(245,158,11,.3); border-radius: 8px; }
+</style></head><body>
+<div class="br-toolbar">
+  <span style="font-size:13px;font-weight:700">🔄 我的第一个工作流 · 条件分支</span>
+  <span style="font-size:10px;color:var(--text-muted);margin-left:4px">节点：图像生成</span>
+  <span style="margin-left:auto;font-size:10px;color:var(--text-muted)">4 条分支 · 1 条默认路由</span>
+  <button class="btn btn-sm btn-primary" style="margin-left:12px">💾 保存</button>
+</div>
+<div class="br-layout">
+  <div class="br-canvas">
+    <div class="br-node" style="top:40px;left:40px"><div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><div style="width:6px;height:6px;border-radius:50%;background:#667eea"></div><span style="font-weight:600">章节拆解</span></div><span style="font-size:10px;color:var(--text-muted)">📖 剧本处理</span></div>
+    <div class="br-node selected" style="top:220px;left:40px"><div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><div style="width:6px;height:6px;border-radius:50%;background:#fbbf24"></div><span style="font-weight:600">图像生成 🔀</span></div><span style="font-size:10px;color:var(--text-muted)">🎨 风格迁移 · 4 分支</span></div>
+    <div class="br-node" style="top:40px;left:280px;border-color:#34d399"><div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><div style="width:6px;height:6px;border-radius:50%;background:#34d399"></div><span style="font-weight:600">剪辑合成</span></div><span style="font-size:10px;color:var(--text-muted)">→ 路径A：成功</span></div>
+    <div class="br-node" style="top:160px;left:280px;border-color:#f59e0b"><div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><div style="width:6px;height:6px;border-radius:50%;background:#f59e0b"></div><span style="font-weight:600">StyleFix 修复</span></div><span style="font-size:10px;color:var(--text-muted)">→ 路径B：画风异常</span></div>
+    <div class="br-node" style="top:280px;left:280px;border-color:#ef4444"><div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><div style="width:6px;height:6px;border-radius:50%;background:#ef4444"></div><span style="font-weight:600">人工审核队列</span></div><span style="font-size:10px;color:var(--text-muted)">→ 路径C：置信度低</span></div>
+    <div class="br-node" style="top:400px;left:280px;border-color:#64748b"><div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><div style="width:6px;height:6px;border-radius:50%;background:#64748b"></div><span style="font-weight:600">重试 (最多3次)</span></div><span style="font-size:10px;color:var(--text-muted)">→ 路径D：失败重试</span></div>
+  </div>
+  <div class="br-panel">
+    <div class="section-title">🔀 条件分支配置</div>
+    <p style="font-size:11px;color:var(--text-muted);margin-top:-8px">节点「图像生成」根据输出结果自动路由到不同下游节点</p>
+
+    <!-- 路径 A -->
+    <div class="branch-item active">
+      <div class="branch-header">
+        <span class="branch-label"><span class="branch-label-num" style="background:#34d399">A</span>成功</span>
+        <span class="badge badge-green">活跃</span>
+      </div>
+      <div class="condition-row">
+        <span style="font-size:10px;color:var(--text-muted);width:36px">条件</span>
+        <select class="condition-select"><option>状态</option><option>置信度</option><option>分辨率</option></select>
+        <select class="condition-select"><option>=</option><option>≠</option><option>≥</option><option>≤</option></select>
+        <input class="condition-value" value="success">
+      </div>
+      <div class="condition-row">
+        <span style="font-size:10px;color:var(--text-muted);width:36px">且</span>
+        <select class="condition-select"><option>置信度</option><option>状态</option></select>
+        <select class="condition-select"><option>≥</option></select>
+        <input class="condition-value" value="0.85">
+      </div>
+      <div class="target-node">→ 🎬 剪辑合成</div>
+    </div>
+
+    <!-- 路径 B -->
+    <div class="branch-item">
+      <div class="branch-header">
+        <span class="branch-label"><span class="branch-label-num" style="background:#f59e0b">B</span>画风异常</span>
+      </div>
+      <div class="condition-row">
+        <span style="font-size:10px;color:var(--text-muted);width:36px">条件</span>
+        <select class="condition-select"><option>画风一致性</option></select>
+        <select class="condition-select"><option>&lt;</option></select>
+        <input class="condition-value" value="0.7">
+      </div>
+      <div class="target-node">→ 🔧 StyleFix 修复</div>
+    </div>
+
+    <!-- 路径 C -->
+    <div class="branch-item">
+      <div class="branch-header">
+        <span class="branch-label"><span class="branch-label-num" style="background:#ef4444">C</span>置信度低</span>
+      </div>
+      <div class="condition-row">
+        <span style="font-size:10px;color:var(--text-muted);width:36px">条件</span>
+        <select class="condition-select"><option>置信度</option></select>
+        <select class="condition-select"><option>&lt;</option></select>
+        <input class="condition-value" value="0.6">
+      </div>
+      <div class="target-node">→ 👤 人工审核队列</div>
+    </div>
+
+    <!-- 路径 D -->
+    <div class="branch-item">
+      <div class="branch-header">
+        <span class="branch-label"><span class="branch-label-num" style="background:#64748b">D</span>失败</span>
+      </div>
+      <div class="condition-row">
+        <span style="font-size:10px;color:var(--text-muted);width:36px">条件</span>
+        <select class="condition-select"><option>状态</option></select>
+        <select class="condition-select"><option>=</option></select>
+        <input class="condition-value" value="failed">
+      </div>
+      <div class="target-node">→ 🔄 重试 (最多3次)</div>
+    </div>
+
+    <div class="add-branch">+ 添加分支条件</div>
+
+    <div class="default-route">
+      <div style="font-size:11px;font-weight:600;color:#fbbf24;margin-bottom:4px">⚡ 默认路由</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">当所有条件都不匹配时，走默认路径</div>
+      <div class="flex items-center gap-2">
+        <span style="font-size:10px;color:var(--text-muted)">默认 →</span>
+        <select class="condition-select"><option>人工审核队列</option><option>直接丢弃</option><option>重试</option></select>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

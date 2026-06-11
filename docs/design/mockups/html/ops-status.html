@@ -1,0 +1,58 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>ops-status — 服务状态</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; display: flex; flex-direction: column; }
+  .ops-top { padding: 12px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .ops-main { flex: 1; padding: 24px 28px; overflow-y: auto; }
+  .service-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+  .service-card { padding: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); }
+  .service-card.down { border-color: rgba(239,68,68,.3); background: rgba(239,68,68,.02); }
+  .service-name { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .service-status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .service-status-dot.up { background: #10b981; box-shadow: 0 0 8px rgba(16,185,129,.4); }
+  .service-status-dot.down { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,.3); }
+  .service-meta { font-size: 11px; color: var(--text-muted); }
+  .service-uptime { font-size: 10px; color: var(--text-muted); margin-top: 8px; }
+  .incident-card { padding: 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; }
+</style></head><body>
+<div class="ops-top">
+  <div class="flex items-center gap-3"><span style="font-size:16px;font-weight:800">🖥 Ops 运维面板</span><span class="badge badge-green">所有系统正常</span></div>
+  <div class="flex gap-2"><a href="#" class="navbar-link active">服务状态</a><a href="#" class="navbar-link">日志中心</a><a href="#" class="navbar-link">系统监控</a></div>
+</div>
+<div class="ops-main">
+  <div class="section-title">🔌 微服务状态</div>
+  <div class="service-grid mb-4">
+    <div class="service-card">
+      <div class="service-name"><span class="service-status-dot up"></span>API Gateway</div>
+      <div class="service-meta">端口 8080 · v2.4.1 · 运行 14d</div>
+      <div class="service-uptime">⬆️ 99.97% · 响应 12ms</div>
+    </div>
+    <div class="service-card">
+      <div class="service-name"><span class="service-status-dot up"></span>User Service</div>
+      <div class="service-meta">端口 8081 · v1.8.2 · 运行 14d</div>
+      <div class="service-uptime">⬆️ 99.99% · 响应 8ms</div>
+    </div>
+    <div class="service-card">
+      <div class="service-name"><span class="service-status-dot up"></span>Project Service</div>
+      <div class="service-meta">端口 8089 · v1.5.0 · 运行 7d</div>
+      <div class="service-uptime">⬆️ 99.95% · 响应 14ms</div>
+    </div>
+    <div class="service-card">
+      <div class="service-name"><span class="service-status-dot up"></span>Orchestrator</div>
+      <div class="service-meta">端口 8087 · v2.1.0 · 运行 3d</div>
+      <div class="service-uptime">⬆️ 99.82% · 响应 45ms</div>
+    </div>
+    <div class="service-card">
+      <div class="service-name"><span class="service-status-dot up"></span>Image Gen</div>
+      <div class="service-meta">端口 8083 · v3.2.0 · 运行 14d</div>
+      <div class="service-uptime">⬆️ 98.5% · 响应 3.2s</div>
+    </div>
+    <div class="service-card">
+      <div class="service-name"><span class="service-status-dot up"></span>Billing Service</div>
+      <div class="service-meta">端口 8085 · v1.2.0 · 运行 30d</div>
+      <div class="service-uptime">⬆️ 99.99% · 响应 6ms</div>
+    </div>
+  </div>
+  <div class="section-title">⚠️ 最近事件</div>
+  <div class="incident-card"><div class="flex justify-between"><span style="font-size:13px;font-weight:600"><span class="badge badge-amber">已解决</span> Image Gen 延迟升高</span><span style="font-size:10px;color:var(--text-muted)">2026-06-09 14:30</span></div><div style="font-size:11px;color:var(--text-muted);margin-top:4px">GPU 资源争抢导致生成时间从 3s 升至 12s。扩容 2 个 worker 后恢复。</div></div>
+  <div class="incident-card"><div class="flex justify-between"><span style="font-size:13px;font-weight:600"><span class="badge badge-green">已解决</span> Orchestrator 重启</span><span style="font-size:10px;color:var(--text-muted)">2026-06-08 02:15</span></div><div style="font-size:11px;color:var(--text-muted);margin-top:4px">计划内更新 v2.1.0，重启耗时 45s，期间 3 个工作流自动恢复。</div></div>
+</div>
+</body></html>

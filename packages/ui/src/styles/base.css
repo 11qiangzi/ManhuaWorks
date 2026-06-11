@@ -1,0 +1,87 @@
+/* =========================================================
+ * ManhuaWorks UI - Base tokens
+ * Applied to :root; themes override below.
+ * Mobile-first; mobile = 1 col, tablet = 2, desktop = 3, 4k = 5.
+ * ========================================================= */
+
+:root {
+  /* spacing scale (8 档) */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* radius scale (6 档) */
+  --radius-1: 2px;
+  --radius-2: 4px;
+  --radius-3: 8px;
+  --radius-4: 12px;
+  --radius-5: 16px;
+  --radius-6: 24px;
+
+  /* typography (5 档) */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 28px;
+
+  /* animation timings (统一缓动) */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 150ms;
+  --dur-base: 280ms;
+  --dur-slow: 480ms;
+
+  /* z-index ladder */
+  --z-drawer: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+  --z-tooltip: 70;
+
+  /* responsive breakpoints (also exported as TS constants) */
+  --bp-mobile: 640px;
+  --bp-tablet: 768px;
+  --bp-desktop: 1024px;
+  --bp-4k: 2560px;
+}
+
+/* grid: 移动端 1 列 / 平板 2 / 桌面 3 / 4k 5 */
+.rg {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+@media (min-width: 768px) { .rg { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .rg { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 2560px) { .rg { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+
+/* hidden on mobile / tablet / desktop / 4k utilities */
+.hide-mobile { display: none; }
+@media (min-width: 768px) { .hide-mobile { display: initial; } }
+.show-mobile-only { display: initial; }
+@media (min-width: 768px) { .show-mobile-only { display: none; } }
+.show-tablet-up { display: none; }
+@media (min-width: 768px) { .show-tablet-up { display: initial; } }
+.show-desktop-up { display: none; }
+@media (min-width: 1024px) { .show-desktop-up { display: initial; } }
+.show-4k-up { display: none; }
+@media (min-width: 2560px) { .show-4k-up { display: initial; } }
+
+/* prefers-reduced-motion: respect user setting globally */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

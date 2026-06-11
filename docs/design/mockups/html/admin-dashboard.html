@@ -1,0 +1,75 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>admin-dashboard — 数据看板</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; }
+  .layout { display: flex; height: 100vh; }
+  .sidebar { width: 220px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; padding: 16px 12px; gap: 3px; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; font-size: 13px; color: var(--text-secondary); text-decoration: none; }
+  .sidebar-item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+  .sidebar-item.active { background: rgba(99,102,241,.12); color: var(--accent); font-weight: 600; }
+  .sidebar-icon { font-size: 16px; width: 20px; text-align: center; }
+  .main { flex: 1; padding: 20px 28px; overflow-y: auto; }
+  .chart-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  .chart-placeholder { height: 200px; background: var(--bg-tertiary); border-radius: 8px; display: flex; align-items: flex-end; gap: 12px; padding: 16px; }
+  .chart-bar { flex: 1; border-radius: 6px 6px 0 0; min-width: 30px; }
+  .metric-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+  .metric-item { padding: 12px; background: var(--bg-tertiary); border-radius: 8px; }
+  .metric-val { font-size: 22px; font-weight: 800; }
+  .metric-label { font-size: 10px; color: var(--text-muted); }
+</style></head><body>
+<div class="layout">
+<div class="sidebar">
+  <div style="padding:8px 12px;font-size:14px;font-weight:700;margin-bottom:8px">⚙ 管理后台</div>
+  <div class="sidebar-item"><span class="sidebar-icon">👥</span>用户管理</div>
+  <div class="sidebar-item"><span class="sidebar-icon">📁</span>项目审核</div>
+  <div class="sidebar-item active"><span class="sidebar-icon">📊</span>数据看板</div>
+  <div class="sidebar-item"><span class="sidebar-icon">💰</span>计费管理</div>
+  <div class="sidebar-item"><span class="sidebar-icon">🛡️</span>内容审核</div>
+  <div class="sidebar-item"><span class="sidebar-icon">⚙</span>平台配置</div>
+  <div class="sidebar-item"><span class="sidebar-icon">📋</span>系统日志</div>
+</div>
+<div class="main">
+  <div class="flex justify-between items-center mb-4">
+    <div><span class="page-title">📊 数据看板</span><span style="font-size:13px;color:var(--text-muted);margin-left:8px">实时数据</span></div>
+    <select class="input" style="width:110px;font-size:12px;padding:6px 10px"><option>今日</option><option>本周</option><option>本月</option></select>
+  </div>
+  <div class="grid-4 mb-4">
+    <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" style="color:#34d399">+128</div><div class="stat-label">今日新增用户</div></div>
+    <div class="stat-card"><div class="stat-icon">📁</div><div class="stat-value">56</div><div class="stat-label">今日新建项目</div></div>
+    <div class="stat-card"><div class="stat-icon">🎬</div><div class="stat-value">1,892</div><div class="stat-label">生成视频数</div></div>
+    <div class="stat-card"><div class="stat-icon">⚡</div><div class="stat-value">¥12,450</div><div class="stat-label">今日营收</div></div>
+  </div>
+  <div class="grid-2 mb-4">
+    <div class="chart-card">
+      <div class="section-title">📈 用户增长 (近 7 天)</div>
+      <div class="chart-placeholder">
+        <div class="chart-bar" style="height:45%;background:var(--gradient)"></div>
+        <div class="chart-bar" style="height:55%;background:var(--gradient)"></div>
+        <div class="chart-bar" style="height:40%;background:var(--gradient)"></div>
+        <div class="chart-bar" style="height:70%;background:var(--gradient)"></div>
+        <div class="chart-bar" style="height:60%;background:var(--gradient)"></div>
+        <div class="chart-bar" style="height:80%;background:var(--gradient)"></div>
+        <div class="chart-bar" style="height:95%;background:#10b981"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:6px"><span>06/04</span><span>06/05</span><span>06/06</span><span>06/07</span><span>06/08</span><span>06/09</span><span>06/10</span></div>
+    </div>
+    <div class="chart-card">
+      <div class="section-title">🎬 内容产出 (今日)</div>
+      <div class="metric-grid">
+        <div class="metric-item"><div class="metric-val">1,892</div><div class="metric-label">视频生成</div></div>
+        <div class="metric-item"><div class="metric-val">4,320</div><div class="metric-label">图片生成</div></div>
+        <div class="metric-item"><div class="metric-val">¥12.4K</div><div class="metric-label">积分消耗</div></div>
+        <div class="metric-item"><div class="metric-val">98.2%</div><div class="metric-label">生成成功率</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="section-title">📊 套餐分布</div>
+    <div class="flex gap-4 mt-2">
+      <div style="flex:1;text-align:center;padding:16px"><div style="font-size:32px;font-weight:800">892</div><div style="font-size:12px;color:var(--text-muted)">Free</div><div class="progress-bar mt-2" style="height:6px"><div class="progress-fill" style="width:71%;background:#94a3b8"></div></div></div>
+      <div style="flex:1;text-align:center;padding:16px"><div style="font-size:32px;font-weight:800;color:var(--accent)">156</div><div style="font-size:12px;color:var(--text-muted)">Pro</div><div class="progress-bar mt-2" style="height:6px"><div class="progress-fill" style="width:12%"></div></div></div>
+      <div style="flex:1;text-align:center;padding:16px"><div style="font-size:32px;font-weight:800;color:#f59e0b">89</div><div style="font-size:12px;color:var(--text-muted)">Studio</div><div class="progress-bar mt-2" style="height:6px"><div class="progress-fill" style="width:7%;background:#f59e0b"></div></div></div>
+      <div style="flex:1;text-align:center;padding:16px"><div style="font-size:32px;font-weight:800;color:#ef4444">111</div><div style="font-size:12px;color:var(--text-muted)">Team</div><div class="progress-bar mt-2" style="height:6px"><div class="progress-fill" style="width:9%;background:#ef4444"></div></div></div>
+    </div>
+  </div>
+</div>
+</div>
+</body></html>

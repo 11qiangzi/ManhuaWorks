@@ -1,0 +1,34 @@
+{
+  "name": "@manhuaworks/tests",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ManhuaWorks · 全局测试套件（vitest 配置 + mock providers + e2e）",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:setup": "vitest run tests/setup",
+    "test:user-portal": "vitest run tests/user-portal",
+    "test:collab-service": "vitest run tests/collab-service",
+    "test:e2e": "vitest run tests/e2e",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@manhuaworks/collab-service": "workspace:*",
+    "@manhuaworks/user-portal": "workspace:*",
+    "hono": "^4.6.14",
+    "nanoid": "^5.0.7",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^25.9.2",
+    "@vue/test-utils": "^2.4.5",
+    "happy-dom": "^14.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^1.6.1",
+    "vue": "^3.4.21",
+    "ws": "^8.21.0"
+  }
+}

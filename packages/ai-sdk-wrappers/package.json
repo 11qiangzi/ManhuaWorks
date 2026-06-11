@@ -1,0 +1,107 @@
+{
+  "name": "@manhuaworks/ai-sdk-wrappers",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ManhuaWorks 统一 AI SDK 封装层：嵌入模型 + 4 家图像模型 + 2 家视频模型 + pgvector 向量存储",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./embeddings": {
+      "types": "./dist/embeddings/index.d.ts",
+      "import": "./dist/embeddings/index.js"
+    },
+    "./embeddings/local-mini-lm": {
+      "types": "./dist/embeddings/local-mini-lm.d.ts",
+      "import": "./dist/embeddings/local-mini-lm.js"
+    },
+    "./embeddings/remote": {
+      "types": "./dist/embeddings/remote.d.ts",
+      "import": "./dist/embeddings/remote.js"
+    },
+    "./image": {
+      "types": "./dist/image/index.d.ts",
+      "import": "./dist/image/index.js"
+    },
+    "./image/minimax-image": {
+      "types": "./dist/image/minimax-image.d.ts",
+      "import": "./dist/image/minimax-image.js"
+    },
+    "./image/volcengine-seedream": {
+      "types": "./dist/image/volcengine-seedream.d.ts",
+      "import": "./dist/image/volcengine-seedream.js"
+    },
+    "./image/zhipu-cogview": {
+      "types": "./dist/image/zhipu-cogview.d.ts",
+      "import": "./dist/image/zhipu-cogview.js"
+    },
+    "./image/deepseek-jimeng": {
+      "types": "./dist/image/deepseek-jimeng.d.ts",
+      "import": "./dist/image/deepseek-jimeng.js"
+    },
+    "./video": {
+      "types": "./dist/video/index.d.ts",
+      "import": "./dist/video/index.js"
+    },
+    "./video/volcengine-seedance": {
+      "types": "./dist/video/volcengine-seedance.d.ts",
+      "import": "./dist/video/volcengine-seedance.js"
+    },
+    "./video/minimax-video": {
+      "types": "./dist/video/minimax-video.d.ts",
+      "import": "./dist/video/minimax-video.js"
+    },
+    "./vector": {
+      "types": "./dist/vector/index.d.ts",
+      "import": "./dist/vector/index.js"
+    },
+    "./vector/store": {
+      "types": "./dist/vector/store.d.ts",
+      "import": "./dist/vector/store.js"
+    },
+    "./vector/similarity": {
+      "types": "./dist/vector/similarity.d.ts",
+      "import": "./dist/vector/similarity.js"
+    }
+  },
+  "files": [
+    "dist",
+    "embeddings/all-MiniLM-L6-v2",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.examples.json",
+    "lint": "echo \"(lint not configured yet)\" && exit 0",
+    "test": "echo \"(test not configured yet)\" && exit 0",
+    "examples:embeddings": "tsx examples/test-embeddings.ts",
+    "examples:image": "tsx examples/test-image.ts"
+  },
+  "engines": {
+    "node": ">=20.10.0"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  },
+  "peerDependencies": {
+    "@huggingface/transformers": "^3.4.0"
+  },
+  "peerDependenciesMeta": {
+    "@huggingface/transformers": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

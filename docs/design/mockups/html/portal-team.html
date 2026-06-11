@@ -1,0 +1,57 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1440"><title>portal-team — 团队</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1440px; height: 900px; overflow: hidden; }
+  .portal-layout { display: flex; height: 100vh; }
+  .portal-sidebar { width: 240px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+  .ps-brand { padding: 16px 16px 12px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+  .ps-user { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .ps-avatar { width: 36px; height: 36px; border-radius: 10px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+  .ps-user-info { flex: 1; } .ps-user-name { font-size: 13px; font-weight: 600; } .ps-user-plan { font-size: 10px; color: var(--accent); }
+  .ps-nav { flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+  .ps-nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; font-size: 13px; color: var(--text-secondary); text-decoration: none; }
+  .ps-nav-item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+  .ps-nav-item.active { background: rgba(99,102,241,.12); color: var(--accent); font-weight: 600; }
+  .ps-nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .ps-nav-badge { margin-left: auto; font-size: 10px; padding: 1px 6px; border-radius: 8px; background: var(--accent); color: #fff; }
+  .ps-credits { padding: 12px 16px; border-top: 1px solid var(--border); }
+  .ps-credits-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+  .ps-credits-bar { height: 4px; background: var(--bg-tertiary); border-radius: 2px; overflow: hidden; }
+  .ps-credits-fill { height: 100%; background: var(--gradient); border-radius: 2px; }
+  .main-content { flex: 1; padding: 28px 32px; overflow-y: auto; }
+  .member-row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; }
+  .member-avatar { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .member-info { flex:1; } .member-name { font-size: 14px; font-weight: 600; } .member-email { font-size: 11px; color: var(--text-muted); }
+  .member-meta { font-size: 11px; color: var(--text-muted); }
+</style></head><body>
+<div class="portal-layout">
+<div class="portal-sidebar">
+  <div class="ps-brand"><div class="navbar-logo">M</div><span class="navbar-name">ManhuaWorks</span></div>
+  <div class="ps-user"><div class="ps-avatar">梁</div><div class="ps-user-info"><div class="ps-user-name">创作者</div><div class="ps-user-plan">Pro 会员</div></div></div>
+  <div class="ps-nav">
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">🏠</span>首页</a>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">📁</span>我的项目<span class="ps-nav-badge">12</span></a>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">🎞️</span>我的作品</a>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">🗃️</span>素材库</a>
+    <a href="#" class="ps-nav-item active"><span class="ps-nav-icon">👥</span>团队</a>
+    <div style="margin:8px 0 4px;padding:0 12px;font-size:10px;color:var(--text-muted);letter-spacing:.05em">创作工具</div>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">🎬</span>创作者工作台</a>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">🔑</span>BYOK 设置</a>
+    <div style="margin:8px 0 4px;padding:0 12px;font-size:10px;color:var(--text-muted);letter-spacing:.05em">账户</div>
+    <a href="#" class="ps-nav-item"><span class="ps-nav-icon">⚙️</span>账号设置</a>
+  </div>
+  <div class="ps-credits"><div class="ps-credits-label"><span>本月积分</span><span>342/500 · 68%</span></div><div class="ps-credits-bar"><div class="ps-credits-fill" style="width:68%"></div></div></div>
+</div>
+<div class="main-content">
+  <div class="flex justify-between items-center mb-4">
+    <span class="page-title">团队协作 <span style="font-size:14px;color:var(--text-muted);font-weight:400">7 位成员</span></span>
+    <div class="flex items-center gap-2"><div class="search-box"><input class="input" placeholder="搜索成员..." style="width:160px;font-size:12px;padding:6px 10px"></div><select style="padding:6px 10px;border-radius:8px;background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);font-size:12px"><option>全部角色</option><option>所有者</option><option>管理员</option><option>编辑</option><option>观察者</option></select><button class="btn btn-primary btn-sm">➕ 邀请成员</button></div>
+  </div>
+  <div class="member-row"><div class="member-avatar" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff">🧑</div><div class="member-info"><div class="member-name">我（创作者）<span class="badge badge-red">所有者</span></div><div class="member-email">me@manhuaworks.com</div></div><div class="member-meta" style="text-align:right"><span style="color:#34d399">● 在线</span><br>2026-01-15 加入</div></div>
+  <div class="member-row"><div class="member-avatar" style="background:linear-gradient(135deg,#34d399,#10b981);color:#fff">👩</div><div class="member-info"><div class="member-name">林染<span class="badge badge-purple">管理员</span></div><div class="member-email">linran@manhuaworks.com</div></div><div class="member-meta" style="text-align:right"><span style="color:#34d399">● 在线</span><br>2026-02-10 加入</div><div class="flex gap-2"><button class="btn btn-xs btn-ghost">改角色</button><button class="btn btn-xs btn-danger">移除</button></div></div>
+  <div class="member-row"><div class="member-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff">👨</div><div class="member-info"><div class="member-name">老魏<span class="badge badge-green">编辑</span></div><div class="member-email">laowei@manhuaworks.com</div></div><div class="member-meta" style="text-align:right"><span style="color:#94a3b8">● 1 天前活跃</span><br>2026-03-05 加入</div><div class="flex gap-2"><button class="btn btn-xs btn-ghost">改角色</button><button class="btn btn-xs btn-danger">移除</button></div></div>
+  <div class="member-row"><div class="member-avatar" style="background:linear-gradient(135deg,#60a5fa,#3b82f6);color:#fff">🧒</div><div class="member-info"><div class="member-name">小林<span class="badge badge-green">编辑</span></div><div class="member-email">xiaolin@manhuaworks.com</div></div><div class="member-meta" style="text-align:right"><span style="color:#94a3b8">● 2 天前活跃</span><br>2026-04-20 加入</div><div class="flex gap-2"><button class="btn btn-xs btn-ghost">改角色</button><button class="btn btn-xs btn-danger">移除</button></div></div>
+  <div class="member-row"><div class="member-avatar" style="background:linear-gradient(135deg,#a78bfa,#8b5cf6);color:#fff">🧓</div><div class="member-info"><div class="member-name">小赵<span class="badge badge-blue">观察者</span></div><div class="member-email">xiaozhao@manhuaworks.com</div></div><div class="member-meta" style="text-align:right"><span style="color:#94a3b8">● 5 天前活跃</span><br>2026-05-15 加入</div><div class="flex gap-2"><button class="btn btn-xs btn-ghost">改角色</button><button class="btn btn-xs btn-danger">移除</button></div></div>
+  <div class="member-row"><div class="member-avatar" style="background:var(--bg-tertiary)">👧</div><div class="member-info"><div class="member-name">设计师 Alice<span class="badge badge-amber">已邀请</span></div><div class="member-email">alice@manhuaworks.com</div></div><div class="member-meta" style="text-align:right"><span style="color:#fbbf24">● 等待接受</span><br>2026-06-01 邀请</div><div class="flex gap-2"><button class="btn btn-xs btn-danger">取消邀请</button></div></div>
+  <div class="member-row" style="opacity:.5"><div class="member-avatar" style="background:var(--bg-tertiary)">🧔</div><div class="member-info"><div class="member-name">前成员 Bob<span class="badge badge-red">已停用</span></div><div class="member-email">bob@manhuaworks.com</div></div><div class="member-meta" style="text-align:right"><span style="color:#ef4444">● 已停用</span><br>2026-02-01 加入</div></div>
+</div>
+</div>
+</body></html>

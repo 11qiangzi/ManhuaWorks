@@ -1,0 +1,39 @@
+/* =========================================================
+ * Theme: Minimal Light · 极简白
+ * ManhuaWorks · 白天办公、文档编辑、长时间阅读
+ * 灵感：Notion / Linear / 飞书文档
+ * ========================================================= */
+
+.theme-minimal-light,
+.theme-light {
+  --bg-primary: #ffffff;        /* 主背景 — 纯白 */
+  --bg-secondary: #f7f8fa;      /* 次背景 — 米灰 */
+  --text-primary: #1a1d23;      /* 主文字 — 近黑 */
+  --text-secondary: #6b7280;    /* 次文字 — 灰 */
+  --accent: #2563eb;            /* 强调色 — 钢蓝 */
+  --accent-soft: #3b82f6;       /* 强调柔色 */
+  --accent-deep: #1d4ed8;       /* 强调深色 */
+  --border: #e5e7eb;            /* 浅灰分割线 */
+  --border-strong: #d1d5db;     /* 强分割线 */
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.04);
+  --glow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  --code-bg: #f3f4f6;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --gradient: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  --font-display: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+/* 极简白特有：顶部细线 — 干净利落 */
+.theme-minimal-light .app-root::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border);
+  z-index: 50;
+  pointer-events: none;
+}

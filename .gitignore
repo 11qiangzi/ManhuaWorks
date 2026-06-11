@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.vite/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+
+# Test artifacts
+*.test_env.ps1
+
+# Runtime
+.run/
+*.pid
+
+# Test artifacts
+*.out
+*.err
+.start.err
+tests/.tok.txt
+tests/*_output.txt
+smoke.json
+
+# Temp
+*.tmp
+*.swp

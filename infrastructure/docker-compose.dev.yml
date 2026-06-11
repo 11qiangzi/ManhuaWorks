@@ -1,0 +1,361 @@
+# ManhuaWorks — Development Stack (Lightweight)
+# 2026-06-08 谢擎 L2-task-12
+# 包含：postgres + redis + 4 backend + 4 frontend
+# 跳过：monitor / prometheus / alertmanager / grafana
+#       （开发环境不需要跑整套 observability，节省 ~1GB 内存）
+#
+# 用途：本地编码、日常调试、L1 集成测试
+# 用法：./start.sh   （start.sh 默认使用 dev profile）
+#      或：docker compose -f docker-compose.dev.yml up -d
+#
+# 注意：
+# - 端口与 prod 一致，便于浏览器/客户端共用
+# - 业务后端通过 NODE_ENV=development 跑（如果镜像支持）
+# - 4 个前端都映射到 host，浏览器开 4 个 tab 就能对照
+
+name: manhuaworks-dev
+version: "3.9"
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "3"
+
+x-restart: &no-restart
+  restart: "no"
+
+services:
+  # ============================================================
+  # 1. Postgres
+  # ============================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: mhw-postgres-dev
+    <<: *no-restart
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mhw}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mhw_dev_only}
+      POSTGRES_DB: ${POSTGRES_DB:-manhuaworks}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data-dev:/var/lib/postgresql/data
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mhw} -d ${POSTGRES_DB:-manhuaworks}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    logging: *default-logging
+
+  # ============================================================
+  # 2. Redis
+  # ============================================================
+  redis:
+    image: redis:7-alpine
+    container_name: mhw-redis-dev
+    <<: *no-restart
+    command: ["redis-server", "--appendonly", "no", "--save", "", "--maxmemory", "256mb"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data-dev:/data
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging: *default-logging
+
+  # ============================================================
+  # 3. user-service :8088
+  # ============================================================
+  user-service:
+    build:
+      context: ..
+      dockerfile: services/user-service/Dockerfile
+      target: builder    # 挂载源码，热重载
+    container_name: mhw-user-service-dev
+    <<: *no-restart
+    command: ["sh", "-c", "npm install --no-audit --no-fund && npx tsx watch src/index.ts"]
+    ports:
+      - "8088:8088"
+    environment:
+      NODE_ENV: development
+      PORT: "8088"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mhw}:${POSTGRES_PASSWORD:-mhw_dev_only}@postgres:5432/${POSTGRES_DB:-manhuaworks}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev_secret_do_not_use_in_prod}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      CORS_ORIGIN: "*"
+    volumes:
+      - ../services/user-service/src:/app/src
+      - ../services/user-service/tests:/app/tests
+      - ../services/user-service/package.json:/app/package.json
+      - ../services/user-service/tsconfig.json:/app/tsconfig.json
+      - user-service-node-modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8088/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+  # ============================================================
+  # 4. project-service :8089
+  # ============================================================
+  project-service:
+    build:
+      context: ..
+      dockerfile: services/project-service/Dockerfile
+      target: builder
+    container_name: mhw-project-service-dev
+    <<: *no-restart
+    command: ["sh", "-c", "npm install --no-audit --no-fund && npx tsx watch src/index.ts"]
+    ports:
+      - "8089:8089"
+    environment:
+      NODE_ENV: development
+      PORT: "8089"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mhw}:${POSTGRES_PASSWORD:-mhw_dev_only}@postgres:5432/${POSTGRES_DB:-manhuaworks}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev_secret_do_not_use_in_prod}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      CORS_ORIGIN: "*"
+    volumes:
+      - ../services/project-service/src:/app/src
+      - ../services/project-service/tests:/app/tests
+      - ../services/project-service/package.json:/app/package.json
+      - ../services/project-service/tsconfig.json:/app/tsconfig.json
+      - project-service-node-modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8089/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+  # ============================================================
+  # 5. billing-service :8090
+  # ============================================================
+  billing-service:
+    build:
+      context: ..
+      dockerfile: services/billing-service/Dockerfile
+      target: builder
+    container_name: mhw-billing-service-dev
+    <<: *no-restart
+    command: ["sh", "-c", "npm install --no-audit --no-fund && npx tsx watch src/index.ts"]
+    ports:
+      - "8090:8090"
+    environment:
+      NODE_ENV: development
+      PORT: "8090"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mhw}:${POSTGRES_PASSWORD:-mhw_dev_only}@postgres:5432/${POSTGRES_DB:-manhuaworks}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev_secret_do_not_use_in_prod}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      CORS_ORIGIN: "*"
+      QUOTA_RESET_INTERVAL_SEC: "3600"
+    volumes:
+      - ../services/billing-service/src:/app/src
+      - ../services/billing-service/tests:/app/tests
+      - ../services/billing-service/package.json:/app/package.json
+      - ../services/billing-service/tsconfig.json:/app/tsconfig.json
+      - billing-service-node-modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8090/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+  # ============================================================
+  # 6. collab-service :8091
+  # ============================================================
+  collab-service:
+    build:
+      context: ..
+      dockerfile: services/collab-service/Dockerfile
+      target: builder
+    container_name: mhw-collab-service-dev
+    <<: *no-restart
+    command: ["sh", "-c", "npm install --no-audit --no-fund && npx tsx watch src/index.ts"]
+    ports:
+      - "8091:8091"
+    environment:
+      NODE_ENV: development
+      PORT: "8091"
+      WS_PATH: /ws
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mhw}:${POSTGRES_PASSWORD:-mhw_dev_only}@postgres:5432/${POSTGRES_DB:-manhuaworks}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev_secret_do_not_use_in_prod}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      CORS_ORIGIN: "*"
+    volumes:
+      - ../services/collab-service/src:/app/src
+      - ../services/collab-service/tests:/app/tests
+      - ../services/collab-service/package.json:/app/package.json
+      - ../services/collab-service/tsconfig.json:/app/tsconfig.json
+      - collab-service-node-modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8091/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+  # ============================================================
+  # 7. web :3000
+  # ============================================================
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    container_name: mhw-web-dev
+    <<: *no-restart
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+    volumes:
+      - ../apps/web/src:/app/src
+      - ../apps/web/index.html:/app/index.html
+      - ../apps/web/vite.config.ts:/app/vite.config.ts
+      - web-node-modules:/app/node_modules
+    networks:
+      - manhuaworks_net
+    logging: *default-logging
+
+  # ============================================================
+  # 8. studio :3001
+  # ============================================================
+  studio:
+    build:
+      context: ..
+      dockerfile: apps/studio/Dockerfile
+    container_name: mhw-studio-dev
+    <<: *no-restart
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+    volumes:
+      - ../apps/studio/src:/app/src
+      - ../apps/studio/index.html:/app/index.html
+      - ../apps/studio/vite.config.ts:/app/vite.config.ts
+      - studio-node-modules:/app/node_modules
+    networks:
+      - manhuaworks_net
+    logging: *default-logging
+
+  # ============================================================
+  # 9. admin-portal :3002
+  # ============================================================
+  admin-portal:
+    build:
+      context: ..
+      dockerfile: apps/admin-portal/Dockerfile
+    container_name: mhw-admin-portal-dev
+    <<: *no-restart
+    ports:
+      - "3002:3002"
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+    volumes:
+      - ../apps/admin-portal/src:/app/src
+      - ../apps/admin-portal/index.html:/app/index.html
+      - ../apps/admin-portal/vite.config.ts:/app/vite.config.ts
+      - admin-portal-node-modules:/app/node_modules
+    networks:
+      - manhuaworks_net
+    logging: *default-logging
+
+  # ============================================================
+  # 10. user-portal :3003
+  # ============================================================
+  user-portal:
+    build:
+      context: ..
+      dockerfile: apps/user-portal/Dockerfile
+    container_name: mhw-user-portal-dev
+    <<: *no-restart
+    ports:
+      - "3003:3003"
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+    volumes:
+      - ../apps/user-portal/src:/app/src
+      - ../apps/user-portal/index.html:/app/index.html
+      - ../apps/user-portal/vite.config.ts:/app/vite.config.ts
+      - user-portal-node-modules:/app/node_modules
+    networks:
+      - manhuaworks_net
+    logging: *default-logging
+
+# ============================================================
+# Volumes
+# ============================================================
+volumes:
+  postgres-data-dev:
+    name: mhw-postgres-data-dev
+  redis-data-dev:
+    name: mhw-redis-data-dev
+  user-service-node-modules:
+  project-service-node-modules:
+  billing-service-node-modules:
+  collab-service-node-modules:
+  web-node-modules:
+  studio-node-modules:
+  admin-portal-node-modules:
+  user-portal-node-modules:
+
+# ============================================================
+# Networks
+# ============================================================
+networks:
+  manhuaworks_net:
+    name: manhuaworks_net
+    driver: bridge

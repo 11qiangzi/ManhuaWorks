@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>分镜宫格视图</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; }
+  .gg-toolbar { display: flex; align-items: center; gap: 12px; padding: 10px 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
+  .gg-title { font-size: 15px; font-weight: 700; }
+  .gg-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; padding: 20px; overflow-y: auto; flex: 1; }
+  .gg-cell { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; }
+  .gg-cell:hover { border-color: var(--accent); }
+  .gg-cell-preview { aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; font-size: 48px; position: relative; }
+  .gg-cell-num { position: absolute; top: 8px; left: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,.6); color: #fff; font-size: 12px; font-weight: 700; }
+  .gg-cell-cam { position: absolute; bottom: 8px; right: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,.6); color: #fff; font-size: 10px; }
+  .gg-cell-body { padding: 12px; }
+  .gg-cell-title { font-size: 13px; font-weight: 700; }
+  .gg-cell-meta { font-size: 11px; color: var(--text-muted); display: flex; gap: 8px; margin-top: 2px; }
+  .gg-view-toggle { display: flex; gap: 4px; margin-left: auto; }
+</style></head><body>
+<div class="layout-sidebar">
+<div class="sidebar">
+  <div class="sidebar-item">🏠 首页</div><div class="sidebar-item active">① 剧本创作</div><div class="sidebar-item">② 素材库</div><div class="sidebar-item">③ 工作流</div><div class="sidebar-item">④ 工具箱</div><div class="sidebar-item">⑤ 导出</div>
+</div>
+<div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+<div class="gg-toolbar">
+  <span class="gg-title">🎞️ 长安月下 · 分镜宫格</span>
+  <span style="font-size:12px;color:var(--text-muted)">24 镜 · 3×4 宫格</span>
+  <div class="flex gap-2" style="margin-left:12px"><span class="chip active">全部</span><span class="chip">草稿</span><span class="chip">脚本完成</span><span class="chip">已完成</span></div>
+  <div class="gg-view-toggle" style="margin-left:auto">
+    <button class="btn btn-xs btn-secondary">⬜ 3×3</button><button class="btn btn-xs btn-ghost">📋 列表</button>
+    <button class="btn btn-primary btn-xs" style="margin-left:8px">+ 新建分镜</button>
+  </div>
+</div>
+<div class="gg-grid">
+  <div class="gg-cell"><div class="gg-cell-preview" style="background:linear-gradient(135deg,rgba(102,126,234,.2),rgba(118,75,162,.1))">🌙<div class="gg-cell-num">01</div><div class="gg-cell-cam">中景</div></div><div class="gg-cell-body"><div class="gg-cell-title">长安夜·开场 <span class="badge badge-green">✓</span></div><div class="gg-cell-meta"><span>🏯 宫殿</span><span>24s</span><span>4 机位</span></div></div></div>
+  <div class="gg-cell"><div class="gg-cell-preview" style="background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(217,119,6,.1))">🏠<div class="gg-cell-num">02</div><div class="gg-cell-cam">特写</div></div><div class="gg-cell-body"><div class="gg-cell-title">书房对白 <span class="badge badge-amber">生成中</span></div><div class="gg-cell-meta"><span>🏠 室内</span><span>18s</span><span>3 机位</span></div></div></div>
+  <div class="gg-cell"><div class="gg-cell-preview" style="background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(16,185,129,.05))">🌳<div class="gg-cell-num">03</div><div class="gg-cell-cam">远景</div></div><div class="gg-cell-body"><div class="gg-cell-title">后山练剑 <span class="badge badge-blue">脚本完成</span></div><div class="gg-cell-meta"><span>🌳 室外</span><span>30s</span><span>2 机位</span></div></div></div>
+  <div class="gg-cell"><div class="gg-cell-preview" style="background:linear-gradient(135deg,rgba(239,68,68,.2),rgba(239,68,68,.05))">⚔️<div class="gg-cell-num">04</div><div class="gg-cell-cam">中景</div></div><div class="gg-cell-body"><div class="gg-cell-title">初遇暗影尊 <span class="badge badge-amber">草稿</span></div><div class="gg-cell-meta"><span>⚔️ 战斗</span><span>36s</span><span>1 机位</span></div></div></div>
+  <div class="gg-cell"><div class="gg-cell-preview" style="background:linear-gradient(135deg,rgba(251,191,36,.2),rgba(251,191,36,.05))">🏙️<div class="gg-cell-num">05</div><div class="gg-cell-cam">俯拍</div></div><div class="gg-cell-body"><div class="gg-cell-title">长安集市 <span class="badge badge-green">✓</span></div><div class="gg-cell-meta"><span>🏙️ 都市</span><span>20s</span><span>3 机位</span></div></div></div>
+  <div class="gg-cell"><div class="gg-cell-preview" style="background:linear-gradient(135deg,rgba(59,130,246,.2),rgba(59,130,246,.05))">🌸<div class="gg-cell-num">06</div><div class="gg-cell-cam">特写</div></div><div class="gg-cell-body"><div class="gg-cell-title">偶遇苏婉 <span class="badge badge-green">✓</span></div><div class="gg-cell-meta"><span>🏙️ 都市</span><span>22s</span><span>2 机位</span></div></div></div>
+  <div class="gg-cell"><div class="gg-cell-preview" style="background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(139,92,246,.05))">🏯<div class="gg-cell-num">07</div><div class="gg-cell-cam">远景</div></div><div class="gg-cell-body"><div class="gg-cell-title">朝堂风云 <span class="badge badge-amber">草稿</span></div><div class="gg-cell-meta"><span>🏯 宫殿</span><span>40s</span><span>—</span></div></div></div>
+  <div class="gg-cell"><div class="gg-cell-preview" style="background:linear-gradient(135deg,rgba(248,113,113,.2),rgba(248,113,113,.05))">🔥<div class="gg-cell-num">08</div><div class="gg-cell-cam">中景</div></div><div class="gg-cell-body"><div class="gg-cell-title">夜袭 <span class="badge badge-blue">脚本完成</span></div><div class="gg-cell-meta"><span>⚔️ 战斗</span><span>28s</span><span>2 机位</span></div></div></div>
+  <div class="gg-cell" style="border-style:dashed;border-color:var(--border-strong);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;min-height:200px"><span style="font-size:32px">➕</span><span style="font-size:13px;color:var(--text-muted)">新建分镜</span></div>
+</div>
+</div>
+</div>
+</body></html>

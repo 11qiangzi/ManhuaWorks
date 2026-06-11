@@ -1,0 +1,36 @@
+{
+  "name": "@manhuaworks/asset-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ManhuaWorks 资产服务 - 项目空间 + Toonflow 资产（12 故事类型 + 11 艺术风格 + 4 prompt 库）+ 上传/锁脸/版本/导出/货架",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "echo \"(lint not configured yet)\" && exit 0",
+    "test": "echo \"(test not configured yet)\" && exit 0"
+  },
+  "engines": {
+    "node": ">=20.10.0"
+  },
+  "dependencies": {
+    "hono": "^4.6.14",
+    "@hono/node-server": "^1.13.7",
+    "drizzle-orm": "^0.36.4",
+    "postgres": "^3.4.5",
+    "pg": "^8.13.1",
+    "zod": "^3.23.8",
+    "nanoid": "^5.0.7",
+    "archiver": "^7.0.1",
+    "form-data": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/archiver": "^6.0.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

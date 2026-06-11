@@ -1,0 +1,76 @@
+{
+  "$comment": "W5 集成测试配置：5 服务端口 + 凭据 + 路径",
+  "version": "2026-06-08",
+  "author": "钟帧 + 陈远枢",
+  "services": {
+    "ai-router": {
+      "port": 8083,
+      "baseUrl": "http://127.0.0.1:8083",
+      "healthPath": "/health",
+      "devStartCmd": "pnpm --filter @manhuaworks/ai-router dev",
+      "mode": "dev"
+    },
+    "ai-keys": {
+      "port": 8088,
+      "baseUrl": "http://127.0.0.1:8088",
+      "healthPath": "/health",
+      "devStartCmd": "pnpm --filter @manhuaworks/ai-keys-service dev",
+      "mode": "dev"
+    },
+    "workflow-engine": {
+      "port": 8084,
+      "baseUrl": "http://127.0.0.1:8084",
+      "healthPath": "/health",
+      "devStartCmd": "pnpm --filter @manhuaworks/workflow-engine dev",
+      "mode": "dev"
+    },
+    "asset-service": {
+      "port": 8085,
+      "baseUrl": "http://127.0.0.1:8085",
+      "healthPath": "/health",
+      "devStartCmd": "pnpm --filter @manhuaworks/asset-service dev",
+      "mode": "dev"
+    },
+    "ai-orchestrator": {
+      "port": 8087,
+      "baseUrl": "http://127.0.0.1:8087",
+      "healthPath": "/health",
+      "devStartCmd": "pnpm --filter @manhuaworks/ai-orchestrator dev",
+      "mode": "dev"
+    }
+  },
+  "database": {
+    "type": "sqlite",
+    "path": "./.test-db/integration.db",
+    "backupBeforeRun": true,
+    "cleanupAfterRun": true
+  },
+  "credentials": {
+    "testUser": {
+      "id": "u_test_integration",
+      "email": "integration@test.local",
+      "token": "test-jwt-integration-not-real"
+    }
+  },
+  "fixtures": {
+    "novel200": "./fixtures/demo-novel-200.txt",
+    "novel1000": "./fixtures/demo-novel-1000.txt"
+  },
+  "timing": {
+    "serviceStartTimeoutMs": 30_000,
+    "serviceHealthIntervalMs": 500,
+    "e2eTimeoutMs": 120_000,
+    "loadTestTimeoutMs": 180_000
+  },
+  "loadTest": {
+    "concurrency": 50,
+    "maxErrorRate": 0.01,
+    "durationSeconds": 30,
+    "rampUpSeconds": 5
+  },
+  "trace": {
+    "headerName": "x-trace-id",
+    "spanHeaderName": "x-span-id",
+    "collectSpans": true
+  }
+}

@@ -1,0 +1,30 @@
+/* =========================================================
+ * Theme: Creator Orange · 创作橙
+ * ManhuaWorks · 灵感迸发
+ * ========================================================= */
+
+.theme-creator-orange,
+.theme-orange {
+  --bg-primary: #fffaf5;
+  --bg-secondary: #fef1e6;
+  --bg-tertiary: #fde3cd;
+  --text-primary: #2d1810;
+  --text-secondary: #7a4a30;
+  --accent: #ff6b1a;
+  --accent-2: #f43f5e;
+  --accent-soft: #ff9966;
+  --accent-deep: #cc4f0d;
+  --border: #f5dcc4;
+  --border-strong: #e8b88a;
+  --shadow: 0 6px 20px rgba(255, 107, 26, 0.15);
+  --glow: 0 0 0 1px rgba(255, 107, 26, 0.22);
+  --code-bg: #fef1e6;
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --danger: #dc2626;
+  --error: #dc2626;
+  --gradient: linear-gradient(135deg, #ff6b1a 0%, #f43f5e 100%);
+  --font-display: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+}
+
+.theme-creator-orange .app-root::before { display: none; }

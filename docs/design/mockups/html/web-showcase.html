@@ -1,0 +1,49 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1440"><title>web-showcase — 作品展示</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1440px; height: 900px; overflow: hidden; }
+  .showcase-hero { padding: 60px 32px 40px; text-align: center; }
+  .showcase-eyebrow { font-size: 11px; letter-spacing: .2em; color: var(--accent); font-weight: 700; margin-bottom: 10px; }
+  .showcase-title { font-size: 46px; font-weight: 800; line-height: 1.15; letter-spacing: -.02em; margin-bottom: 12px; }
+  .showcase-sub { font-size: 15px; color: var(--text-secondary); }
+  .showcase-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; padding: 0 32px 40px; max-width: 1100px; margin: 0 auto; }
+  .sc-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .sc-cover { position: relative; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; }
+  .sc-cover-emoji { font-size: 64px; filter: drop-shadow(0 4px 12px rgba(0,0,0,.3)); }
+  .sc-status { position: absolute; top: 10px; right: 10px; padding: 3px 10px; border-radius: 10px; background: rgba(255,255,255,.9); font-size: 11px; font-weight: 700; }
+  .sc-body { padding: 20px; }
+  .sc-title { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+  .sc-subtitle { font-size: 11px; color: var(--accent); margin-bottom: 10px; font-weight: 600; letter-spacing: .05em; }
+  .sc-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 14px; }
+  .sc-meta { display: flex; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); margin-bottom: 12px; font-size: 12px; color: var(--text-muted); }
+  .sc-highlight { display: flex; align-items: center; gap: 8px; }
+  .sc-hl-label { padding: 2px 8px; border-radius: 4px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; }
+  .sc-hl-text { font-size: 12px; color: var(--text-primary); font-weight: 500; }
+  .cta-section { text-align: center; padding: 40px 32px; }
+  .cta-section h2 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .cta-section p { color: var(--text-secondary); margin-bottom: 20px; }
+</style></head><body>
+<header class="navbar">
+  <div class="navbar-brand"><a href="#" style="color:var(--text-primary);text-decoration:none;font-size:14px">← 返回首页</a></div>
+  <span style="font-size:14px;font-weight:700">M · ManhuaWorks</span>
+</header>
+<section class="showcase-hero">
+  <p class="showcase-eyebrow">SHOWCASE · 作品案例</p>
+  <h1 class="showcase-title">文字 → 漫剧，<br>AI 做到了</h1>
+  <p class="showcase-sub">3 部真实作品 · 从草根创作者到 IP 工厂</p>
+</section>
+<section class="showcase-grid">
+  <div class="sc-card">
+    <div class="sc-cover" style="background:linear-gradient(135deg,#667eea,#764ba2)"><span class="sc-cover-emoji">🌃</span><span class="sc-status" style="color:#94a3b8">● 草稿</span></div>
+    <div class="sc-body"><h2 class="sc-title">都市奇缘：晚安摩天楼</h2><p class="sc-subtitle">Modern Romance · AI Comedy</p><p class="sc-desc">现代都市爱情喜剧。一对住在同一栋摩天楼里的陌生人，通过深夜阳台的纸条互诉心声。</p><div class="sc-meta"><span>🎬 24 镜头</span><span>⏱ ~8 分钟</span></div><div class="sc-highlight"><span class="sc-hl-label">亮点</span><span class="sc-hl-text">AI 自动匹配都市夜景 + 浪漫氛围光</span></div></div>
+  </div>
+  <div class="sc-card">
+    <div class="sc-cover" style="background:linear-gradient(135deg,#f093fb,#f5576c)"><span class="sc-cover-emoji">⚔️</span><span class="sc-status" style="color:#f59e0b">● 进行中</span></div>
+    <div class="sc-body"><h2 class="sc-title">剑破苍穹：少年宗主</h2><p class="sc-subtitle">Xianxia Adventure · Long Form</p><p class="sc-desc">古风仙侠冒险长篇。出身没落宗门的少年，凭一柄断剑踏上复仇与觉醒之路。</p><div class="sc-meta"><span>🎬 96 镜头</span><span>⏱ ~32 分钟</span></div><div class="sc-highlight"><span class="sc-hl-label">亮点</span><span class="sc-hl-text">角色一致性 99.2% · 跨集不串戏</span></div></div>
+  </div>
+  <div class="sc-card">
+    <div class="sc-cover" style="background:linear-gradient(135deg,#4facfe,#00f2fe)"><span class="sc-cover-emoji">🚀</span><span class="sc-status" style="color:#10b981">● 已发布</span></div>
+    <div class="sc-body"><h2 class="sc-title">深空遗民：第八殖民舰</h2><p class="sc-subtitle">Near-Future SciFi · First Arc</p><p class="sc-desc">近未来科幻。当太阳熄灭，第八殖民舰是人类的最后方舟。但船员们发现比死亡更可怕的是彼此。</p><div class="sc-meta"><span>🎬 48 镜头</span><span>⏱ ~16 分钟</span></div><div class="sc-highlight"><span class="sc-hl-label">亮点</span><span class="sc-hl-text">首章观众 12.3 万 · 平均完播率 78%</span></div></div>
+  </div>
+</section>
+<section class="cta-section"><h2>你也想做一部？</h2><p>注册即可创建你的第一个漫改项目，注册即送 100 算力 + Pro 套餐 7 天体验</p><div style="display:flex;gap:10px;justify-content:center"><a href="#" class="btn btn-primary">立即开始</a><a href="#" class="btn btn-secondary">返回首页</a></div></section>
+<footer class="footer"><p>© 2026 ManhuaWorks · 创作者友好的漫改 SaaS</p></footer>
+</body></html>

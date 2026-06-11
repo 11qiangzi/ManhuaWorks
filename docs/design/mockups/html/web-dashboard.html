@@ -1,0 +1,65 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1440"><title>web-dashboard — 用户工作台</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1440px; height: 900px; overflow: hidden; display: flex; flex-direction: column; }
+  .dash-page { flex: 1; display: flex; }
+  .dash-sidebar { width: 200px; background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .dash-sidebar .sidebar-item { padding: 8px 12px; font-size: 13px; }
+  .dash-sidebar .sidebar-item.active { background: rgba(99,102,241,.12); color: var(--accent); }
+  .dash-main { flex: 1; padding: 24px 28px; overflow-y: auto; }
+  .avatar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; }
+  .welcome { flex: 1; } .welcome h2 { font-size: 18px; font-weight: 700; } .welcome p { font-size: 12px; color: var(--text-muted); }
+  .stat-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+  .project-card { display: flex; align-items: center; gap: 14px; padding: 14px 16px; }
+  .project-cover { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .project-info { flex: 1; }
+  .project-name { font-size: 14px; font-weight: 600; }
+  .project-time { font-size: 11px; color: var(--text-muted); }
+  .theme-tokens { margin-top: 24px; }
+  .token-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+  .token-card { padding: 12px; background: var(--bg-tertiary); border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 11px; }
+  .token-card .token-name { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+</style></head><body>
+<header class="navbar">
+  <div class="navbar-brand"><div class="navbar-logo">M</div><span class="navbar-name">ManhuaWorks</span></div>
+  <div class="navbar-links"><a href="#" class="navbar-link active">工作台</a><a href="#" class="navbar-link">项目</a><a href="#" class="navbar-link">素材</a><a href="#" class="navbar-link">设置</a></div>
+  <div class="navbar-right"><span style="font-size:12px;color:var(--text-muted)">🎨 创作橙</span><div class="avatar">梁</div></div>
+</header>
+<div class="dash-page">
+  <div class="dash-sidebar">
+    <div class="sidebar-item active">📊 工作台</div><div class="sidebar-item">📁 我的项目</div><div class="sidebar-item">🎬 作品</div><div class="sidebar-item">🗃 素材库</div><div class="sidebar-item">👥 团队</div><div class="sidebar-item">⚙ 设置</div>
+  </div>
+  <div class="dash-main">
+    <div class="avatar-row"><div class="avatar">梁</div><div class="welcome"><h2>欢迎回来，创作者</h2><p>上次登录：今天 10:30 · 在线 17 天</p></div></div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-icon">📁</div><div class="stat-value">12</div><div class="stat-label">进行中项目</div></div>
+      <div class="stat-card"><div class="stat-icon">🎬</div><div class="stat-value">8</div><div class="stat-label">已发布作品</div></div>
+      <div class="stat-card"><div class="stat-icon">🗃</div><div class="stat-value">248</div><div class="stat-label">素材库</div></div>
+      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value">6</div><div class="stat-label">团队成员</div></div>
+    </div>
+    <div class="section-title">最近项目</div>
+    <div class="grid-3">
+      <div class="card project-card" style="display:flex;align-items:center;gap:14px;flex-direction:row;">
+        <div class="project-cover" style="background:linear-gradient(135deg,#667eea,#764ba2)">🌙</div>
+        <div class="project-info"><div class="project-name">长安月下</div><div class="project-time"><span class="badge badge-green">进行中</span> · 2 小时前</div></div>
+      </div>
+      <div class="card project-card" style="display:flex;align-items:center;gap:14px;flex-direction:row;">
+        <div class="project-cover" style="background:linear-gradient(135deg,#f093fb,#f5576c)">⚔️</div>
+        <div class="project-info"><div class="project-name">剑破苍穹</div><div class="project-time"><span class="badge badge-green">进行中</span> · 昨天</div></div>
+      </div>
+      <div class="card project-card" style="display:flex;align-items:center;gap:14px;flex-direction:row;">
+        <div class="project-cover" style="background:linear-gradient(135deg,#34d399,#10b981)">🎒</div>
+        <div class="project-info"><div class="project-name">校园青春</div><div class="project-time"><span class="badge badge-amber">草稿</span> · 3 天前</div></div>
+      </div>
+    </div>
+    <div class="theme-tokens">
+      <div class="section-title">主题变量</div>
+      <div class="token-row">
+        <div class="token-card"><div class="token-name">--bg-primary</div><div style="color:#818cf8">#0a0e1a</div></div>
+        <div class="token-card"><div class="token-name">--bg-secondary</div><div style="color:#34d399">#111827</div></div>
+        <div class="token-card"><div class="token-name">--text-primary</div><div style="color:#fbbf24">#e2e8f0</div></div>
+        <div class="token-card"><div class="token-name">--accent</div><div style="color:#f472b6">#818cf8</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

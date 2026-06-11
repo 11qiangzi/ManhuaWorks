@@ -1,0 +1,74 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>ops-monitoring — 系统监控</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; display: flex; flex-direction: column; }
+  .ops-top { padding: 12px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .ops-main { flex: 1; padding: 24px 28px; overflow-y: auto; }
+  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .chart-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  .bar-chart { height: 160px; display: flex; align-items: flex-end; gap: 6px; padding: 0 8px; }
+  .bar { flex: 1; border-radius: 4px 4px 0 0; min-width: 20px; position: relative; }
+  .bar-val { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 9px; color: var(--text-muted); }
+  .metric-row { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); padding: 0 8px; margin-top: 4px; }
+  .alert-item { padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; border-left: 3px solid; }
+</style></head><body>
+<div class="ops-top">
+  <div class="flex items-center gap-3"><span style="font-size:16px;font-weight:800">🖥 Ops 运维面板</span></div>
+  <div class="flex gap-2"><a href="#" class="navbar-link">服务状态</a><a href="#" class="navbar-link">日志中心</a><a href="#" class="navbar-link active">系统监控</a></div>
+</div>
+<div class="ops-main">
+  <div class="grid-4 mb-4">
+    <div class="stat-card"><div class="stat-icon">🖥</div><div class="stat-value">42%</div><div class="stat-label">CPU 使用率</div><div class="progress-bar mt-2" style="height:4px"><div class="progress-fill" style="width:42%"></div></div></div>
+    <div class="stat-card"><div class="stat-icon">💾</div><div class="stat-value">8.2G</div><div class="stat-label">内存 / 12G</div><div class="progress-bar mt-2" style="height:4px"><div class="progress-fill" style="width:68%"></div></div></div>
+    <div class="stat-card"><div class="stat-icon">💿</div><div class="stat-value">256G</div><div class="stat-label">磁盘 / 512G</div><div class="progress-bar mt-2" style="height:4px"><div class="progress-fill" style="width:50%"></div></div></div>
+    <div class="stat-card"><div class="stat-icon">🌐</div><div class="stat-value">128</div><div class="stat-label">活跃连接</div></div>
+  </div>
+  <div class="chart-row">
+    <div class="chart-box">
+      <div class="section-title">📈 CPU 使用率 (1h)</div>
+      <div class="bar-chart">
+        <div class="bar" style="height:35%;background:var(--gradient)"><span class="bar-val">35%</span></div>
+        <div class="bar" style="height:42%;background:var(--gradient)"><span class="bar-val">42%</span></div>
+        <div class="bar" style="height:38%;background:var(--gradient)"></div>
+        <div class="bar" style="height:55%;background:var(--gradient)"><span class="bar-val">55%</span></div>
+        <div class="bar" style="height:40%;background:var(--gradient)"></div>
+        <div class="bar" style="height:48%;background:var(--gradient)"></div>
+        <div class="bar" style="height:42%;background:var(--gradient)"></div>
+      </div>
+      <div class="metric-row"><span>-60m</span><span>-40m</span><span>-20m</span><span>now</span></div>
+    </div>
+    <div class="chart-box">
+      <div class="section-title">⚡ GPU 利用率 (1h)</div>
+      <div class="bar-chart">
+        <div class="bar" style="height:72%;background:#f59e0b"><span class="bar-val">72%</span></div>
+        <div class="bar" style="height:88%;background:#f59e0b"><span class="bar-val">88%</span></div>
+        <div class="bar" style="height:65%;background:#f59e0b"></div>
+        <div class="bar" style="height:92%;background:#ef4444"><span class="bar-val">92%</span></div>
+        <div class="bar" style="height:78%;background:#f59e0b"></div>
+        <div class="bar" style="height:85%;background:#f59e0b"></div>
+        <div class="bar" style="height:80%;background:#f59e0b"></div>
+      </div>
+      <div class="metric-row"><span>-60m</span><span>-40m</span><span>-20m</span><span>now</span></div>
+    </div>
+  </div>
+  <div class="chart-row">
+    <div class="chart-box">
+      <div class="section-title">📊 QPS (每秒请求)</div>
+      <div class="bar-chart">
+        <div class="bar" style="height:60%;background:#60a5fa"><span class="bar-val">326</span></div>
+        <div class="bar" style="height:55%;background:#60a5fa"></div>
+        <div class="bar" style="height:70%;background:#60a5fa"><span class="bar-val">412</span></div>
+        <div class="bar" style="height:65%;background:#60a5fa"></div>
+        <div class="bar" style="height:58%;background:#60a5fa"></div>
+        <div class="bar" style="height:80%;background:#60a5fa"><span class="bar-val">512</span></div>
+        <div class="bar" style="height:62%;background:#60a5fa"></div>
+      </div>
+      <div class="metric-row"><span>-60m</span><span>-40m</span><span>-20m</span><span>now</span></div>
+    </div>
+    <div class="chart-box">
+      <div class="section-title">⚠️ 告警规则</div>
+      <div class="alert-item" style="border-left-color:#f59e0b"><div style="font-size:13px;font-weight:600">🟡 GPU > 90%</div><div style="font-size:11px;color:var(--text-muted)">触发 1 次 · 持续时间 2 分钟 · 12:45</div></div>
+      <div class="alert-item" style="border-left-color:#10b981"><div style="font-size:13px;font-weight:600">🟢 CPU 正常</div><div style="font-size:11px;color:var(--text-muted)">42% · 阈值 80% · 未触发</div></div>
+      <div class="alert-item" style="border-left-color:#10b981"><div style="font-size:13px;font-weight:600">🟢 磁盘正常</div><div style="font-size:11px;color:var(--text-muted)">256G/512G · 阈值 85% · 未触发</div></div>
+    </div>
+  </div>
+</div>
+</body></html>

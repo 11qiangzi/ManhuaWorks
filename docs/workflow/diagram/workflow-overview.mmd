@@ -1,0 +1,36 @@
+flowchart TD
+    Start([用户: 设计师/运营]) --> P1[阶段1: 输入<br/>小说/角色/场景/风格]
+    P1 --> Q1{Preset?}
+    Q1 -->|是| P1b[加载预设]
+    Q1 -->|否| P1c[手动选择]
+    P1b --> P2
+    P1c --> P2[阶段2: 分解<br/>章节→分镜→镜头]
+    P2 --> Q2{分镜数量<br/>合理?}
+    Q2 -->|太少/太多| P2a[提示设计师调整]
+    P2a --> P2
+    Q2 -->|OK| P3[阶段3: 生成<br/>6 pipeline × 3 质量]
+    P3 --> Q3{QA 抽检<br/>通过?}
+    Q3 -->|否| Q3a{单镜头<br/>重试 3 次}
+    Q3a -->|仍失败| P3b[Failover Handler<br/>跳过+标红]
+    Q3a -->|重试成功| P3
+    P3b --> P3
+    Q3 -->|是| P4[阶段4: 合成<br/>音/字/转场]
+    P4 --> Q4{音画同步<br/>通过?}
+    Q4 -->|否| P4a[回阶段3 重跑]
+    P4a --> P3
+    Q4 -->|是| P5[阶段5: 导出<br/>mp4/mov/字幕/多平台]
+    P5 --> Q5{平台<br/>适配?}
+    Q5 -->|抖音/快手| P5a[9:16 + 烧字幕]
+    Q5 -->|B 站/YouTube| P5b[16:9 + 软字幕]
+    Q5 -->|专业| P5c[mov + ass]
+    P5a --> End([Zip 包 / 推送到平台])
+    P5b --> End
+    P5c --> End
+
+    style P1 fill:#e3f2fd
+    style P2 fill:#fff3e0
+    style P3 fill:#fce4ec
+    style P4 fill:#e8f5e9
+    style P5 fill:#f3e5f5
+    style Start fill:#fff9c4
+    style End fill:#c8e6c9

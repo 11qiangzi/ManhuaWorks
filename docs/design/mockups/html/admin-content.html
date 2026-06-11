@@ -1,0 +1,53 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>admin-content — 内容审核</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; }
+  .layout { display: flex; height: 100vh; }
+  .sidebar { width: 220px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; padding: 16px 12px; gap: 3px; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; font-size: 13px; color: var(--text-secondary); text-decoration: none; }
+  .sidebar-item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+  .sidebar-item.active { background: rgba(99,102,241,.12); color: var(--accent); font-weight: 600; }
+  .sidebar-icon { font-size: 16px; width: 20px; text-align: center; }
+  .main { flex: 1; padding: 20px 28px; overflow-y: auto; }
+  .content-card { padding: 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; display: flex; gap: 14px; align-items: center; }
+  .content-thumb { width: 80px; height: 56px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; }
+  .content-info { flex: 1; } .content-title { font-size: 13px; font-weight: 700; } .content-meta { font-size: 11px; color: var(--text-muted); }
+  .content-match { font-size: 10px; margin-top: 2px; }
+</style></head><body>
+<div class="layout">
+<div class="sidebar">
+  <div style="padding:8px 12px;font-size:14px;font-weight:700;margin-bottom:8px">⚙ 管理后台</div>
+  <div class="sidebar-item"><span class="sidebar-icon">👥</span>用户管理</div>
+  <div class="sidebar-item"><span class="sidebar-icon">📁</span>项目审核</div>
+  <div class="sidebar-item"><span class="sidebar-icon">📊</span>数据看板</div>
+  <div class="sidebar-item"><span class="sidebar-icon">💰</span>计费管理</div>
+  <div class="sidebar-item active"><span class="sidebar-icon">🛡️</span>内容审核</div>
+  <div class="sidebar-item"><span class="sidebar-icon">⚙</span>平台配置</div>
+  <div class="sidebar-item"><span class="sidebar-icon">📋</span>系统日志</div>
+</div>
+<div class="main">
+  <div class="flex justify-between items-center mb-4">
+    <div><span class="page-title">🛡️ 内容审核</span><span style="font-size:13px;color:var(--text-muted);margin-left:8px">AI 自动检测 + 人工复审</span></div>
+    <div class="flex gap-2"><div class="search-box"><input class="input" placeholder="搜索…" style="width:160px;font-size:12px;padding:6px 10px"></div></div>
+  </div>
+  <div class="flex gap-2 mb-4"><span class="chip active">全部</span><span class="chip">⚠️ 待复审</span><span class="chip">✅ 已通过</span><span class="chip">🚫 已屏蔽</span></div>
+  <div class="content-card" style="border-color:rgba(245,158,11,.3)">
+    <div class="content-thumb" style="background:var(--bg-tertiary)">🗡️</div>
+    <div class="content-info"><div class="content-title">林启 · 主视觉图 v3 <span class="badge badge-amber">待复审</span></div><div class="content-meta">长安月下 · 梁总 · 生成于 5 分钟前</div><div class="content-match" style="color:#fbbf24">⚠️ 敏感词检测: "断剑" 置信度 72%</div></div>
+    <div class="flex gap-2"><button class="btn btn-xs" style="background:#10b981;color:#fff">通过</button><button class="btn btn-xs btn-danger">屏蔽</button></div>
+  </div>
+  <div class="content-card">
+    <div class="content-thumb" style="background:var(--bg-tertiary)">🌸</div>
+    <div class="content-info"><div class="content-title">苏婉 · 表情集 v2 <span class="badge badge-green">已通过</span></div><div class="content-meta">长安月下 · 梁总 · 审核于 30 分钟前</div><div class="content-match" style="color:#34d399">✅ 无违规 · NSFW: 0.01%</div></div>
+  </div>
+  <div class="content-card" style="opacity:.6">
+    <div class="content-thumb" style="background:var(--bg-tertiary)">🔥</div>
+    <div class="content-info"><div class="content-title">暗影尊 · 战斗场景 <span class="badge badge-red">已屏蔽</span></div><div class="content-meta">逆袭少女 · 张三 · 屏蔽于 1 小时前</div><div class="content-match" style="color:#ef4444">🚫 NSFW 检测: 94% · 暴力场景: 88%</div></div>
+  </div>
+  <div class="section-title mt-4">⚙ 自动审核规则</div>
+  <div class="flex flex-col gap-3" style="max-width:600px">
+    <div class="flex justify-between items-center" style="padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px"><div><div style="font-size:13px;font-weight:600">NSFW 检测</div><div style="font-size:11px;color:var(--text-muted)">阈值: 85% 自动屏蔽, 60% 人工复审</div></div><div class="toggle-switch on"><div class="toggle-dot"></div></div></div>
+    <div class="flex justify-between items-center" style="padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px"><div><div style="font-size:13px;font-weight:600">暴力内容</div><div style="font-size:11px;color:var(--text-muted)">阈值: 75% 自动屏蔽, 50% 人工复审</div></div><div class="toggle-switch on"><div class="toggle-dot"></div></div></div>
+    <div class="flex justify-between items-center" style="padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px"><div><div style="font-size:13px;font-weight:600">敏感词过滤</div><div style="font-size:11px;color:var(--text-muted)">阈值: 70% 人工复审</div></div><div class="toggle-switch on"><div class="toggle-dot"></div></div></div>
+  </div>
+</div>
+</div>
+</body></html>

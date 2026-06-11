@@ -1,0 +1,39 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>新建项目向导</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .wizard-card { width: 720px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 40px 48px; }
+  .wizard-steps { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 32px; }
+  .wizard-step { display: flex; align-items: center; gap: 8px; }
+  .wizard-dot { width: 32px; height: 32px; border-radius: 50%; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--text-muted); }
+  .wizard-dot.active { background: var(--accent); color: #fff; }
+  .wizard-dot.done { background: #34d399; color: #fff; }
+  .wizard-line { width: 40px; height: 2px; background: var(--border); }
+  .wizard-line.done { background: #34d399; }
+  .mode-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 28px; }
+  .mode-card { padding: 24px 18px; border: 2px solid var(--border); border-radius: var(--radius); cursor: pointer; text-align: center; }
+  .mode-card.active { border-color: var(--accent); background: rgba(99,102,241,.05); }
+  .mode-card:hover { border-color: var(--border-strong); }
+  .next-btn { width: 100%; padding: 14px; font-size: 16px; }
+</style></head><body>
+<div class="wizard-card">
+  <div class="wizard-steps">
+    <div class="wizard-step"><div class="wizard-dot active">1</div><span style="font-size:12px;color:var(--accent)">选择模式</span></div>
+    <div class="wizard-line"></div>
+    <div class="wizard-step"><div class="wizard-dot">2</div><span style="font-size:12px;color:var(--text-muted)">基本信息</span></div>
+    <div class="wizard-line"></div>
+    <div class="wizard-step"><div class="wizard-dot">3</div><span style="font-size:12px;color:var(--text-muted)">初始角色</span></div>
+    <div class="wizard-line"></div>
+    <div class="wizard-step"><div class="wizard-dot">4</div><span style="font-size:12px;color:var(--text-muted)">完成</span></div>
+  </div>
+  <h2 style="text-align:center;font-size:22px;margin-bottom:6px">🎯 选择创作模式</h2>
+  <p style="text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:24px">不同模式使用不同的 AI 模型和参数预设</p>
+  <div class="mode-grid">
+    <div class="mode-card active"><div style="font-size:36px;margin-bottom:8px">🎨</div><div style="font-weight:700;font-size:15px">精品漫</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px">高品质漫剧<br>角色精致·分镜考究</div></div>
+    <div class="mode-card"><div style="font-size:36px;margin-bottom:8px">🎙️</div><div style="font-weight:700;font-size:15px">解说漫</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px">故事驱动型<br>智能多播·音色提取</div></div>
+    <div class="mode-card"><div style="font-size:36px;margin-bottom:8px">🎬</div><div style="font-weight:700;font-size:15px">真人剧</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px">写实风格<br>演员音色·专业运镜</div></div>
+  </div>
+  <div class="flex justify-between">
+    <button class="btn btn-secondary">取消</button>
+    <button class="btn btn-primary next-btn" style="width:auto;padding:12px 32px">下一步：基本信息 →</button>
+  </div>
+</div>
+</body></html>

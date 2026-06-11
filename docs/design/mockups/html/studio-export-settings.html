@@ -1,0 +1,55 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>导出参数设置</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; }
+  .es-form { max-width: 800px; }
+  .es-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .param-section { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .preset-card { padding: 12px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; text-align: center; }
+  .preset-card.active { border-color: var(--accent); background: rgba(99,102,241,.05); }
+  .preset-icon { font-size: 24px; }
+  .preset-name { font-size: 12px; font-weight: 600; margin-top: 4px; }
+  .preset-detail { font-size: 10px; color: var(--text-muted); }
+</style></head><body>
+<div class="layout-sidebar">
+<div class="sidebar">
+  <div class="sidebar-item">🏠 首页</div><div class="sidebar-item">① 剧本创作</div><div class="sidebar-item">② 素材库</div><div class="sidebar-item">③ 工作流</div><div class="sidebar-item">④ 工具箱</div><div class="sidebar-item active">⑤ 导出</div>
+</div>
+<div class="main-content">
+  <div class="flex items-center gap-3 mb-4"><a href="#" style="color:var(--text-secondary);text-decoration:none">← 返回导出中心</a><span class="page-title">⚙ 导出参数 · 视频导出 (.mp4)</span></div>
+  <div class="es-form">
+    <div class="es-card">
+      <div class="section-title">📐 分辨率预设</div>
+      <div class="flex gap-3">
+        <div class="preset-card active" style="flex:1"><div class="preset-icon">🖥</div><div class="preset-name">1080p</div><div class="preset-detail">1920×1080</div></div>
+        <div class="preset-card" style="flex:1"><div class="preset-icon">📱</div><div class="preset-name">720p</div><div class="preset-detail">1280×720</div></div>
+        <div class="preset-card" style="flex:1"><div class="preset-icon">🎬</div><div class="preset-name">4K</div><div class="preset-detail">3840×2160</div></div>
+        <div class="preset-card" style="flex:1"><div class="preset-icon">📲</div><div class="preset-name">竖屏</div><div class="preset-detail">1080×1920</div></div>
+      </div>
+    </div>
+    <div class="es-card">
+      <div class="section-title">🎥 视频参数</div>
+      <div class="param-section">
+        <div><div class="form-label">编码格式</div><select class="input"><option>H.264 (推荐)</option><option>H.265 / HEVC</option><option>AV1</option></select></div>
+        <div><div class="form-label">帧率</div><select class="input"><option>24 fps</option><option>30 fps</option><option>60 fps</option></select></div>
+        <div><div class="form-label">码率</div><select class="input"><option>高 (15 Mbps)</option><option>中 (8 Mbps) 推荐</option><option>低 (4 Mbps)</option></select></div>
+        <div><div class="form-label">音频编码</div><select class="input"><option>AAC 256kbps</option><option>AAC 128kbps</option><option>无音频</option></select></div>
+      </div>
+    </div>
+    <div class="es-card">
+      <div class="section-title">🏷️ 输出设置</div>
+      <div class="flex flex-col gap-3">
+        <div><div class="form-label">文件名</div><input class="input" value="长安月下_第02镜_书房对白"></div>
+        <div class="flex items-center gap-3">
+          <input type="checkbox" id="watermark" checked><label for="watermark" style="font-size:13px">添加水印 "ManhuaWorks"</label>
+          <input type="checkbox" id="subtitle" checked><label for="subtitle" style="font-size:13px">嵌入字幕</label>
+          <input type="checkbox" id="chapter"><label for="chapter" style="font-size:13px">章节标记</label>
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-2 justify-end">
+      <button class="btn btn-secondary">取消</button>
+      <button class="btn btn-primary">📤 开始导出</button>
+    </div>
+  </div>
+</div>
+</div>
+</body></html>

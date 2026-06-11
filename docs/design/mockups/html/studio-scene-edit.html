@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>场景详情编辑</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; }
+  .sd-layout { display: flex; gap: 20px; padding: 20px; flex: 1; overflow: hidden; }
+  .sd-left { flex: 1; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+  .sd-right { width: 340px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+  .sd-preview { aspect-ratio: 16/9; border-radius: var(--radius); background: linear-gradient(135deg,rgba(245,158,11,.2),rgba(245,158,11,.05)); display: flex; align-items: center; justify-content: center; font-size: 72px; border: 1px solid var(--border); }
+  .subscene-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .sub-card { padding: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); cursor: pointer; }
+  .sub-card:hover { border-color: var(--accent); }
+  .sub-card.active { border-color: var(--accent); background: rgba(99,102,241,.05); }
+  .sub-name { font-size: 13px; font-weight: 700; }
+  .sub-angle { font-size: 11px; color: var(--text-muted); }
+  .light-preset { display: flex; gap: 8px; }
+  .light-chip { padding: 8px 14px; border: 1px solid var(--border); border-radius: 20px; font-size: 12px; cursor: pointer; background: var(--bg-card); }
+  .light-chip.active { border-color: var(--accent); background: rgba(99,102,241,.08); }
+  .form-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+</style></head><body>
+<div class="layout-sidebar">
+<div class="sidebar">
+  <div class="sidebar-item">🏠 首页</div><div class="sidebar-item">① 剧本创作</div><div class="sidebar-item active">② 素材库</div><div class="sidebar-item">③ 工作流</div><div class="sidebar-item">④ 工具箱</div><div class="sidebar-item">⑤ 导出</div>
+</div>
+<div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+<div style="padding:12px 20px;background:var(--bg-secondary);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+  <div class="flex items-center gap-3"><a href="#" style="color:var(--text-secondary);text-decoration:none">← 返回素材库</a><span style="font-size:15px;font-weight:700">🏠 编辑场景 · 林府书房</span><span class="badge badge-amber">室内</span></div>
+  <div class="flex gap-2"><button class="btn btn-sm btn-secondary">🔄 重置</button><button class="btn btn-sm btn-primary">💾 保存</button></div>
+</div>
+<div class="sd-layout">
+<div class="sd-left">
+  <div class="sd-preview">🏠</div>
+  <div class="section-title">📐 子场景 (3)</div>
+  <div class="subscene-grid">
+    <div class="sub-card active"><div class="sub-name">🛋️ 沙发区</div><div class="sub-angle">正面视角 · 暖光主光源</div></div>
+    <div class="sub-card"><div class="sub-name">🪟 窗边书桌</div><div class="sub-angle">侧光氛围 · 竹影投窗</div></div>
+    <div class="sub-card"><div class="sub-name">📚 书架角</div><div class="sub-angle">纵深构图 · 暗角补光</div></div>
+    <div class="sub-card" style="border-style:dashed;display:flex;align-items:center;justify-content:center;min-height:80px"><span style="font-size:16px;color:var(--text-muted)">+ 新增子场景</span></div>
+  </div>
+</div>
+<div class="sd-right">
+  <div class="form-section">
+    <div class="section-title">基本信息</div>
+    <div class="flex flex-col gap-3">
+      <div><div class="form-label">名称</div><input class="input" value="林府书房"></div>
+      <div><div class="form-label">类型</div><select class="input"><option>🏠 室内</option><option>🌳 室外</option><option>⚔️ 战斗</option></select></div>
+      <div><div class="form-label">描述</div><textarea class="input" rows="3">林启父亲的书房。檀木书桌靠窗，竹影透过纱帘投在地面，墙上挂一柄祖传断剑。</textarea></div>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="section-title">💡 光照设置</div>
+    <div class="flex flex-col gap-3">
+      <div><div class="form-label">预设</div><div class="light-preset"><span class="light-chip active">暖黄</span><span class="light-chip">日光</span><span class="light-chip">烛光</span><span class="light-chip">月光</span></div></div>
+      <div><div class="form-label">色温</div><input type="range" style="width:100%" value="3200"><div class="flex justify-between" style="font-size:10px;color:var(--text-muted)"><span>冷 (2000K)</span><span>3200K</span><span>暖 (8000K)</span></div></div>
+      <div><div class="form-label">亮度</div><input type="range" style="width:100%" value="75"></div>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="section-title">🎨 场景 Prompt</div>
+    <textarea class="input" rows="3">中式古典书房，檀木家具，窗外竹林摇曳，暖黄灯光，氛围安静庄严</textarea>
+    <div style="margin-top:8px"><div class="form-label">Negative</div><input class="input" value="现代电器, 塑料材质, 过多人, 杂乱"></div>
+  </div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

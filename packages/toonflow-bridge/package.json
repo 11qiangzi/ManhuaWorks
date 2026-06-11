@@ -1,0 +1,70 @@
+{
+  "name": "@manhuaworks/toonflow-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ManhuaWorks × Toonflow 兼容对接层 - 接收 Toonflow 格式输入并返回标准 mp4 输出 (W5 v1)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./adapters/input": {
+      "types": "./dist/adapters/input.d.ts",
+      "import": "./dist/adapters/input.js"
+    },
+    "./adapters/output": {
+      "types": "./dist/adapters/output.d.ts",
+      "import": "./dist/adapters/output.js"
+    },
+    "./adapters/progress": {
+      "types": "./dist/adapters/progress.d.ts",
+      "import": "./dist/adapters/progress.js"
+    },
+    "./client/http": {
+      "types": "./dist/client/http.d.ts",
+      "import": "./dist/client/http.js"
+    },
+    "./client/ws": {
+      "types": "./dist/client/ws.d.ts",
+      "import": "./dist/client/ws.js"
+    },
+    "./mapper/novel-to-toonflow": {
+      "types": "./dist/mapper/novel-to-toonflow.d.ts",
+      "import": "./dist/mapper/novel-to-toonflow.js"
+    },
+    "./mapper/toonflow-to-novel": {
+      "types": "./dist/mapper/toonflow-to-novel.d.ts",
+      "import": "./dist/mapper/toonflow-to-novel.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "echo \"(lint not configured yet)\" && exit 0",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "example:basic": "tsx src/examples/basic.ts",
+    "example:advanced": "tsx src/examples/advanced.ts"
+  },
+  "engines": {
+    "node": ">=20.10.0"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.5.13",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

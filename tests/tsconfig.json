@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": false,
+    "types": ["node", "vitest/globals"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["../apps/user-portal/src/*"],
+      "@collab/*": ["../services/collab-service/src/*"],
+      "@setup/*": ["./setup/*"],
+      "@fixtures/*": ["./fixtures/*"]
+    }
+  },
+  "include": [
+    "setup/**/*.ts",
+    "user-portal/**/*.ts",
+    "collab-service/**/*.ts",
+    "e2e/**/*.ts",
+    "integration/**/*.ts",
+    "fixtures/**/*.ts",
+    "./*.test.ts"
+  ],
+  "exclude": ["**/node_modules/**", "**/dist/**"]
+}

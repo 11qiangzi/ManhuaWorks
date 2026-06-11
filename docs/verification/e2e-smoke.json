@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-06-08T14:54:57.931Z",
+  "totalMs": 26,
+  "pass": 1,
+  "fail": 0,
+  "skip": 8,
+  "ports": {
+    "user": 8088,
+    "project": 8089,
+    "billing": 8090,
+    "collab": 8091,
+    "orchestrator": 8087
+  },
+  "live": {
+    "user": false,
+    "project": true,
+    "billing": false,
+    "collab": true,
+    "orchestrator": true
+  },
+  "results": [
+    {
+      "step": 1,
+      "status": "SKIP",
+      "ms": 0
+    },
+    {
+      "step": 2,
+      "status": "SKIP",
+      "ms": 0
+    },
+    {
+      "step": 3,
+      "status": "SKIP",
+      "ms": 14,
+      "http": 500,
+      "note": "need user fixture"
+    },
+    {
+      "step": 4,
+      "status": "SKIP",
+      "ms": 4,
+      "http": 404,
+      "note": "no fixture project"
+    },
+    {
+      "step": 5,
+      "status": "SKIP",
+      "ms": 0
+    },
+    {
+      "step": 6,
+      "status": "SKIP",
+      "ms": 3,
+      "http": 404,
+      "note": "no fixture project"
+    },
+    {
+      "step": 7,
+      "status": "PASS",
+      "ms": 1,
+      "http": 401
+    },
+    {
+      "step": 8,
+      "status": "SKIP",
+      "ms": 0
+    },
+    {
+      "step": 9,
+      "status": "SKIP",
+      "ms": 2,
+      "note": "ws error"
+    }
+  ],
+  "ctx": {
+    "email": "e2e_1780930497904_djodn0@test.local",
+    "password": "Pw!o0ddizy8A1",
+    "token": null,
+    "projectId": "00000000-0000-4000-8000-000000000001",
+    "episodeId": null,
+    "runId": "stub-run"
+  }
+}

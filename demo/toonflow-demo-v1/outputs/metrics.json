@@ -1,0 +1,20 @@
+{
+  "demoId": "toonflow-demo-v1",
+  "pipelineName": "novel-to-drama",
+  "workflowId": "wf-demo-001",
+  "jobId": "250ybu0g7fnk",
+  "runId": "run_aca37ba2",
+  "status": "done",
+  "finalVideoUrl": "http://127.0.0.1:18090/output/demo-episode-01.mp4",
+  "costUsd": 0.41999999999999993,
+  "totalLatencyMs": 14139,
+  "bridgeLatencyMs": 16361,
+  "shotCount": 5,
+  "audioUrl": "http://127.0.0.1:8090/output/narration.mp3",
+  "progressEvents": 13,
+  "mp4Path": "D:\\ManhuaWorks\\demo\\toonflow-demo-v1\\outputs\\demo-episode-01.mp4",
+  "mp4SizeBytes": 72581,
+  "mp4Sha256": "52a75e4097780666291f3baa1fd7fe038fd35d1fec61e1c6ea280aabe3da7767",
+  "inputLength": 196,
+  "timestamp": "2026-06-08T01:32:51.960Z"
+}

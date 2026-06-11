@@ -1,0 +1,25 @@
+{
+  "name": "manhuaworks-demo-toonflow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ManhuaWorks W1 demo: 跑通 Toonflow 1.1.7 (漫剧生成) 的本地演示部署。",
+  "author": "ManhuaWorks 漫改部 / 钟帧",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node src/server.ts",
+    "start:js": "node src/server.js",
+    "demo:input": "type demo-input\\第一章.txt",
+    "verify": "node src/server.ts --verify"
+  },
+  "dependencies": {
+    "tsx": "^4.19.2"
+  },
+  "comments": {
+    "toonflow": "Toonflow 1.1.7 完整副本位于 ./toonflow-app/，由 D:\\Toonflow\\Toonflow-app 复制而来（不修改原版）。其依赖已在 toonflow-app/node_modules 中单独补装。",
+    "port": "默认端口 10588（与 Toonflow 原版一致），可通过 PORT 环境变量覆盖。",
+    "purpose": "W1 交付：让 ManhuaWorks 评审能在本机一键启动 Toonflow，看到首页，粘贴小说片段走完一次「小说→漫剧」生成流程。"
+  }
+}

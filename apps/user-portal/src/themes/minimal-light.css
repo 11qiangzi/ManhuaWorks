@@ -1,0 +1,31 @@
+/* =========================================================
+ * Theme: Minimal Light · 极简白
+ * ManhuaWorks · 白天办公
+ * ========================================================= */
+
+.theme-minimal-light,
+.theme-light {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f8fa;
+  --bg-tertiary: #eef0f4;
+  --text-primary: #1a1d23;
+  --text-secondary: #6b7280;
+  --accent: #2563eb;
+  --accent-2: #1d4ed8;
+  --accent-soft: #60a5fa;
+  --accent-deep: #1e40af;
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --glow: 0 0 0 1px rgba(37, 99, 235, 0.18);
+  --code-bg: #f3f4f6;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --error: #ef4444;
+  --gradient: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  --font-display: -apple-system, BlinkMacSystemFont, 'PingFang SC',
+                  'Microsoft YaHei', sans-serif;
+}
+
+.theme-minimal-light .app-root::before { display: none; }

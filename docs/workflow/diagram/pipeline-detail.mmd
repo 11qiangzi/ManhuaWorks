@@ -1,0 +1,71 @@
+flowchart TD
+    Start([进入生成阶段<br/>shots.json 就绪]) --> Q1{主路径?}
+    
+    Q1 -->|1. novel-to-drama<br/>主力| P1[Prompt Optimizer]
+    P1 --> P1a{质量模式?}
+    P1a -->|Draft| P1b[SDXL-Turbo<br/>+ AnimateDiff-Light]
+    P1a -->|Standard| P1c[Flux-Dev<br/>+ SVD-XT]
+    P1a -->|Cinematic| P1d[Flux-Pro + Upscale<br/>+ CogVideoX-5B]
+    P1b --> P1e[Consistency Check]
+    P1c --> P1e
+    P1d --> P1e
+    P1e --> P1f[Upscaler]
+    P1f --> P1End[输出: 镜头视频]
+    
+    Q1 -->|2. character-replace| P2[Face/Body Replacer]
+    P2 --> P2a[IP-Adapter + ControlNet]
+    P2a --> P2b[时序一致性插帧]
+    P2b --> P2c[边缘羽化]
+    P2c --> P2End[输出: 替换视频]
+    
+    Q1 -->|3. style-transfer| P3[风格迁移]
+    P3 --> P3a{Style Shot<br/>vs IP-Adapter}
+    P3a --> P3b[关键帧锁定]
+    P3b --> P3c[帧间传播]
+    P3c --> P3d[防抖后处理]
+    P3d --> P3End[输出: 风格化视频]
+    
+    Q1 -->|4. auto-translate| P4[ASR 校验 / 翻译]
+    P4 --> P4a[LLM 翻译 12 语言]
+    P4a --> P4b[TTS 配音]
+    P4b --> P4c{口型同步<br/>质量?}
+    P4c -->|强| P4d[Wav2Lip]
+    P4c -->|弱| P4e[VideoReTalking<br/>手动校准]
+    P4d --> P4f[烧字幕]
+    P4e --> P4f
+    P4f --> P4End[输出: 多语言版]
+    
+    Q1 -->|5. episode-batch| P5[章节切分]
+    P5 --> P5a{并发 N}
+    P5a --> P5b[并发 novel-to-drama]
+    P5b --> P5c[集间一致性检查]
+    P5c --> P5d[集封面生成]
+    P5d --> P5e[打包 N 集]
+    P5e --> P5End[输出: 批量包]
+    
+    Q1 -->|6. multi-character-replace| P6[角色表 k:v]
+    P6 --> P6a[per 角色<br/>character-replace]
+    P6a --> P6b[区域冲突<br/>z-order 排序]
+    P6b --> P6c[一次合成]
+    P6c --> P6End[输出: 多角色版]
+    
+    P1End --> QGate{Quality Gate<br/>通过?}
+    P2End --> QGate
+    P3End --> QGate
+    P4End --> QGate
+    P5End --> QGate
+    P6End --> QGate
+    
+    QGate -->|是| Done([进入阶段4: 合成])
+    QGate -->|否| Fail[Failover Handler]
+    Fail --> QRetry{重试 ≤ 3?}
+    QRetry -->|是| Retry[回 pipeline 起点]
+    QRetry -->|否| Skip[跳过 + 标红<br/>进 QA 池]
+
+    style P1 fill:#fce4ec
+    style P2 fill:#e3f2fd
+    style P3 fill:#fff3e0
+    style P4 fill:#e8f5e9
+    style P5 fill:#f3e5f5
+    style P6 fill:#fff9c4
+    style Done fill:#c8e6c9

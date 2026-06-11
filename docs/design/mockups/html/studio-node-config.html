@@ -1,0 +1,51 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>工作流节点配置</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; }
+  .nc-layout { display: flex; flex: 1; overflow: hidden; }
+  .nc-canvas { flex: 1; background: radial-gradient(circle,rgba(99,102,241,.03) 1px,transparent 1px); background-size: 24px 24px; position: relative; }
+  .nnode { position: absolute; background: var(--bg-card); border: 2px solid var(--accent); border-radius: 10px; padding: 12px 14px; min-width: 150px; top: 60px; left: 60px; }
+  .nc-panel { width: 420px; background: var(--bg-secondary); border-left: 1px solid var(--border); padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+  .param-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+  .param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .code-block { background: #0d1117; border: 1px solid var(--border); border-radius: 6px; padding: 10px; font-family: var(--font-mono); font-size: 11px; color: #7ee787; overflow-x: auto; }
+</style></head><body>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border)">
+  <span style="font-size:14px;font-weight:600">🔄 我的第一个工作流</span>
+  <span style="font-size:11px;color:var(--text-muted)">· 节点: 图像生成</span>
+  <button class="btn btn-sm btn-primary" style="margin-left:auto">💾 保存</button>
+</div>
+<div class="nc-layout">
+  <div class="nc-canvas">
+    <div class="nnode"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="width:8px;height:8px;border-radius:50%;background:#fbbf24"></div><span style="font-size:12px;font-weight:600">图像生成</span></div><div style="font-size:10px;color:var(--text-muted)">🎨 风格迁移 · 已连接</div></div>
+  </div>
+  <div class="nc-panel">
+    <div class="section-title">🎨 图像生成节点配置</div>
+    <div class="param-section">
+      <div class="section-title">基本参数</div>
+      <div class="flex flex-col gap-3">
+        <div><div class="form-label">模型</div><select class="input"><option>Stable Diffusion XL</option><option>AnimeGen v3</option><option>ComicCraft Pro</option></select></div>
+        <div class="param-grid">
+          <div><div class="form-label">宽度</div><input class="input" value="1024"></div>
+          <div><div class="form-label">高度</div><input class="input" value="1024"></div>
+          <div><div class="form-label">步数</div><input class="input" value="30"></div>
+          <div><div class="form-label">CFG</div><input class="input" value="7.5"></div>
+        </div>
+        <div><div class="form-label">Seed</div><input class="input" value="-1 (随机)"></div>
+      </div>
+    </div>
+    <div class="param-section">
+      <div class="section-title">🎯 提示词</div>
+      <div><div class="form-label">Positive Prompt</div><textarea class="input" rows="3">{{character_prompt}}, {{scene_prompt}}, masterpiece, best quality, anime style</textarea></div>
+      <div style="margin-top:8px"><div class="form-label">Negative Prompt</div><input class="input" value="low quality, blurry, extra limbs, deformed"></div>
+    </div>
+    <div class="param-section">
+      <div class="section-title">⚙ 高级</div>
+      <div class="flex flex-col gap-3">
+        <div><div class="form-label">输入节点</div><div class="code-block">📥 角色提取 (node_char_extract)<br>📥 章节拆解 (node_chapter_split)</div></div>
+        <div><div class="form-label">输出格式</div><select class="input"><option>PNG (默认)</option><option>JPG</option><option>WebP</option></select></div>
+        <div class="flex items-center gap-2"><input type="checkbox" id="retry" checked><label for="retry" style="font-size:12px">失败自动重试 (最多 3 次)</label></div>
+        <div class="flex items-center gap-2"><input type="checkbox" id="batch" checked><label for="batch" style="font-size:12px">批量模式 (同时生成多张)</label></div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

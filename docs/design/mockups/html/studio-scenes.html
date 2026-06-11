@@ -1,0 +1,54 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>studio-scenes — 场景管理</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; }
+  .scene-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+  .scene-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; }
+  .scene-card:hover { border-color: var(--accent); }
+  .scene-preview { height: 80px; display: flex; align-items: center; justify-content: center; font-size: 36px; }
+  .scene-body { padding: 12px 14px; }
+  .scene-name { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .scene-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+</style></head><body>
+<div class="layout-sidebar">
+<div class="sidebar">
+  <div style="font-size:10px;color:var(--text-muted);padding:0 12px;margin-bottom:4px">创作全链路</div>
+  <div class="sidebar-item">🏠 首页</div><div class="sidebar-item">① 剧本创作</div><div class="sidebar-item active">② 素材库</div><div class="sidebar-item">③ 工作流</div><div class="sidebar-item">④ 工具箱</div><div class="sidebar-item">⑤ 导出</div>
+</div>
+<div class="main-content" style="display:flex;gap:20px;">
+<div style="flex:1">
+  <div class="flex justify-between items-center mb-4">
+    <div class="flex items-center gap-3"><span class="page-title">场景管理</span><div class="search-box"><input class="input" placeholder="搜索场景..." style="width:200px"></div></div>
+    <button class="btn btn-primary btn-sm">➕ 新场景</button>
+  </div>
+  <div class="flex gap-2 mb-4" style="flex-wrap:wrap">
+    <span class="chip active">全部</span><span class="chip">🏠 室内</span><span class="chip">🌳 室外</span><span class="chip">⚔️ 战斗</span><span class="chip">🎓 校园</span><span class="chip">🏙️ 都市</span><span class="chip">🏯 宫殿</span><span class="chip">🚀 赛博</span><span class="chip">✨ 幻境</span>
+  </div>
+  <div class="scene-grid">
+    <div class="scene-card"><div class="scene-preview" style="background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(245,158,11,.05))">🏠</div><div class="scene-body"><div class="scene-name">室内客厅 <span class="badge badge-amber">室内</span></div><div class="scene-meta">暖光 · 3 子场景</div></div></div>
+    <div class="scene-card"><div class="scene-preview" style="background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(16,185,129,.05))">🌳</div><div class="scene-body"><div class="scene-name">室外林地 <span class="badge badge-green">室外</span></div><div class="scene-meta">自然光 · 5 子场景</div></div></div>
+    <div class="scene-card"><div class="scene-preview" style="background:linear-gradient(135deg,rgba(239,68,68,.2),rgba(239,68,68,.05))">⚔️</div><div class="scene-body"><div class="scene-name">战斗擂场 <span class="badge badge-red">战斗</span></div><div class="scene-meta">动态光 · 2 子场景</div></div></div>
+    <div class="scene-card"><div class="scene-preview" style="background:linear-gradient(135deg,rgba(6,182,212,.2),rgba(6,182,212,.05))">🎓</div><div class="scene-body"><div class="scene-name">校园教室 <span class="badge badge-blue">校园</span></div><div class="scene-meta">日光 · 4 子场景</div></div></div>
+    <div class="scene-card"><div class="scene-preview" style="background:linear-gradient(135deg,rgba(59,130,246,.2),rgba(59,130,246,.05))">🏙️</div><div class="scene-body"><div class="scene-name">都市街道 <span class="badge badge-blue">都市</span></div><div class="scene-meta">霓虹 · 6 子场景</div></div></div>
+    <div class="scene-card"><div class="scene-preview" style="background:linear-gradient(135deg,rgba(251,191,36,.2),rgba(251,191,36,.05))">🏯</div><div class="scene-body"><div class="scene-name">古代宫殿 <span class="badge badge-amber">宫殿</span></div><div class="scene-meta">暖金 · 2 子场景</div></div></div>
+    <div class="scene-card"><div class="scene-preview" style="background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(139,92,246,.05))">🚀</div><div class="scene-body"><div class="scene-name">未来赛博城 <span class="badge badge-purple">赛博</span></div><div class="scene-meta">全息 · 3 子场景</div></div></div>
+    <div class="scene-card"><div class="scene-preview" style="background:linear-gradient(135deg,rgba(236,72,153,.2),rgba(236,72,153,.05))">✨</div><div class="scene-body"><div class="scene-name">幻想幻境 <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b4">幻境</span></div><div class="scene-meta">梦幻 · 4 子场景</div></div></div>
+  </div>
+</div>
+<div class="detail-panel">
+  <div class="detail-name">🏠 室内客厅</div>
+  <div class="detail-desc">温馨家庭客厅场景，包含沙发区、窗户、书架。适用于日常对话和室内剧情。</div>
+  <div class="detail-meta">
+    <div class="detail-item"><span class="detail-item-label">类型</span><span>室内</span></div>
+    <div class="detail-item"><span class="detail-item-label">光照</span><span>暖黄色调 · 窗户自然光</span></div>
+    <div class="detail-item"><span class="detail-item-label">子场景</span><span>3 个</span></div>
+    <div class="detail-item"><span class="detail-item-label">使用次数</span><span>12 次</span></div>
+  </div>
+  <div class="section-title">子场景</div>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="padding:6px 10px;background:var(--bg-tertiary);border-radius:6px;font-size:12px">🛋️ 沙发区 — 正面视角</div>
+    <div style="padding:6px 10px;background:var(--bg-tertiary);border-radius:6px;font-size:12px">🪟 窗边 — 侧光氛围</div>
+    <div style="padding:6px 10px;background:var(--bg-tertiary);border-radius:6px;font-size:12px">📚 书架角 — 纵深构图</div>
+  </div>
+</div>
+</div>
+</div>
+</body></html>

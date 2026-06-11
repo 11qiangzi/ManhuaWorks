@@ -1,0 +1,349 @@
+{
+  "generatedAt": "2026-06-08T14:55:05.462Z",
+  "repoRoot": "D:/ManhuaWorks",
+  "filter": {
+    "services": null
+  },
+  "totals": {
+    "files": 61,
+    "tests": 942,
+    "vitestConfigs": 9
+  },
+  "byTopDir": {
+    "apps": 109,
+    "packages": 168,
+    "services": 472,
+    "tests": 193
+  },
+  "byService": {
+    "apps/admin-portal": {
+      "files": 2,
+      "tests": 25
+    },
+    "apps/studio": {
+      "files": 3,
+      "tests": 84
+    },
+    "apps/user-portal": {
+      "files": 1,
+      "tests": 0
+    },
+    "packages/api-client": {
+      "files": 1,
+      "tests": 8
+    },
+    "packages/toonflow-bridge": {
+      "files": 2,
+      "tests": 22
+    },
+    "packages/ui": {
+      "files": 7,
+      "tests": 138
+    },
+    "services/ai-orchestrator": {
+      "files": 10,
+      "tests": 181
+    },
+    "services/billing-service": {
+      "files": 2,
+      "tests": 59
+    },
+    "services/collab-service": {
+      "files": 2,
+      "tests": 13
+    },
+    "services/monitor": {
+      "files": 5,
+      "tests": 66
+    },
+    "services/project-service": {
+      "files": 3,
+      "tests": 66
+    },
+    "services/user-service": {
+      "files": 4,
+      "tests": 87
+    },
+    "tests/collab-service": {
+      "files": 2,
+      "tests": 52
+    },
+    "tests/cross-service.test.ts": {
+      "files": 1,
+      "tests": 24
+    },
+    "tests/e2e": {
+      "files": 6,
+      "tests": 37
+    },
+    "tests/integration": {
+      "files": 7,
+      "tests": 23
+    },
+    "tests/resilience.test.ts": {
+      "files": 1,
+      "tests": 19
+    },
+    "tests/user-portal": {
+      "files": 2,
+      "tests": 38
+    }
+  },
+  "byType": {
+    "unit": 836,
+    "integration": 23,
+    "e2e": 37,
+    "smoke": 27,
+    "resilience": 19
+  },
+  "perFile": [
+    {
+      "file": "D:\\ManhuaWorks\\apps\\admin-portal\\src\\__tests__\\smoke.test.ts",
+      "tests": 19
+    },
+    {
+      "file": "D:\\ManhuaWorks\\apps\\admin-portal\\tests\\views.test.ts",
+      "tests": 6
+    },
+    {
+      "file": "D:\\ManhuaWorks\\apps\\studio\\tests\\character-consistency.test.ts",
+      "tests": 25
+    },
+    {
+      "file": "D:\\ManhuaWorks\\apps\\studio\\tests\\scene-match.test.ts",
+      "tests": 40
+    },
+    {
+      "file": "D:\\ManhuaWorks\\apps\\studio\\tests\\views.test.ts",
+      "tests": 19
+    },
+    {
+      "file": "D:\\ManhuaWorks\\apps\\user-portal\\tests\\l3l-views.test.mjs",
+      "tests": 0
+    },
+    {
+      "file": "D:\\ManhuaWorks\\packages\\api-client\\tests\\smoke.test.ts",
+      "tests": 8
+    },
+    {
+      "file": "D:\\ManhuaWorks\\packages\\toonflow-bridge\\tests\\bridge.test.ts",
+      "tests": 9
+    },
+    {
+      "file": "D:\\ManhuaWorks\\packages\\toonflow-bridge\\tests\\mapper.test.ts",
+      "tests": 13
+    },
+    {
+      "file": "D:\\ManhuaWorks\\packages\\ui\\tests\\animation.test.ts",
+      "tests": 18
+    },
+    {
+      "file": "D:\\ManhuaWorks\\packages\\ui\\tests\\breakpoint.test.ts",
+      "tests": 9
+    },
+    {
+      "file": "D:\\ManhuaWorks\\packages\\ui\\tests\\error.test.ts",
+      "tests": 42
+    },
+    {
+      "file": "D:\\ManhuaWorks\\packages\\ui\\tests\\loading.test.ts",
+      "tests": 16
+    },
+    {
+      "file": "D:\\ManhuaWorks\\packages\\ui\\tests\\notification.test.ts",
+      "tests": 14
+    },
+    {
+      "file": "D:\\ManhuaWorks\\packages\\ui\\tests\\theme.test.ts",
+      "tests": 18
+    },
+    {
+      "file": "D:\\ManhuaWorks\\packages\\ui\\tests\\toast.test.ts",
+      "tests": 21
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\ai-orchestrator\\src\\e2e\\novel-to-drama.test.ts",
+      "tests": 0
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\ai-orchestrator\\src\\embeddings\\model.test.ts",
+      "tests": 32
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\ai-orchestrator\\src\\embeddings\\role-consistency.test.ts",
+      "tests": 21
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\ai-orchestrator\\src\\embeddings\\store.test.ts",
+      "tests": 23
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\ai-orchestrator\\src\\image\\character-image.test.ts",
+      "tests": 17
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\ai-orchestrator\\src\\video\\composer.test.ts",
+      "tests": 26
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\ai-orchestrator\\src\\video\\generator.test.ts",
+      "tests": 24
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\ai-orchestrator\\src\\video\\pipeline.test.ts",
+      "tests": 11
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\ai-orchestrator\\src\\workflow\\engine.test.ts",
+      "tests": 17
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\ai-orchestrator\\src\\workflow\\pipeline-bridge.test.ts",
+      "tests": 10
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\billing-service\\tests\\billing.test.ts",
+      "tests": 15
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\billing-service\\tests\\cost-log.test.ts",
+      "tests": 44
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\collab-service\\tests\\collab.test.ts",
+      "tests": 9
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\collab-service\\tests\\realtime.test.ts",
+      "tests": 4
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\monitor\\tests\\alerts.test.ts",
+      "tests": 9
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\monitor\\tests\\app.test.ts",
+      "tests": 8
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\monitor\\tests\\collectors.test.ts",
+      "tests": 8
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\monitor\\tests\\metrics.test.ts",
+      "tests": 21
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\monitor\\tests\\rules.test.ts",
+      "tests": 20
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\project-service\\tests\\e2e.test.ts",
+      "tests": 1
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\project-service\\tests\\repos.test.ts",
+      "tests": 45
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\project-service\\tests\\routes.test.ts",
+      "tests": 20
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\user-service\\tests\\api-key.repo.test.ts",
+      "tests": 20
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\user-service\\tests\\api-key.test.ts",
+      "tests": 17
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\user-service\\tests\\auth.test.ts",
+      "tests": 17
+    },
+    {
+      "file": "D:\\ManhuaWorks\\services\\user-service\\tests\\crypto.test.ts",
+      "tests": 33
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\collab-service\\realtime.test.ts",
+      "tests": 19
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\collab-service\\routes.test.ts",
+      "tests": 33
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\cross-service.test.ts",
+      "tests": 24
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\e2e\\auth-flow.test.ts",
+      "tests": 5
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\e2e\\billing-flow.test.ts",
+      "tests": 2
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\e2e\\collab-flow.test.ts",
+      "tests": 3
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\e2e\\full-flow.test.ts",
+      "tests": 9
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\e2e\\novel-to-drama.test.ts",
+      "tests": 14
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\e2e\\project-flow.test.ts",
+      "tests": 4
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\integration\\byok-flow.e2e.test.ts",
+      "tests": 3
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\integration\\collab-realtime.e2e.test.ts",
+      "tests": 5
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\integration\\load-test.test.ts",
+      "tests": 5
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\integration\\novel-to-drama.e2e.test.ts",
+      "tests": 2
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\integration\\perf-bench.test.ts",
+      "tests": 2
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\integration\\trace.test.ts",
+      "tests": 3
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\integration\\workflow-run.e2e.test.ts",
+      "tests": 3
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\resilience.test.ts",
+      "tests": 19
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\user-portal\\components.test.ts",
+      "tests": 16
+    },
+    {
+      "file": "D:\\ManhuaWorks\\tests\\user-portal\\composables.test.ts",
+      "tests": 22
+    }
+  ],
+  "liveRuns": null,
+  "elapsedMs": 94,
+  "baseline": null,
+  "baselineDiff": null
+}

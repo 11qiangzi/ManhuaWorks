@@ -1,0 +1,124 @@
+# ManhuaWorks Monitor Stack
+# 4 服务：prometheus :9090 + grafana :3000 + alertmanager :9093 + monitor :8092
+version: '3.9'
+
+services:
+  # ============================================================
+  # Prometheus
+  # ============================================================
+  prometheus:
+    image: prom/prometheus:v2.55.0
+    container_name: mhw-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alertmanager/rules.yml:/etc/prometheus/rules.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - mhw-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ============================================================
+  # Grafana
+  # ============================================================
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: mhw-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_INSTALL_PLUGINS=
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      - mhw-net
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ============================================================
+  # AlertManager
+  # ============================================================
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: mhw-alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    networks:
+      - mhw-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ============================================================
+  # Monitor (本项目自家)
+  # ============================================================
+  monitor:
+    build:
+      context: ../services/monitor
+      dockerfile: Dockerfile
+    container_name: mhw-monitor
+    restart: unless-stopped
+    ports:
+      - "8092:8092"
+    environment:
+      - NODE_ENV=production
+      - PORT=8092
+      - LOG_LEVEL=info
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - FEISHU_WEBHOOK_URL=${FEISHU_WEBHOOK_URL}
+    depends_on:
+      - prometheus
+    networks:
+      - mhw-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8092/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+# ============================================================
+# Volumes
+# ============================================================
+volumes:
+  prometheus-data:
+  grafana-data:
+  alertmanager-data:
+
+# ============================================================
+# Networks
+# ============================================================
+networks:
+  mhw-net:
+    driver: bridge

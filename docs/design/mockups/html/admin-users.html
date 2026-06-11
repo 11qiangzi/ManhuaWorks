@@ -1,0 +1,51 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>admin-users — 用户管理</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; }
+  .layout { display: flex; height: 100vh; }
+  .sidebar { width: 220px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; padding: 16px 12px; gap: 3px; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; font-size: 13px; color: var(--text-secondary); text-decoration: none; }
+  .sidebar-item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+  .sidebar-item.active { background: rgba(99,102,241,.12); color: var(--accent); font-weight: 600; }
+  .sidebar-icon { font-size: 16px; width: 20px; text-align: center; }
+  .main { flex: 1; padding: 20px 28px; overflow-y: auto; }
+  .user-table { width: 100%; border-collapse: collapse; }
+  .user-table th { text-align: left; padding: 10px 14px; font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--border); }
+  .user-table td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .user-table tr:hover td { background: var(--bg-tertiary); }
+  .user-avatar { width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; margin-right: 8px; vertical-align: middle; }
+</style></head><body>
+<div class="layout">
+<div class="sidebar">
+  <div style="padding:8px 12px;font-size:14px;font-weight:700;margin-bottom:8px">⚙ 管理后台</div>
+  <div class="sidebar-item active"><span class="sidebar-icon">👥</span>用户管理</div>
+  <div class="sidebar-item"><span class="sidebar-icon">📁</span>项目审核</div>
+  <div class="sidebar-item"><span class="sidebar-icon">📊</span>数据看板</div>
+  <div class="sidebar-item"><span class="sidebar-icon">💰</span>计费管理</div>
+  <div class="sidebar-item"><span class="sidebar-icon">🛡️</span>内容审核</div>
+  <div class="sidebar-item"><span class="sidebar-icon">⚙</span>平台配置</div>
+  <div class="sidebar-item"><span class="sidebar-icon">📋</span>系统日志</div>
+</div>
+<div class="main">
+  <div class="flex justify-between items-center mb-4">
+    <div><span class="page-title">👥 用户管理</span><span style="font-size:13px;color:var(--text-muted);margin-left:8px">共 1,248 用户</span></div>
+    <div class="flex gap-2"><div class="search-box"><input class="input" placeholder="搜索用户/邮箱…" style="width:200px;font-size:12px;padding:6px 10px"></div><select class="input" style="width:120px;font-size:12px;padding:6px 10px"><option>全部状态</option><option>活跃</option><option>禁用</option></select><button class="btn btn-primary btn-sm">+ 新建</button></div>
+  </div>
+  <div class="grid-4 mb-4">
+    <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value">1,248</div><div class="stat-label">总用户</div></div>
+    <div class="stat-card"><div class="stat-icon">🟢</div><div class="stat-value">892</div><div class="stat-label">活跃 (7d)</div></div>
+    <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-value">156</div><div class="stat-label">Pro 会员</div></div>
+    <div class="stat-card"><div class="stat-icon">🚫</div><div class="stat-value">23</div><div class="stat-label">已禁用</div></div>
+  </div>
+  <table class="user-table">
+    <thead><tr><th>用户</th><th>邮箱</th><th>套餐</th><th>项目数</th><th>注册时间</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>
+      <tr><td><span class="user-avatar" style="background:var(--gradient);color:#fff">梁</span>梁总</td><td>creator@mhw.com</td><td><span class="badge badge-purple">Pro</span></td><td>12</td><td>2026-01-15</td><td><span class="badge badge-green">活跃</span></td><td class="flex gap-1"><button class="btn btn-xs btn-secondary">查看</button><button class="btn btn-xs btn-ghost">禁用</button></td></tr>
+      <tr><td><span class="user-avatar" style="background:#10b981;color:#fff">👩</span>林染</td><td>linran@mhw.com</td><td><span class="badge badge-purple">Pro</span></td><td>8</td><td>2026-02-10</td><td><span class="badge badge-green">活跃</span></td><td class="flex gap-1"><button class="btn btn-xs btn-secondary">查看</button><button class="btn btn-xs btn-ghost">禁用</button></td></tr>
+      <tr><td><span class="user-avatar" style="background:#f59e0b;color:#fff">👨</span>张三</td><td>zhangsan@gmail.com</td><td><span class="badge badge-blue">Free</span></td><td>2</td><td>2026-03-20</td><td><span class="badge badge-green">活跃</span></td><td class="flex gap-1"><button class="btn btn-xs btn-secondary">查看</button><button class="btn btn-xs btn-ghost">禁用</button></td></tr>
+      <tr><td><span class="user-avatar" style="background:#ef4444;color:#fff">🧔</span>李四</td><td>lisi@qq.com</td><td><span class="badge badge-blue">Free</span></td><td>0</td><td>2026-04-05</td><td><span class="badge badge-red">禁用</span></td><td class="flex gap-1"><button class="btn btn-xs btn-secondary">查看</button><button class="btn btn-xs" style="background:rgba(16,185,129,.1);color:#34d399">启用</button></td></tr>
+      <tr><td><span class="user-avatar" style="background:#6366f1;color:#fff">👧</span>王五</td><td>wangwu@mhw.com</td><td><span class="badge badge-purple">Studio</span></td><td>5</td><td>2026-05-10</td><td><span class="badge badge-green">活跃</span></td><td class="flex gap-1"><button class="btn btn-xs btn-secondary">查看</button><button class="btn btn-xs btn-ghost">禁用</button></td></tr>
+    </tbody>
+  </table>
+  <div class="flex justify-between items-center mt-4" style="font-size:12px;color:var(--text-muted)"><span>显示 1-5 / 1,248</span><div class="flex gap-2"><button class="btn btn-xs btn-ghost">《</button><button class="btn btn-xs btn-secondary">1</button><button class="btn btn-xs btn-ghost">2</button><button class="btn btn-xs btn-ghost">3</button><button class="btn btn-xs btn-ghost">…</button><button class="btn btn-xs btn-ghost">250</button><button class="btn btn-xs btn-ghost">》</button></div></div>
+</div>
+</div>
+</body></html>

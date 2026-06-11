@@ -1,0 +1,34 @@
+{
+  "name": "@manhuaworks/wechat-mp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ManhuaWorks 微信小程序客户端 (Taro 3 + Vue 3 脚手架, M2 起点)",
+  "scripts": {
+    "dev:weapp": "taro build --type weapp --watch",
+    "build:weapp": "taro build --type weapp",
+    "lint": "echo \"[wechat-mp] lint placeholder - eslint to be wired in M2\"",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tarojs/api": "^3.6.20",
+    "@tarojs/components": "^3.6.20",
+    "@tarojs/plugin-framework-vue3": "^3.6.20",
+    "@tarojs/runtime": "^3.6.20",
+    "@tarojs/shared": "^3.6.20",
+    "@tarojs/taro": "^3.6.20",
+    "axios": "^1.7.4",
+    "pinia": "^2.1.7",
+    "vue": "^3.4.21"
+  },
+  "devDependencies": {
+    "@tarojs/cli": "^3.6.20",
+    "@tarojs/webpack5-runner": "^3.6.20",
+    "@types/node": "^20.12.0",
+    "@vue/compiler-sfc": "^3.4.21",
+    "happy-dom": "^14.0.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.5.0",
+    "vue-tsc": "^2.0.13"
+  }
+}

@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1440"><title>web-home — ManhuaWorks 产品首页</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1440px; height: 900px; overflow: hidden; }
+  .hero { padding: 80px 32px 60px; text-align: center; }
+  .hero-inner { max-width: 720px; margin: 0 auto; }
+  .hero-eyebrow { font-size: 12px; letter-spacing: .15em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; font-weight: 600; }
+  .hero-title { font-size: 52px; font-weight: 800; line-height: 1.15; letter-spacing: -.025em; margin-bottom: 16px; }
+  .hero-title span { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero-sub { font-size: 16px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 36px; }
+  .hero-cta { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; }
+  .hero-theme-hint { font-size: 12px; color: var(--text-muted); }
+  .hero-theme-hint strong { color: var(--accent); }
+  .section { max-width: 1100px; margin: 0 auto; padding: 48px 32px; }
+  .section-header { text-align: center; margin-bottom: 32px; }
+  .section-header h2 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+  .section-header p { color: var(--text-secondary); font-size: 14px; }
+  .feature-card { text-align: left; padding: 28px 24px; }
+  .feature-icon { font-size: 36px; margin-bottom: 12px; }
+  .feature-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .feature-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+  .theme-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; }
+  .theme-card { padding: 16px; border-radius: var(--radius); background: var(--bg-card); border: 1px solid var(--border); text-align: center; cursor: pointer; transition: all .2s; }
+  .theme-card:hover { border-color: var(--accent); }
+  .theme-card.active { border-color: var(--accent); box-shadow: 0 0 16px var(--accent-glow); }
+  .theme-card-dot { width: 20px; height: 20px; border-radius: 50%; margin: 0 auto 6px; }
+  .theme-card-name { font-size: 12px; font-weight: 600; }
+</style></head><body>
+<header class="navbar">
+  <div class="navbar-brand"><div class="navbar-logo">M</div><span class="navbar-name">ManhuaWorks</span></div>
+  <div class="navbar-right">
+    <span style="font-size:12px;color:var(--text-muted)">🎨 创作橙</span>
+    <a href="#" class="btn btn-primary btn-sm">登录 / 注册</a>
+  </div>
+</header>
+<main>
+  <section class="hero">
+    <div class="hero-inner">
+      <p class="hero-eyebrow">创作者友好的漫改 SaaS 平台</p>
+      <h1 class="hero-title">文字一键<span>变漫剧</span></h1>
+      <p class="hero-sub">小说 → 分镜 → 角色 → 场景 → 视频，全流程 AI 辅助<br>从草根创作者到 IP 工厂，一站搞定</p>
+      <div class="hero-cta">
+        <a href="#" class="btn btn-primary">🚀 开始创作</a>
+        <a href="#" class="btn btn-secondary">查看示例作品</a>
+      </div>
+      <p class="hero-theme-hint">当前主题：<strong>创作橙</strong> · 灵感迸发的视觉体验</p>
+    </div>
+  </section>
+  <section class="section">
+    <div class="section-header"><h2>3 大核心能力</h2><p>从文字到视频，全流程 AI 助力</p></div>
+    <div class="grid-3">
+      <div class="card feature-card"><div class="feature-icon">📖</div><div class="feature-title">小说一键拆稿</div><div class="feature-desc">AI 自动识别章节结构、人物关系、关键场景，省下 80% 拆稿时间</div></div>
+      <div class="card feature-card"><div class="feature-icon">🎬</div><div class="feature-title">智能分镜生成</div><div class="feature-desc">从文本到镜头脚本，自动匹配景别 / 运镜 / 转场，导演视角重新讲故事</div></div>
+      <div class="card feature-card"><div class="feature-icon">🎥</div><div class="feature-title">图生视频工作流</div><div class="feature-desc">角色 + 场景 + 镜头三位一体，AI 出图直出视频片段，连贯不串戏</div></div>
+    </div>
+  </section>
+  <section class="section">
+    <div class="section-header"><h2>5 套主题 · 自由切换</h2><p>当前激活：创作橙 · 选择您喜欢的视觉风格</p></div>
+    <div class="theme-grid">
+      <div class="theme-card active"><div class="theme-card-dot" style="background:#f59e0b"></div><div class="theme-card-name">创作橙</div></div>
+      <div class="theme-card"><div class="theme-card-dot" style="background:#6366f1"></div><div class="theme-card-name">深蓝紫</div></div>
+      <div class="theme-card"><div class="theme-card-dot" style="background:#10b981"></div><div class="theme-card-name">青翠绿</div></div>
+      <div class="theme-card"><div class="theme-card-dot" style="background:#ef4444"></div><div class="theme-card-name">烈焰红</div></div>
+      <div class="theme-card"><div class="theme-card-dot" style="background:#ec4899"></div><div class="theme-card-name">樱花粉</div></div>
+    </div>
+  </section>
+  <footer class="footer"><p>© 2026 ManhuaWorks · 创作者友好的漫改 SaaS</p><p style="margin-top:4px"><a href="#" style="color:var(--text-muted)">服务条款</a> · <a href="#" style="color:var(--text-muted)">隐私政策</a> · <a href="#" style="color:var(--text-muted)">联系客服</a></p></footer>
+</main>
+</body></html>

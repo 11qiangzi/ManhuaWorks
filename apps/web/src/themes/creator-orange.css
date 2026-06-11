@@ -1,0 +1,40 @@
+/* =========================================================
+ * Theme: Creator Orange · 创作橙
+ * ManhuaWorks · 创作主题、激情、灵感迸发
+ * 灵感：Notion 红 / 剪映橙 / Figma 橙
+ * ========================================================= */
+
+.theme-creator-orange,
+.theme-orange {
+  --bg-primary: #fffaf5;        /* 主背景 — 暖白 */
+  --bg-secondary: #fff1e6;      /* 次背景 — 浅桃 */
+  --text-primary: #2d1810;      /* 主文字 — 焦糖 */
+  --text-secondary: #8b6f5c;    /* 次文字 — 驼色 */
+  --accent: #ff6b1a;            /* 强调色 — 烈橙 */
+  --accent-soft: #ff8c42;       /* 强调柔色 */
+  --accent-deep: #e55a0a;       /* 强调深色 */
+  --border: #f5d9c2;            /* 浅桃分割线 */
+  --border-strong: #e8b894;     /* 强分割线 */
+  --shadow: 0 4px 16px rgba(255, 107, 26, 0.12);
+  --glow: 0 0 0 3px rgba(255, 107, 26, 0.15);
+  --code-bg: #fdecd9;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --gradient: linear-gradient(135deg, #ff6b1a 0%, #ff3d6e 100%);
+  --font-display: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+}
+
+/* 创作橙特有：右上角斜光 — 像落日余晖 */
+.theme-creator-orange .app-root::after {
+  content: '';
+  position: fixed;
+  top: -120px;
+  right: -120px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(255, 107, 26, 0.18) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}

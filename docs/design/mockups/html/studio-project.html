@@ -1,0 +1,51 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>studio-project — 项目编辑器</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; }
+  .proj-header { margin-bottom: 20px; }
+  .proj-title-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .proj-name { font-size: 26px; font-weight: 800; }
+  .proj-meta { font-size: 12px; color: var(--text-muted); }
+  .proj-stats-bar { display: flex; gap: 20px; padding: 16px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; }
+  .proj-stat { text-align: center; }
+  .proj-stat-val { font-size: 22px; font-weight: 800; }
+  .proj-stat-label { font-size: 11px; color: var(--text-muted); }
+  .shot-list { display: flex; flex-direction: column; gap: 10px; }
+  .shot-card { display: flex; align-items: center; gap: 16px; padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; }
+  .shot-card:hover { border-color: var(--accent); }
+  .shot-num { width: 40px; text-align: center; font-size: 18px; font-weight: 800; color: var(--accent); flex-shrink: 0; }
+  .shot-preview { width: 100px; height: 60px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+  .shot-info { flex: 1; }
+  .shot-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .shot-meta { font-size: 11px; color: var(--text-muted); }
+  .status-filters { display: flex; gap: 8px; margin-bottom: 14px; }
+</style></head><body>
+<div class="layout-sidebar">
+<div class="sidebar">
+  <div style="font-size:10px;color:var(--text-muted);padding:0 12px;margin-bottom:4px">创作全链路</div>
+  <div class="sidebar-item">🏠 首页</div><div class="sidebar-item active">① 剧本创作</div><div class="sidebar-item">② 素材库</div><div class="sidebar-item">③ 工作流</div><div class="sidebar-item">④ 工具箱</div><div class="sidebar-item">⑤ 导出</div>
+</div>
+<div class="main-content">
+  <div class="proj-header">
+    <div class="proj-title-row"><span class="proj-name">🌙 长安月下</span><span class="badge badge-green">进行中</span></div>
+    <div class="proj-meta">创建于 2026-05-20 · 最近更新 2 小时前</div>
+    <div class="flex gap-2 mt-4"><button class="btn btn-primary btn-sm">✏️ 编辑</button><button class="btn btn-secondary btn-sm">📤 导出</button><button class="btn btn-ghost btn-sm">⚙ 设置</button></div>
+  </div>
+  <div class="proj-stats-bar">
+    <div class="proj-stat"><div class="proj-stat-val">24</div><div class="proj-stat-label">总镜头</div></div>
+    <div class="proj-stat"><div class="proj-stat-val">8:32</div><div class="proj-stat-label">总时长</div></div>
+    <div class="proj-stat"><div class="proj-stat-val" style="color:#f59e0b">4</div><div class="proj-stat-label">草稿</div></div>
+    <div class="proj-stat"><div class="proj-stat-val" style="color:#3b82f6">5</div><div class="proj-stat-label">脚本完成</div></div>
+    <div class="proj-stat"><div class="proj-stat-val" style="color:#a78bfa">8</div><div class="proj-stat-label">生成中</div></div>
+    <div class="proj-stat"><div class="proj-stat-val" style="color:#10b981">7</div><div class="proj-stat-label">已完成</div></div>
+  </div>
+  <div class="status-filters"><span class="chip active">全部</span><span class="chip">📝 草稿</span><span class="chip">📋 脚本完成</span><span class="chip">🎨 生成中</span><span class="chip">✅ 已完成</span></div>
+  <div class="section-title">分镜列表</div>
+  <div class="shot-list">
+    <div class="shot-card"><div class="shot-num">01</div><div class="shot-preview" style="background:linear-gradient(135deg,rgba(102,126,234,.2),rgba(118,75,162,.1))">🌙</div><div class="shot-info"><div class="shot-title">长安夜 — 第一幕开场 <span class="badge badge-green">已完成</span></div><div class="shot-meta">🏯 古代宫殿 · 夜景 · 24s <span style="color:var(--accent);margin-left:8px">4/4 机位完成</span></div></div></div>
+    <div class="shot-card"><div class="shot-num">02</div><div class="shot-preview" style="background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(217,119,6,.1))">🏠</div><div class="shot-info"><div class="shot-title">书房对白 — 林启与父亲 <span class="badge badge-amber">生成中</span></div><div class="shot-meta">🏠 室内客厅 · 暖光 · 18s <span style="color:var(--accent);margin-left:8px">2/3 机位完成</span></div></div></div>
+    <div class="shot-card"><div class="shot-num">03</div><div class="shot-preview" style="background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(16,185,129,.05))">🌳</div><div class="shot-info"><div class="shot-title">后山练剑 — 晨光中觉醒 <span class="badge badge-blue">脚本完成</span></div><div class="shot-meta">🌳 室外林地 · 晨光 · 30s</div></div></div>
+    <div class="shot-card"><div class="shot-num">04</div><div class="shot-preview" style="background:linear-gradient(135deg,rgba(239,68,68,.2),rgba(239,68,68,.05))">⚔️</div><div class="shot-info"><div class="shot-title">初遇暗影尊 — 第一战 <span class="badge badge-amber">草稿</span></div><div class="shot-meta">⚔️ 战斗擂场 · 动态光 · 36s</div></div></div>
+    <div class="shot-card"><div class="shot-num">05</div><div class="shot-preview" style="background:linear-gradient(135deg,rgba(251,191,36,.2),rgba(251,191,36,.05))">🏙️</div><div class="shot-info"><div class="shot-title">长安集市 — 偶遇苏婉 <span class="badge badge-green">已完成</span></div><div class="shot-meta">🏙️ 都市街道 · 日景 · 20s</div></div></div>
+  </div>
+</div>
+</div>
+</body></html>

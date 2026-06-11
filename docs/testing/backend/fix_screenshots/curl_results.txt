@@ -1,0 +1,8 @@
+﻿C-016 | Studio Vite | GET / | Status: 200 | HTML: YES | ✅ PASS
+API-004 | Auth | 带Token=✅ 无Token=✅ 错Token=✅ | ✅ PASS
+API-005 | POST /projects | Status: 201 | ✅ PASS
+LEG-002 | api-keys | GET=✅ POST=✅ | ✅ PASS
+LEG-004 | subscriptions | GET plans=✅ GET me=✅ | ✅ PASS
+LEG-006 | jobs | POST=✅ GET=✅ | ✅ PASS
+API-006 | Rate Limit | X-RateLimit-Limit: 50 req/min | ✅ PASS
+LEG-003 | assets | GET /assets Status: 200 | ✅ PASS

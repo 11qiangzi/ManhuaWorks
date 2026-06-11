@@ -1,0 +1,151 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>studio-home — Studio 首页</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; }
+  .hero-banner { display: flex; align-items: center; gap: 48px; padding: 36px 40px; margin-bottom: 28px; background: linear-gradient(135deg,rgba(102,126,234,.08),rgba(118,75,162,.08)); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+  .hero-left { flex:1; } .hero-left h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+  .hero-left p { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; max-width: 480px; }
+  .hero-actions { display: flex; gap: 10px; }
+  .hero-right { width: 160px; height: 120px; flex-shrink: 0; position: relative; display: flex; align-items: center; justify-content: center; }
+  .hero-orb { position: absolute; border-radius: 50%; filter: blur(30px); opacity: .3; }
+  .hero-orb-1 { width: 80px; height: 80px; background: #667eea; top: 5px; left: 20px; }
+  .hero-orb-2 { width: 60px; height: 60px; background: #764ba2; top: 40px; left: 60px; }
+  .hero-orb-3 { width: 50px; height: 50px; background: #34d399; top: 10px; right: 10px; }
+  .hero-icon { font-size: 40px; position: relative; z-index: 1; }
+  .mode-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .choice-card { padding: 28px 24px; border-radius: var(--radius-lg); border: 2px solid var(--border); cursor: pointer; transition: all .25s; display: flex; gap: 18px; }
+  .choice-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+  .choice-card.auto { background: linear-gradient(135deg,rgba(102,126,234,.06),rgba(118,75,162,.04)); }
+  .choice-card.auto:hover, .choice-card.auto.active { border-color: var(--accent); }
+  .choice-card.pro { background: linear-gradient(135deg,rgba(245,158,11,.06),rgba(217,119,6,.04)); }
+  .choice-card.pro:hover, .choice-card.pro.active { border-color: #f59e0b; }
+  .choice-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; }
+  .choice-body { flex:1; }
+  .choice-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .choice-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 10px; }
+  .choice-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .choice-sub { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .choice-sub-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+  .sub-options { display: flex; gap: 8px; }
+  .sub-opt { flex:1; padding: 12px; border-radius: 8px; background: var(--bg-tertiary); border: 1px solid var(--border); cursor: pointer; text-align: center; font-size: 12px; transition: all .15s; }
+  .sub-opt:hover { border-color: var(--accent); }
+  .sub-opt.active { border-color: var(--accent); background: rgba(99,102,241,.08); }
+  .sub-opt-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+  .sub-opt-name { font-weight: 600; }
+  .sub-opt-desc { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+  .pipeline { display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 24px; }
+  .pipeline-step { flex:1; padding: 16px 14px; background: var(--bg-card); border-right: 1px solid var(--border); text-decoration: none; color: inherit; }
+  .pipeline-step:last-child { border-right: none; }
+  .pipeline-num { width: 26px; height: 26px; border-radius: 50%; background: rgba(99,102,241,.15); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+  .pipeline-title { font-size: 13px; font-weight: 700; } .pipeline-sub { font-size: 10px; color: var(--text-muted); }
+  .pipeline-desc { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+  .announce-row { display: flex; gap: 16px; }
+  .announce-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .announce-tag { padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; flex-shrink: 0; }
+  .announce-tag.green { background: rgba(52,211,153,.12); color: #34d399; }
+  .announce-tag.purple { background: rgba(139,92,246,.12); color: #a78bfa; }
+  .announce-tag.amber { background: rgba(251,191,36,.12); color: #fbbf24; }
+  .announce-date { font-size: 10px; color: var(--text-muted); flex-shrink: 0; }
+  .demo-card { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--bg-card); }
+  .demo-thumb { height: 50px; display: flex; align-items: center; justify-content: center; position: relative; }
+  .demo-play { font-size: 18px; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.5); }
+  .demo-info { padding: 6px 8px; display: flex; justify-content: space-between; font-size: 10px; }
+  .demo-name { font-weight: 600; } .demo-style { color: var(--text-muted); }
+  .guide-step { display: flex; gap: 14px; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); }
+  .guide-num { width: 32px; height: 32px; border-radius: 50%; background: var(--gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+  .guide-title { font-size: 14px; font-weight: 700; } .guide-desc { font-size: 12px; color: var(--text-secondary); }
+</style></head><body>
+<div class="layout-sidebar">
+<div class="sidebar">
+  <div style="font-size:10px;color:var(--text-muted);padding:0 12px;margin-bottom:4px">创作全链路</div>
+  <div class="sidebar-item active"><span class="sidebar-num">🏠</span> 首页</div>
+  <div class="sidebar-item"><span class="sidebar-num">①</span> 剧本创作</div>
+  <div class="sidebar-item"><span class="sidebar-num">②</span> 素材库</div>
+  <div class="sidebar-item"><span class="sidebar-num">③</span> 工作流</div>
+  <div class="sidebar-item"><span class="sidebar-num">④</span> 工具箱</div>
+  <div class="sidebar-item"><span class="sidebar-num">⑤</span> 导出</div>
+</div>
+<div class="main-content">
+  <div class="hero-banner">
+    <div class="hero-left"><h2>欢迎使用 ManhuaWorks</h2><p>AI 驱动的漫画创作平台 — 从小说到成片，一站式全链路创作</p><div class="hero-actions"><a href="#" class="btn btn-primary">🚀 开始创作</a><a href="#" class="btn btn-secondary">查看项目列表 →</a></div></div>
+    <div class="hero-right"><div class="hero-orb hero-orb-1"></div><div class="hero-orb hero-orb-2"></div><div class="hero-orb hero-orb-3"></div><div class="hero-icon">🎨</div></div>
+  </div>
+  <!-- ===== 🆕 创作方式选择 ===== -->
+  <div class="section-title">🎯 选择创作方式</div>
+  <div class="mode-choice">
+    <!-- 自动流程 -->
+    <div class="choice-card auto active">
+      <div class="choice-icon" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff">🚀</div>
+      <div class="choice-body">
+        <div class="choice-name">自动流程</div>
+        <div class="choice-desc">我们预配好的小说 → 漫剧流水线，上传小说后跟着步骤走，AI 自动完成角色提取、分镜生成、视频合片。适合快速出片。</div>
+        <div class="choice-tags"><span class="badge badge-green">推荐</span><span class="badge badge-blue">零门槛</span><span class="badge badge-purple">一键出片</span></div>
+        <div class="choice-sub">
+          <div class="choice-sub-label">选择输出风格</div>
+          <div class="sub-options">
+            <div class="sub-opt active"><span class="sub-opt-icon">🎨</span><span class="sub-opt-name">精品漫</span><div class="sub-opt-desc">高画质角色</div></div>
+            <div class="sub-opt"><span class="sub-opt-icon">🎙️</span><span class="sub-opt-name">解说漫</span><div class="sub-opt-desc">故事驱动型</div></div>
+            <div class="sub-opt"><span class="sub-opt-icon">🎬</span><span class="sub-opt-name">真人剧</span><div class="sub-opt-desc">写实风格</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 自主配置 -->
+    <div class="choice-card pro">
+      <div class="choice-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff">🔧</div>
+      <div class="choice-body">
+        <div class="choice-name">自主配置</div>
+        <div class="choice-desc">打开工作流设计器，自己拖拽节点搭建管线。自定义每一步的模型、参数、Prompt。适合对质量有要求、有 AI 经验的创作者。</div>
+        <div class="choice-tags"><span class="badge badge-amber">进阶</span><span class="badge badge-red">完全可控</span><span class="badge badge-purple">支持 BYOK</span></div>
+        <div class="choice-sub">
+          <div class="choice-sub-label">你可以自定义</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--text-secondary)">
+            <span style="padding:4px 10px;border-radius:12px;background:var(--bg-tertiary);border:1px solid var(--border)">🤖 每步选模型</span>
+            <span style="padding:4px 10px;border-radius:12px;background:var(--bg-tertiary);border:1px solid var(--border)">📝 Prompt 调优</span>
+            <span style="padding:4px 10px;border-radius:12px;background:var(--bg-tertiary);border:1px solid var(--border)">🔗 节点编排</span>
+            <span style="padding:4px 10px;border-radius:12px;background:var(--bg-tertiary);border:1px solid var(--border)">⚙ 参数细调</span>
+            <span style="padding:4px 10px;border-radius:12px;background:var(--bg-tertiary);border:1px solid var(--border)">🔄 条件分支</span>
+            <span style="padding:4px 10px;border-radius:12px;background:var(--bg-tertiary);border:1px solid var(--border)">📊 批量生成</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="section-title">📋 创作全链路</div>
+  <div class="pipeline">
+    <div class="pipeline-step"><div class="pipeline-num">1</div><div class="pipeline-title">📖 故事</div><div class="pipeline-sub">小说/剧本</div><div class="pipeline-desc">AI 智能生成剧本</div></div>
+    <div class="pipeline-step"><div class="pipeline-num">2</div><div class="pipeline-title">🎭 素材</div><div class="pipeline-sub">角色+场景</div><div class="pipeline-desc">管理主视觉图和设定集</div></div>
+    <div class="pipeline-step"><div class="pipeline-num">3</div><div class="pipeline-title">🎞️ 分镜</div><div class="pipeline-sub">分镜生成</div><div class="pipeline-desc">宫格/多机位可选</div></div>
+    <div class="pipeline-step"><div class="pipeline-num">4</div><div class="pipeline-title">🎥 视频</div><div class="pipeline-sub">视频生成</div><div class="pipeline-desc">音画同步/首尾帧控制</div></div>
+    <div class="pipeline-step"><div class="pipeline-num">5</div><div class="pipeline-title">🔧 后期</div><div class="pipeline-sub">工具处理</div><div class="pipeline-desc">智能剪辑/高清/字幕</div></div>
+    <div class="pipeline-step"><div class="pipeline-num">6</div><div class="pipeline-title">📤 导出</div><div class="pipeline-sub">成品输出</div><div class="pipeline-desc">多格式导出/下载</div></div>
+  </div>
+  <div style="display:flex;gap:20px;">
+    <div style="flex:1">
+      <div class="section-title">📢 更新公告</div>
+      <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+        <div class="announce-item"><span class="announce-tag green">新功能</span><span>首页全新改版，创作链路一目了然</span><span class="announce-date">06-09</span></div>
+        <div class="announce-item"><span class="announce-tag purple">新模型</span><span>工作流新增 novel-to-drama 剧本生成节点</span><span class="announce-date">06-05</span></div>
+        <div class="announce-item"><span class="announce-tag amber">优化</span><span>角色管理接入真 API，支持团队协作</span><span class="announce-date">06-01</span></div>
+      </div>
+    </div>
+    <div style="flex:1">
+      <div class="section-title">🎬 素材案例</div>
+      <div class="grid-3" style="grid-template-columns:repeat(3,1fr)">
+        <div class="demo-card"><div class="demo-thumb" style="background:#f472b6"><span class="demo-play">▶</span></div><div class="demo-info"><span class="demo-name">逆袭的A班少女</span><span class="demo-style">校园</span></div></div>
+        <div class="demo-card"><div class="demo-thumb" style="background:#60a5fa"><span class="demo-play">▶</span></div><div class="demo-info"><span class="demo-name">鲲鹏</span><span class="demo-style">玄幻</span></div></div>
+        <div class="demo-card"><div class="demo-thumb" style="background:#34d399"><span class="demo-play">▶</span></div><div class="demo-info"><span class="demo-name">我的代码恋人</span><span class="demo-style">都市</span></div></div>
+        <div class="demo-card"><div class="demo-thumb" style="background:#fbbf24"><span class="demo-play">▶</span></div><div class="demo-info"><span class="demo-name">天道刃</span><span class="demo-style">武侠</span></div></div>
+        <div class="demo-card"><div class="demo-thumb" style="background:#a78bfa"><span class="demo-play">▶</span></div><div class="demo-info"><span class="demo-name">觉醒时刻</span><span class="demo-style">异能</span></div></div>
+        <div class="demo-card"><div class="demo-thumb" style="background:#f87171"><span class="demo-play">▶</span></div><div class="demo-info"><span class="demo-name">开局拒入宫斗剧本</span><span class="demo-style">古装</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="section-title mt-4">💡 新手指南</div>
+  <div class="grid-4">
+    <div class="guide-step"><div class="guide-num">1</div><div><div class="guide-title">新建项目</div><div class="guide-desc">从首页选择创作模式</div></div></div>
+    <div class="guide-step"><div class="guide-num">2</div><div><div class="guide-title">准备素材</div><div class="guide-desc">设置角色主视觉图和场景</div></div></div>
+    <div class="guide-step"><div class="guide-num">3</div><div><div class="guide-title">生成分镜</div><div class="guide-desc">AI 智能分镜，选风格机位</div></div></div>
+    <div class="guide-step"><div class="guide-num">4</div><div><div class="guide-title">导出成品</div><div class="guide-desc">预览成片，一键导出视频</div></div></div>
+  </div>
+</div>
+</div>
+</body></html>

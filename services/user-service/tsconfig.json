@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "lib": ["ES2022"],
+    "outDir": "dist",
+    "rootDir": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": false,
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": false,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": false,
+    "types": ["node"]
+  },
+  "include": [
+    "src/config/**/*.ts",
+    "src/middleware/**/*.ts",
+    "src/models/**/*.ts",
+    "src/repositories/**/*.ts",
+    "src/repos/**/*.ts",
+    "src/services/**/*.ts",
+    "src/controllers/**/*.ts",
+    "src/utils/**/*.ts",
+    "src/routes/index.ts",
+    "src/routes/api-key.routes.ts",
+    "src/app.ts",
+    "src/index.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/db/**",
+    "src/lib/**"
+  ]
+}

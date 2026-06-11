@@ -1,0 +1,109 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>批量生成设置</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; display: flex; flex-direction: column; }
+  .bg-toolbar { display: flex; align-items: center; gap: 10px; padding: 8px 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
+  .bg-layout { display: flex; flex: 1; overflow: hidden; }
+  .bg-main { flex: 1; padding: 20px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+  .bg-preview { width: 400px; background: var(--bg-secondary); border-left: 1px solid var(--border); padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+  .config-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  .param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .seed-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .seed-chip { padding: 5px 12px; border-radius: 16px; background: var(--bg-tertiary); border: 1px solid var(--border); font-family: var(--font-mono); font-size: 11px; cursor: pointer; }
+  .seed-chip.active { border-color: var(--accent); background: rgba(99,102,241,.08); }
+  .prompt-variant { padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); margin-bottom: 8px; }
+  .style-row { display: flex; gap: 8px; }
+  .style-chip { padding: 8px 14px; border-radius: 8px; background: var(--bg-tertiary); border: 1px solid var(--border); cursor: pointer; font-size: 12px; }
+  .style-chip.active { border-color: var(--accent); background: rgba(99,102,241,.08); }
+  .style-chip:hover { border-color: var(--border-strong); }
+  .preview-card { padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; }
+  .preview-thumb { aspect-ratio: 16/9; border-radius: 6px; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-size: 32px; margin-bottom: 8px; }
+  .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .batch-summary { padding: 16px; background: rgba(99,102,241,.06); border: 1px solid var(--accent); border-radius: var(--radius); }
+  .batch-summary-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+</style></head><body>
+<div class="bg-toolbar">
+  <span style="font-size:13px;font-weight:700">📊 批量生成 · 图像生成节点</span>
+  <span style="font-size:10px;color:var(--text-muted);margin-left:4px">项目：长安月下 · 第 2 镜</span>
+  <button class="btn btn-sm btn-primary" style="margin-left:auto">🚀 开始批量生成</button>
+</div>
+<div class="bg-layout">
+<div class="bg-main">
+  <!-- Seed 批次 -->
+  <div class="config-card">
+    <div class="section-title">🎲 Seed 批次</div>
+    <p style="font-size:11px;color:var(--text-muted);margin-top:-6px;margin-bottom:10px">不同 Seed 产生不同构图和细节，同一 Prompt 多版本择优</p>
+    <div class="seed-chips mb-3">
+      <span class="seed-chip active">42</span><span class="seed-chip">128</span><span class="seed-chip">256</span><span class="seed-chip">512</span><span class="seed-chip">1024</span><span class="seed-chip">2048</span><span class="seed-chip">4096</span><span class="seed-chip">8192</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;font-size:11px">
+      <button class="btn btn-xs btn-secondary">+ 随机 Seed</button>
+      <span style="color:var(--text-muted)">每 Seed 生成 1 张，共 <strong style="color:var(--text-primary)">8 张</strong></span>
+    </div>
+  </div>
+
+  <!-- Prompt 变体 -->
+  <div class="config-card">
+    <div class="section-title">📝 Prompt 变体</div>
+    <p style="font-size:11px;color:var(--text-muted);margin-top:-6px;margin-bottom:10px">同一场景不同 Prompt 描述，对比生成效果</p>
+    <div class="prompt-variant" style="border-color:var(--accent)">
+      <div class="flex justify-between items-center mb-2"><span class="badge badge-purple">主 Prompt</span><button class="btn btn-xs btn-ghost">✏️</button></div>
+      <div style="font-size:11px;font-family:var(--font-mono);color:var(--text-secondary)">少年剑修，白衣黑发，眼神坚定，古风仙侠风格，masterpiece</div>
+    </div>
+    <div class="prompt-variant">
+      <div class="flex justify-between items-center mb-2"><span class="badge badge-amber">变体 1</span><button class="btn btn-xs btn-ghost">✏️</button></div>
+      <div style="font-size:11px;font-family:var(--font-mono);color:var(--text-secondary)">少年剑修，白衣黑发，眼神坚定，<span style="color:#60a5fa">水墨画风，留白构图</span></div>
+    </div>
+    <div class="prompt-variant">
+      <div class="flex justify-between items-center mb-2"><span class="badge badge-amber">变体 2</span><button class="btn btn-xs btn-ghost">✏️</button></div>
+      <div style="font-size:11px;font-family:var(--font-mono);color:var(--text-secondary)">少年剑修，白衣黑发，<span style="color:#60a5fa">特写镜头，表情微怒，光影对比强</span></div>
+    </div>
+    <button class="btn btn-xs btn-secondary" style="width:100%">+ 添加 Prompt 变体</button>
+  </div>
+
+  <!-- 风格并行 -->
+  <div class="config-card">
+    <div class="section-title">🎨 多风格并行</div>
+    <p style="font-size:11px;color:var(--text-muted);margin-top:-6px;margin-bottom:10px">同一镜头用不同风格同时生成，方便对比选优</p>
+    <div class="style-row">
+      <span class="style-chip active">🎌 动漫 (默认)</span>
+      <span class="style-chip">🖋️ 水墨</span>
+      <span class="style-chip">📷 写实</span>
+      <span class="style-chip">✏️ 素描</span>
+      <span class="style-chip">🎮 赛博</span>
+    </div>
+  </div>
+
+  <!-- 批量汇总 -->
+  <div class="batch-summary">
+    <div class="section-title" style="margin-bottom:8px">📦 批量汇总</div>
+    <div class="batch-summary-row"><span>Seed 数</span><span>8</span></div>
+    <div class="batch-summary-row"><span>Prompt 变体数</span><span>3</span></div>
+    <div class="batch-summary-row"><span>风格数</span><span>1</span></div>
+    <div class="batch-summary-row" style="border-top:1px solid var(--border);padding-top:6px;margin-top:4px;font-weight:700"><span>预计总量</span><span style="color:var(--accent);font-size:16px">24 张</span></div>
+    <div class="batch-summary-row" style="margin-top:2px"><span>预计耗时</span><span>~3 分钟</span></div>
+    <div class="batch-summary-row"><span>预计积分</span><span>24 × $0.015 = $0.36</span></div>
+  </div>
+</div>
+
+<!-- 预览面板 -->
+<div class="bg-preview">
+  <div class="section-title">🖼️ 预览排列</div>
+  <p style="font-size:10px;color:var(--text-muted);margin-top:-8px;margin-bottom:8px">8 Seed × 3 Prompt × 1 风格 = 24 张</p>
+  <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text-muted);margin-bottom:8px">
+    <span class="chip active">全部</span><span class="chip">Seed 42</span><span class="chip">主 Prompt</span>
+  </div>
+  <div class="preview-grid">
+    <div class="preview-card"><div class="preview-thumb">🗡️</div><div style="font-size:10px;color:var(--text-muted);text-align:center">S42 · P主 · 动漫</div></div>
+    <div class="preview-card"><div class="preview-thumb">🗡️</div><div style="font-size:10px;color:var(--text-muted);text-align:center">S128 · P主 · 动漫</div></div>
+    <div class="preview-card"><div class="preview-thumb">🗡️</div><div style="font-size:10px;color:var(--text-muted);text-align:center">S42 · P变1 · 动漫</div></div>
+    <div class="preview-card"><div class="preview-thumb">🗡️</div><div style="font-size:10px;color:var(--text-muted);text-align:center">S256 · P主 · 动漫</div></div>
+    <div class="preview-card"><div class="preview-thumb">🗡️</div><div style="font-size:10px;color:var(--text-muted);text-align:center">S128 · P变2 · 动漫</div></div>
+    <div class="preview-card"><div class="preview-thumb">🗡️</div><div style="font-size:10px;color:var(--text-muted);text-align:center">S42 · P变2 · 动漫</div></div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:4px">
+    <button class="btn btn-xs btn-ghost">《 上一页</button>
+    <span style="font-size:10px;color:var(--text-muted)">第 1/4 页</span>
+    <button class="btn btn-xs btn-ghost">下一页 》</button>
+  </div>
+</div>
+</div>
+</body></html>

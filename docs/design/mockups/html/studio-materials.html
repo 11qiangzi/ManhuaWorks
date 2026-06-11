@@ -1,0 +1,92 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>studio-materials — 素材库（按作品）</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; }
+  .proj-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding: 10px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); }
+  .proj-selector { display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 8px; background: rgba(99,102,241,.1); border: 1px solid var(--accent); color: var(--accent); font-size: 14px; font-weight: 600; cursor: pointer; }
+  .proj-selector .arrow { font-size: 10px; margin-left: 4px; }
+  .proj-meta { font-size: 12px; color: var(--text-muted); }
+  .proj-list { display: flex; gap: 6px; margin-left: auto; }
+  .proj-chip { padding: 6px 14px; border-radius: 20px; background: var(--bg-tertiary); border: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); cursor: pointer; transition: all .15s; }
+  .proj-chip.active { background: rgba(99,102,241,.12); border-color: var(--accent); color: var(--accent); }
+  .proj-chip:hover { border-color: var(--border-strong); }
+  .mat-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 14px; padding: 0 4px; }
+  .mat-tab { padding: 10px 24px; font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; }
+  .mat-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .mat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+  .mat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; }
+  .mat-card:hover { border-color: var(--accent); }
+  .mat-preview { height: 120px; display: flex; align-items: center; justify-content: center; font-size: 48px; position: relative; }
+  .mat-model-badge { position: absolute; bottom: 8px; left: 8px; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,.6); color: #fff; font-size: 10px; font-family: var(--font-mono); }
+  .mat-body { padding: 12px; }
+  .mat-name { font-size: 14px; font-weight: 700; }
+  .mat-tags { display: flex; gap: 4px; margin-top: 4px; }
+  .proj-divider { display: flex; align-items: center; gap: 8px; margin: 20px 0 12px; }
+  .proj-divider::before, .proj-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .proj-divider span { font-size: 11px; color: var(--text-muted); padding: 0 8px; }
+</style></head><body>
+<div class="layout-sidebar">
+<div class="sidebar">
+  <div style="font-size:10px;color:var(--text-muted);padding:0 12px;margin-bottom:4px">创作全链路</div>
+  <div class="sidebar-item">🏠 首页</div><div class="sidebar-item">① 剧本创作</div><div class="sidebar-item active">② 素材库</div><div class="sidebar-item">③ 工作流</div><div class="sidebar-item">④ 工具箱</div><div class="sidebar-item">⑤ 导出</div>
+</div>
+<div class="main-content">
+  <!-- 作品选择器 -->
+  <div class="proj-bar">
+    <span style="font-size:12px;color:var(--text-muted);font-weight:500">📁 当前作品</span>
+    <div class="proj-selector">🌙 长安月下 <span class="arrow">▾</span></div>
+    <span class="proj-meta">古风宫廷 · 24 集 · 角色 6 · 场景 8 · 道具 12 · 音色 4</span>
+    <div class="proj-list">
+      <div class="proj-chip active">🌙 长安月下</div>
+      <div class="proj-chip">⚔️ 剑破苍穹</div>
+      <div class="proj-chip">🚀 深空遗民</div>
+      <div class="proj-chip" style="border-style:dashed">+ 新建</div>
+    </div>
+  </div>
+
+  <!-- 素材类型 Tab -->
+  <div class="flex justify-between items-center mb-0">
+    <div class="mat-tabs"><span class="mat-tab active">👤 角色 (6)</span><span class="mat-tab">🎬 场景 (8)</span><span class="mat-tab">🗡️ 道具 (12)</span><span class="mat-tab">🎙️ 音色 (4)</span></div>
+    <button class="btn btn-primary btn-sm">➕ 新角色</button>
+  </div>
+
+  <!-- ===== 角色 Tab：当前作品 ===== -->
+  <div class="section-label">🌙 长安月下 · 角色</div>
+  <div class="mat-grid">
+    <div class="mat-card"><div class="mat-preview" style="background:linear-gradient(135deg,rgba(102,126,234,.3),rgba(118,75,162,.15))">🗡️<div class="mat-model-badge">v3 · 已定型</div></div><div class="mat-body"><div class="mat-name">林启</div><div class="mat-tags"><span class="tag">主角</span><span class="tag">剑修</span><span class="tag">少年</span></div></div></div>
+    <div class="mat-card"><div class="mat-preview" style="background:linear-gradient(135deg,rgba(52,211,153,.3),rgba(16,185,129,.15))">🌸<div class="mat-model-badge">v2 · 已定型</div></div><div class="mat-body"><div class="mat-name">苏婉</div><div class="mat-tags"><span class="tag">女主</span><span class="tag">炼丹师</span></div></div></div>
+    <div class="mat-card"><div class="mat-preview" style="background:linear-gradient(135deg,rgba(245,158,11,.3),rgba(217,119,6,.15))">🔥<div class="mat-model-badge">v1 · 已定型</div></div><div class="mat-body"><div class="mat-name">暗影尊</div><div class="mat-tags"><span class="tag">反派</span><span class="tag">暗系</span></div></div></div>
+    <div class="mat-card"><div class="mat-preview" style="background:linear-gradient(135deg,rgba(96,165,250,.3),rgba(59,130,246,.15))">🧙<div class="mat-model-badge">v1 · 已定型</div></div><div class="mat-body"><div class="mat-name">老魏</div><div class="mat-tags"><span class="tag">配角</span><span class="tag">导师</span></div></div></div>
+    <div class="mat-card"><div class="mat-preview" style="background:linear-gradient(135deg,rgba(244,114,182,.3),rgba(236,72,153,.15))">🎭<div class="mat-model-badge">v1 · 已定型</div></div><div class="mat-body"><div class="mat-name">陈琳</div><div class="mat-tags"><span class="tag">路人</span><span class="tag">商人</span></div></div></div>
+    <div class="mat-card" style="border-style:dashed;border-color:var(--border-strong)"><div class="mat-preview" style="background:var(--bg-tertiary)">➕</div><div class="mat-body"><div class="mat-name" style="color:var(--text-muted)">新角色</div><div class="mat-tags"><span class="tag">待创建</span></div></div></div>
+  </div>
+
+  <!-- ===== 场景 Tab：当前作品 ===== -->
+  <div class="section-label mt-4">🌙 长安月下 · 场景</div>
+  <div class="mat-grid">
+    <div class="mat-card"><div class="mat-preview" style="background:linear-gradient(135deg,rgba(245,158,11,.3),rgba(245,158,11,.05))">🏠</div><div class="mat-body"><div class="mat-name">林府书房</div><div class="mat-tags"><span class="tag">室内</span><span class="tag">暖光</span><span class="tag">3 子场景</span></div></div></div>
+    <div class="mat-card"><div class="mat-preview" style="background:linear-gradient(135deg,rgba(16,185,129,.3),rgba(16,185,129,.05))">🌳</div><div class="mat-body"><div class="mat-name">后山竹海</div><div class="mat-tags"><span class="tag">室外</span><span class="tag">晨光</span><span class="tag">5 子场景</span></div></div></div>
+    <div class="mat-card"><div class="mat-preview" style="background:linear-gradient(135deg,rgba(239,68,68,.3),rgba(239,68,68,.05))">⚔️</div><div class="mat-body"><div class="mat-name">宗门外擂台</div><div class="mat-tags"><span class="tag">战斗</span><span class="tag">动态光</span><span class="tag">2 子场景</span></div></div></div>
+    <div class="mat-card"><div class="mat-preview" style="background:linear-gradient(135deg,rgba(251,191,36,.3),rgba(251,191,36,.05))">🏯</div><div class="mat-body"><div class="mat-name">长安宫殿</div><div class="mat-tags"><span class="tag">宫殿</span><span class="tag">暖金</span><span class="tag">4 子场景</span></div></div></div>
+  </div>
+
+  <!-- 其他作品 -->
+  <div class="proj-divider"><span>其他作品素材</span></div>
+  <div style="display:flex;gap:12px;opacity:.55">
+    <div style="flex:1;padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius)">
+      <div style="font-size:12px;font-weight:700;margin-bottom:8px">⚔️ 剑破苍穹</div>
+      <div style="display:flex;gap:8px;font-size:11px;color:var(--text-muted)">
+        <span>👤 角色 5</span><span>🎬 场景 12</span><span>🗡️ 道具 8</span><span>🎙️ 音色 3</span>
+      </div>
+    </div>
+    <div style="flex:1;padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius)">
+      <div style="font-size:12px;font-weight:700;margin-bottom:8px">🚀 深空遗民</div>
+      <div style="display:flex;gap:8px;font-size:11px;color:var(--text-muted)">
+        <span>👤 角色 4</span><span>🎬 场景 6</span><span>🗡️ 道具 5</span><span>🎙️ 音色 2</span>
+      </div>
+    </div>
+    <div style="flex:1;padding:12px;background:var(--bg-card);border:1px dashed var(--border);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;cursor:pointer">
+      <span style="font-size:12px;color:var(--text-muted)">+ 新建作品</span>
+    </div>
+  </div>
+</div>
+</div>
+</body></html>

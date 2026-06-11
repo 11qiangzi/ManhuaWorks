@@ -1,0 +1,30 @@
+/* =========================================================
+ * Theme: National Ink · 国风墨
+ * ManhuaWorks · 古风漫改
+ * ========================================================= */
+
+.theme-national-ink,
+.theme-ink {
+  --bg-primary: #f5efe1;
+  --bg-secondary: #ebe3cf;
+  --bg-tertiary: #ddd2b6;
+  --text-primary: #1a1612;
+  --text-secondary: #5a4d3a;
+  --accent: #a8302b;
+  --accent-2: #8b1e1a;
+  --accent-soft: #c4564f;
+  --accent-deep: #6b1815;
+  --border: #d8c9a3;
+  --border-strong: #b89e72;
+  --shadow: 0 6px 20px rgba(168, 48, 43, 0.12);
+  --glow: 0 0 0 1px rgba(168, 48, 43, 0.2);
+  --code-bg: #ebe3cf;
+  --success: #6b8e23;
+  --warning: #d97706;
+  --danger: #b91c1c;
+  --error: #b91c1c;
+  --gradient: linear-gradient(135deg, #a8302b 0%, #5c1c1a 100%);
+  --font-display: 'STKaiti', 'KaiTi', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.theme-national-ink .app-root::before { display: none; }

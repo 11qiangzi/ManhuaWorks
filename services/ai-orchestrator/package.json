@@ -1,0 +1,36 @@
+{
+  "name": "@manhuaworks/ai-orchestrator",
+  "version": "0.5.0",
+  "private": true,
+  "description": "ManhuaWorks AI 编排服务 - 在 ai-router + workflow-engine 之上提供 6 个一站式生成管道（5 精修 + 1 新 multi-character-replace）",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck:examples": "tsc --noEmit -p tsconfig.examples.json",
+    "example:refined": "tsx examples/run-novel-to-drama.refined.ts",
+    "perf:bench": "tsx examples/perf-bench.ts",
+    "lint": "echo \"(lint not configured yet)\" && exit 0",
+    "test": "echo \"(test not configured yet)\" && exit 0",
+    "example": "tsx src/examples/runtime.ts"
+  },
+  "engines": {
+    "node": ">=20.10.0"
+  },
+  "dependencies": {
+    "@manhuaworks/shared-types": "workspace:^",
+    "@manhuaworks/shared": "workspace:*",
+    "hono": "^4.6.3",
+    "@hono/node-server": "^1.13.7",
+    "zod": "^3.23.8",
+    "nanoid": "^5.0.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

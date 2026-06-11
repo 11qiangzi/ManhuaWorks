@@ -1,0 +1,35 @@
+{
+  "name": "@manhuaworks/workflow-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ManhuaWorks 漫改工作流引擎 - Toonflow 工作流拆解为可被 API 调用的微服务",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "echo \"(lint not configured yet)\" && exit 0",
+    "test": "echo \"(test not configured yet)\" && exit 0"
+  },
+  "engines": {
+    "node": ">=20.10.0"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "axios": "^1.7.7",
+    "bullmq": "^5.21.0",
+    "hono": "^4.6.3",
+    "ioredis": "^5.4.1",
+    "nanoid": "^5.0.7",
+    "ws": "^8.21.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.5.13",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

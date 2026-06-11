@@ -1,0 +1,30 @@
+{
+  "name": "@manhuaworks/studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@manhuaworks/api-client": "workspace:^",
+    "@manhuaworks/shared-types": "workspace:^",
+    "@manhuaworks/ui": "workspace:^",
+    "@vueuse/core": "^13.9.0",
+    "axios": "^1.11.0",
+    "pinia": "^3.0.3",
+    "vue": "^3.5.26",
+    "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.7",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.16",
+    "vite-plugin-compression": "^0.5.1",
+    "vue-tsc": "^3.3.4"
+  }
+}

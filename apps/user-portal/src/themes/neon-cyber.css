@@ -1,0 +1,42 @@
+/* =========================================================
+ * Theme: Neon Cyber · 霓虹赛博
+ * ManhuaWorks · 赛博朋克
+ * ========================================================= */
+
+.theme-neon-cyber,
+.theme-cyber {
+  --bg-primary: #0a0014;
+  --bg-secondary: #150028;
+  --bg-tertiary: #1f0a3d;
+  --text-primary: #f0e6ff;
+  --text-secondary: #a78bd9;
+  --accent: #ff00aa;
+  --accent-2: #00f0ff;
+  --accent-soft: #ff66cc;
+  --accent-deep: #cc0088;
+  --border: #3d1a6b;
+  --border-strong: #5e2a99;
+  --shadow: 0 8px 32px rgba(255, 0, 170, 0.25);
+  --glow: 0 0 12px rgba(255, 0, 170, 0.4);
+  --code-bg: #150028;
+  --success: #00ff88;
+  --warning: #ffea00;
+  --danger: #ff0055;
+  --error: #ff0055;
+  --gradient: linear-gradient(135deg, #ff00aa 0%, #00f0ff 100%);
+  --font-display: 'JetBrains Mono', 'Courier New', -apple-system, sans-serif;
+}
+
+.theme-neon-cyber .app-root::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 2px;
+  height: 100vh;
+  background: linear-gradient(180deg, transparent, var(--accent-2) 50%, transparent);
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 50;
+  box-shadow: var(--glow);
+}

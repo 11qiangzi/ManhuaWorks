@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>ops-logs — 日志中心</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; display: flex; flex-direction: column; }
+  .ops-top { padding: 12px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .ops-main { flex: 1; padding: 20px 24px; overflow: hidden; display: flex; gap: 16px; }
+  .log-stream { flex: 1; background: #0d1117; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; font-family: var(--font-mono); font-size: 11px; overflow-y: auto; line-height: 1.7; }
+  .log-line { display: flex; gap: 10px; }
+  .log-line .ts { color: #64748b; flex-shrink: 0; }
+  .log-line .svc { color: #60a5fa; flex-shrink: 0; width: 80px; }
+  .log-line .lvl { flex-shrink: 0; width: 38px; font-weight: 600; }
+  .log-line .lvl.I { color: #60a5fa; } .log-line .lvl.W { color: #fbbf24; } .log-line .lvl.E { color: #fca5a5; } .log-line .lvl.D { color: #a78bfa; }
+  .log-line .msg { color: #94a3b8; }
+  .log-filter { width: 280px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+</style></head><body>
+<div class="ops-top">
+  <div class="flex items-center gap-3"><span style="font-size:16px;font-weight:800">🖥 Ops 运维面板</span><span class="badge badge-green">实时流</span></div>
+  <div class="flex gap-2"><a href="#" class="navbar-link">服务状态</a><a href="#" class="navbar-link active">日志中心</a><a href="#" class="navbar-link">系统监控</a></div>
+</div>
+<div class="ops-main">
+  <div class="log-stream">
+    <div class="log-line"><span class="ts">13:02:18.421</span><span class="svc">api-gateway</span><span class="lvl I">INFO</span><span class="msg">POST /api/v1/auth/login — 200 in 45ms</span></div>
+    <div class="log-line"><span class="ts">13:02:18.310</span><span class="svc">image-gen</span><span class="lvl I">INFO</span><span class="msg">Job img_a8xK completed — sdxl, seed=42, 3.2s</span></div>
+    <div class="log-line"><span class="ts">13:02:18.105</span><span class="svc">user-svc</span><span class="lvl I">INFO</span><span class="msg">User login: creator@mhw.com — method=email</span></div>
+    <div class="log-line"><span class="ts">13:02:16.892</span><span class="svc">orchestrator</span><span class="lvl I">INFO</span><span class="msg">Workflow wf_main started — 6 nodes</span></div>
+    <div class="log-line"><span class="ts">13:02:16.510</span><span class="svc">image-gen</span><span class="lvl D">DEBUG</span><span class="msg">Warmup completed — gpu=0 memory=8.2G/12G</span></div>
+    <div class="log-line"><span class="ts">13:02:15.234</span><span class="svc">billing</span><span class="lvl W">WARN</span><span class="msg">User=张三 credit low — available 3, needed 15</span></div>
+    <div class="log-line"><span class="ts">13:02:12.780</span><span class="svc">health-check</span><span class="lvl I">INFO</span><span class="msg">Provider test: DeepSeek=OK(189ms), OpenAI=OK(326ms)</span></div>
+    <div class="log-line"><span class="ts">13:02:10.045</span><span class="svc">image-gen</span><span class="lvl E">ERROR</span><span class="msg">BYOK provider=字节豆包 — API error 401 Unauthorized</span></div>
+    <div class="log-line"><span class="ts">13:02:08.321</span><span class="svc">api-gateway</span><span class="lvl I">INFO</span><span class="msg">GET /api/v1/projects?limit=6 — 200 in 18ms</span></div>
+    <div class="log-line"><span class="ts">13:02:05.112</span><span class="svc">project-svc</span><span class="lvl I">INFO</span><span class="msg">Project=proj_1 updated — user=creator@mhw.com</span></div>
+    <div class="log-line"><span class="ts">13:02:02.456</span><span class="svc">user-svc</span><span class="lvl I">INFO</span><span class="msg">User register: new_user@gmail.com</span></div>
+    <div class="log-line"><span class="ts">13:02:00.001</span><span class="svc">cron</span><span class="lvl I">INFO</span><span class="msg">Daily stats aggregation completed — 1,248 users, 56 projects</span></div>
+  </div>
+  <div class="log-filter">
+    <div class="section-title">🔍 过滤</div>
+    <div><div class="form-label">服务</div><select class="input" style="font-size:11px;padding:6px 10px"><option>全部服务</option><option>api-gateway</option><option>image-gen</option><option>user-svc</option><option>orchestrator</option><option>billing</option><option>project-svc</option></select></div>
+    <div><div class="form-label">级别</div><select class="input" style="font-size:11px;padding:6px 10px"><option>全部级别</option><option>INFO</option><option>WARN</option><option>ERROR</option><option>DEBUG</option></select></div>
+    <div><div class="form-label">时间范围</div><select class="input" style="font-size:11px;padding:6px 10px"><option>最近 15 分钟</option><option>最近 1 小时</option><option>最近 24 小时</option></select></div>
+    <div class="flex items-center gap-2"><input type="checkbox" id="auto" checked><label for="auto" style="font-size:11px">自动滚动</label></div>
+    <button class="btn btn-sm btn-secondary">⏸ 暂停</button>
+    <button class="btn btn-sm btn-ghost">📤 导出日志</button>
+  </div>
+</div>
+</body></html>

@@ -1,0 +1,147 @@
+/* ═══════════════════════════════════════════════════════════
+ * 漫工场 Design Tokens — P0 林知行审定
+ * scope: web / studio / user-portal / admin-portal / ops-portal
+ * principle: 5 站统一引用, 一个变量一个值
+ * author: 陆流光 (设计) · 林染 (前端)
+ * date: 2026-06-10
+ * ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* ═══ 品牌色 Brand Colors ═══ */
+  --color-brand-primary: #7C3AED;        /* 主紫 — CTA / 重点 / 链接 */
+  --color-brand-primary-hover: #6D28D9;  /* 主紫 hover */
+  --color-brand-primary-light: #EDE9FE;  /* 主紫 浅 (浅色主题卡片/标签背景) */
+  --color-brand-secondary: #06B6D4;      /* 辅青 — 次要强调 / 信息 / 徽章 */
+  --color-brand-secondary-hover: #0891B2;
+  --color-brand-secondary-light: #CFFAFE;
+
+  /* ═══ 背景 Backgrounds ═══ */
+  --color-bg-deep: #0F0F23;             /* 深色背景 — 首页 / 深色主题基调 */
+  --color-bg-deep-elevated: #1A1A3E;    /* 深色悬浮层 (卡片/弹窗高出背景) */
+  --color-bg-surface: #F8FAFC;          /* 浅色页面背景 */
+  --color-bg-card: #FFFFFF;             /* 浅色卡片背景 */
+  --color-bg-hover: #F1F5F9;            /* 浅色 hover 态 */
+
+  /* ═══ 文字 Typography ═══ */
+  --color-text-primary: #0F172A;        /* 主文字 (浅色主题) */
+  --color-text-secondary: #475569;      /* 次要文字 */
+  --color-text-tertiary: #94A3B8;       /* 占位/禁用文字 */
+  --color-text-inverse: #F8FAFC;        /* 反色文字 (深色背景上) */
+  --color-text-link: #7C3AED;           /* 链接色 = 主色 */
+  --color-text-link-hover: #6D28D9;
+
+  /* ═══ 语义色 Semantic ═══ */
+  --color-success: #10B981;
+  --color-success-light: #D1FAE5;
+  --color-warning: #F59E0B;
+  --color-warning-light: #FEF3C7;
+  --color-error: #EF4444;
+  --color-error-light: #FEE2E2;
+  --color-info: #3B82F6;
+  --color-info-light: #DBEAFE;
+
+  /* ═══ 边框 & 分割线 ═══ */
+  --color-border: #E2E8F0;
+  --color-border-hover: #CBD5E1;
+  --color-border-focus: #7C3AED;        /* 聚焦边框 = 主色 */
+
+  /* ═══ 字体 Font Stack ═══ */
+  --font-sans: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont,
+               'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono',
+               'Consolas', 'Courier New', monospace;
+
+  /* ═══ 字号 Font Size ═══ */
+  --text-xs:   0.75rem;   /* 12px — 小标签/辅助文字 */
+  --text-sm:   0.875rem;  /* 14px — 正文/表格 */
+  --text-base: 1rem;      /* 16px — 默认正文字号 */
+  --text-lg:   1.125rem;  /* 18px — 小标题 */
+  --text-xl:   1.25rem;   /* 20px — 副标题 */
+  --text-2xl:  1.5rem;    /* 24px — 模块标题 */
+  --text-3xl:  1.875rem;  /* 30px — Hero 副标题 */
+  --text-4xl:  3rem;      /* 48px — Hero 主标题 */
+  --text-5xl:  3.75rem;   /* 60px — 大屏 Hero */
+
+  /* ═══ 字重 Font Weight ═══ */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* ═══ 行高 Line Height ═══ */
+  --leading-tight:  1.25;   /* 标题 */
+  --leading-normal: 1.5;    /* 正文 */
+  --leading-relaxed: 1.75;  /* 长文本 */
+
+  /* ═══ 间距 Spacing Scale (4px base) ═══ */
+  --space-1:  0.25rem;  /* 4px */
+  --space-2:  0.5rem;   /* 8px */
+  --space-3:  0.75rem;  /* 12px */
+  --space-4:  1rem;     /* 16px */
+  --space-5:  1.25rem;  /* 20px */
+  --space-6:  1.5rem;   /* 24px */
+  --space-8:  2rem;     /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+
+  /* ═══ 圆角 Border Radius ═══ */
+  --radius-sm:  0.25rem;  /* 4px  — 小元素 */
+  --radius-md:  0.5rem;   /* 8px  — 按钮/输入框 */
+  --radius-lg:  0.75rem;  /* 12px — 卡片 */
+  --radius-xl:  1rem;     /* 16px — 大卡片/弹窗 */
+  --radius-full: 9999px;  /* 胶囊/头像 */
+
+  /* ═══ 阴影 Box Shadow ═══ */
+  --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md:  0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg:  0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl:  0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-card-hover: 0 12px 24px -4px rgb(124 58 237 / 0.25);
+
+  /* ═══ 过渡 Transition ═══ */
+  --transition-fast:   150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow:   300ms ease-out;
+  --transition-enter:  300ms ease-out;
+  --transition-leave:  200ms ease-in;
+
+  /* ═══ Z-Index ═══ */
+  --z-dropdown: 100;
+  --z-sticky:   200;
+  --z-sidebar:  300;
+  --z-modal:    400;
+  --z-toast:    500;
+  --z-tooltip:  600;
+
+  /* ═══ 布局 Layout ═══ */
+  --sidebar-expanded: 240px;
+  --sidebar-collapsed: 64px;
+  --header-height: 56px;
+  --content-max-width: 1280px;
+
+  /* ═══ 响应式断点 (Tailwind 参考) ═══ */
+  /* sm: 640px  |  md: 768px  |  lg: 1024px  |  xl: 1280px  |  2xl: 1536px */
+}
+
+/* ═══ 深色主题覆盖 Dark Theme ═══ */
+.dark {
+  --color-bg-surface: #0F0F23;
+  --color-bg-card: #1A1A3E;
+  --color-bg-hover: #2D2D5E;
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-text-tertiary: #64748B;
+  --color-border: #334155;
+  --color-border-hover: #475569;
+}
+
+/* ═══════════════════════════════════════════════════════════
+ * App 兼容别名 (deprecated: 新代码直接用规范名)
+ * 为现有组件提供过渡映射, P1 迁移完成后移除
+ * ═══════════════════════════════════════════════════════════ */
+:root {
+  --accent: var(--color-brand-primary);
+  --accent-strong: var(--color-brand-primary-hover);
+  --accent-glow: rgba(124, 58, 237, 0.3);
+}

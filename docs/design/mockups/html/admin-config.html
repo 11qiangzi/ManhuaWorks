@@ -1,0 +1,54 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1920"><title>admin-config — 平台配置</title><link rel="stylesheet" href="shared.css"><style>
+  body { width: 1920px; height: 1080px; overflow: hidden; }
+  .layout { display: flex; height: 100vh; }
+  .sidebar { width: 220px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; padding: 16px 12px; gap: 3px; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; font-size: 13px; color: var(--text-secondary); text-decoration: none; }
+  .sidebar-item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+  .sidebar-item.active { background: rgba(99,102,241,.12); color: var(--accent); font-weight: 600; }
+  .sidebar-icon { font-size: 16px; width: 20px; text-align: center; }
+  .main { flex: 1; padding: 20px 28px; overflow-y: auto; }
+  .config-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 14px; max-width: 800px; }
+</style></head><body>
+<div class="layout">
+<div class="sidebar">
+  <div style="padding:8px 12px;font-size:14px;font-weight:700;margin-bottom:8px">⚙ 管理后台</div>
+  <div class="sidebar-item"><span class="sidebar-icon">👥</span>用户管理</div>
+  <div class="sidebar-item"><span class="sidebar-icon">📁</span>项目审核</div>
+  <div class="sidebar-item"><span class="sidebar-icon">📊</span>数据看板</div>
+  <div class="sidebar-item"><span class="sidebar-icon">💰</span>计费管理</div>
+  <div class="sidebar-item"><span class="sidebar-icon">🛡️</span>内容审核</div>
+  <div class="sidebar-item active"><span class="sidebar-icon">⚙</span>平台配置</div>
+  <div class="sidebar-item"><span class="sidebar-icon">📋</span>系统日志</div>
+</div>
+<div class="main">
+  <div class="flex items-center gap-3 mb-4"><span class="page-title">⚙ 平台配置</span></div>
+  <div class="tabs"><span class="tab active">🌐 通用</span><span class="tab">🤖 AI 默认</span><span class="tab">📧 邮件</span><span class="tab">🔐 安全</span></div>
+  <div class="config-card">
+    <div class="section-title">🌐 通用设置</div>
+    <div class="flex flex-col gap-3">
+      <div><div class="form-label">平台名称</div><input class="input" value="ManhuaWorks"></div>
+      <div><div class="form-label">默认语言</div><select class="input"><option>简体中文</option><option>English</option></select></div>
+      <div class="flex items-center gap-3"><input type="checkbox" id="signup" checked><label for="signup" style="font-size:13px">开放注册</label></div>
+      <div class="flex items-center gap-3"><input type="checkbox" id="invite"><label for="invite" style="font-size:13px">仅邀请注册</label></div>
+    </div>
+  </div>
+  <div class="config-card">
+    <div class="section-title">🤖 AI 默认参数</div>
+    <div class="grid-2" style="grid-template-columns:1fr 1fr;gap:12px">
+      <div><div class="form-label">默认模型</div><select class="input"><option>Stable Diffusion XL</option><option>AnimeGen v3</option></select></div>
+      <div><div class="form-label">默认画幅</div><select class="input"><option>16:9</option><option>1:1</option></select></div>
+      <div><div class="form-label">默认步数</div><input class="input" value="30"></div>
+      <div><div class="form-label">默认 CFG</div><input class="input" value="7.5"></div>
+    </div>
+  </div>
+  <div class="config-card">
+    <div class="section-title">📧 邮件配置</div>
+    <div class="flex flex-col gap-3">
+      <div><div class="form-label">SMTP 服务器</div><input class="input" value="smtp.manhuaworks.com"></div>
+      <div class="flex gap-3"><div style="flex:1"><div class="form-label">发件地址</div><input class="input" value="noreply@manhuaworks.com"></div><div style="flex:1"><div class="form-label">发件名称</div><input class="input" value="ManhuaWorks"></div></div>
+    </div>
+  </div>
+  <button class="btn btn-primary">💾 保存配置</button>
+</div>
+</div>
+</body></html>
