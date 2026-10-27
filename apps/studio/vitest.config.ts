@@ -1,5 +1,5 @@
 /**
- * ManhuaWorks · 全局 Vitest 配置 + 全局 Mock
+ * 千机工坊 · 全局 Vitest 配置 + 全局 Mock
  *
  * 设计目标：
  *  - 任何 worker（apps / services / e2e）跑 `pnpm test` 都能复用同一份配置

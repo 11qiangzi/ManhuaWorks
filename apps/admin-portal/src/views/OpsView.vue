@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * OpsView —业务运营 ·4 大模块12 数据点
- * ManhuaWorks · M1-W3 L3.K
+ * 千机工坊 · M1-W3 L3.K
  *
  *顶部时间范围 +4 模块卡片（响应式3/2/1列）+10s 自动刷新
  */
@@ -288,7 +288,7 @@ function pieColor(plan: string): string {
  </div>
  </section>
 
- <div v-if="ops.error.value" class="ops-error">⚠️ {{ ops.error.value }}（已回退 mock）</div>
+ <div v-if="ops.error.value" class="ops-error">⚠️ {{ ops.error.value }}</div>
  </div>
 </template>
 

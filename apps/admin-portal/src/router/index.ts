@@ -2,13 +2,14 @@
  * admin-portal路由 — 派单 33C: +projects +logs
  */
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { createAuthGuard } from '@manhuaworks/api-client'
 
 const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/dashboard' },
-  { path: '/monitoring', redirect: '/dashboard' },
   {
     path: '/',
     component: () => import('@/layouts/AdminLayout.vue'),
+    meta: { requiresAuth: true },
     children: [
       { path: 'dashboard', name: 'dashboard', component: () => import('@/views/DashboardView.vue'), meta: { title: '仪表盘', icon: '📊' } },
       { path: 'users', name: 'users', component: () => import('@/views/UsersView.vue'), meta: { title: '用户管理', icon: '👥' } },
@@ -20,24 +21,20 @@ const routes: RouteRecordRaw[] = [
       // 🆕 派单 33C
       { path: 'projects', name: 'admin-projects', component: () => import('@/views/AdminProjectsView.vue'), meta: { title: '项目审核', icon: '📁' } },
       { path: 'logs', name: 'admin-logs', component: () => import('@/views/AdminLogsView.vue'), meta: { title: '系统日志', icon: '📋' } },
+      // 🆕 P1-3: 合并 ops-portal 路由
+      { path: 'monitoring', name: 'monitoring', component: () => import('../../../ops-portal/src/views/MonitoringView.vue'), meta: { title: '系统监控', icon: '📊', section: 'ops' } },
+      { path: 'system', name: 'system', component: () => import('../../../ops-portal/src/views/SystemView.vue'), meta: { title: '系统管理', icon: '⚙️', section: 'ops' } },
+      { path: 'ops-logs', name: 'ops-logs', component: () => import('../../../ops-portal/src/views/OpsLogsView.vue'), meta: { title: '系统日志', icon: '📋', section: 'ops' } },
+      { path: 'services', name: 'services', component: () => import('@/views/ServiceManagementView.vue'), meta: { title: '服务管理', icon: '🔧', section: 'ops' } },
+      // 🆕 P3-3: 配乐管理
+      { path: 'music-management', name: 'music-management', component: () => import('@/views/MusicManagementView.vue'), meta: { title: '配乐管理', icon: '🎵' } },
     ],
   },
 ]
 
 const router = createRouter({ history: createWebHistory(), routes })
 
-router.beforeEach((to) => {
-  if (to.name === 'login') return
-  try {
-    const token = localStorage.getItem('mhw.access_token')
-    if (!token) {
-      window.location.href = `http://${window.location.hostname}:3000/login?return=` + encodeURIComponent(window.location.origin + to.path)
-      return false
-    }
-  } catch {
-    window.location.href = `http://${window.location.hostname}:3000/login`
-    return false
-  }
-})
+// 统一鉴权守卫 — 替代硬编码 localhost:3000 跳转, 动态构建主站 URL
+createAuthGuard(router, { mode: 'external' })
 
 export default router

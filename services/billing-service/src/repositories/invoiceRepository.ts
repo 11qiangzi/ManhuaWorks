@@ -56,6 +56,14 @@ export const invoiceRepository = {
     return rows.map(rowToInvoice);
   },
 
+  async countByUser(userId: string): Promise<number> {
+    const { rows } = await query<{ count: string }>(
+      `SELECT COUNT(*) FROM invoices WHERE user_id = $1`,
+      [userId]
+    );
+    return Number(rows[0]!.count);
+  },
+
   async listAll(limit = 100, offset = 0): Promise<Invoice[]> {
     const { rows } = await query<InvoiceRow>(
       `SELECT * FROM invoices ORDER BY issued_at DESC LIMIT $1 OFFSET $2`,

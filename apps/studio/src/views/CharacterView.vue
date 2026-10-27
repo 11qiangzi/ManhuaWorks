@@ -14,19 +14,62 @@
  *   5. 删除走真 API/modal,乐观更新+回滚
  */
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { makeMockCharacters } from '../data/studio-mock'
 import { CHARACTER_ARCHETYPES_V2, getArchetypeMeta } from '../data/character-archetypes-v2'
 import { STUDIO_THEMES, type StudioThemeId } from '../types/studio'
 import type { CharacterV2, CharacterExpression, CharacterArchetype } from '../types/character'
-import { useCharacterStore, ROLE_BADGE, type StudioRole } from '../stores/characterStore'
+import { useCharacterStore } from '../stores/characterStore'
+import type { CharacterItem } from '../stores/characterStore'
+import { useTheme } from '../composables/useTheme'
+
+// ---------- 本地类型: 工作室角色 (成员管理, 纯前端) ----------
+type StudioRole = 'admin' | 'writer' | 'artist' | 'voice' | 'subtitle' | 'viewer'
+
+const ROLE_BADGE: Record<StudioRole, { icon: string; label: string }> = {
+  admin:    { icon: '👑', label: '管理员' },
+  writer:   { icon: '✍️', label: '编剧' },
+  artist:   { icon: '🎨', label: '画师' },
+  voice:    { icon: '🎙️', label: '配音' },
+  subtitle: { icon: '📝', label: '字幕' },
+  viewer:   { icon: '👁️', label: '观看' },
+}
 import ArchetypePicker from '../components/character/ArchetypePicker.vue'
 import CharacterForm from '../components/character/CharacterForm.vue'
 
 // ---------- 默认 project (开发期用) ----------
 const DEFAULT_PROJECT_ID = 'proj_default_001'
 
+// ---------- router ----------
+const router = useRouter()
+
+function editCharacter(id: string) {
+  router.push(`/characters/${id}/edit`)
+}
+
 // ---------- store ----------
 const store = useCharacterStore()
+
+// ---------- API → 本地类型转换 ----------
+function itemToV2(item: CharacterItem): CharacterV2 {
+  return {
+    id: item.id,
+    name: item.name,
+    archetype: (item.archetype || 'youth') as CharacterArchetype,
+    description: item.description || '',
+    views: { front: item.thumbnail_url || null, side: null, back: null, threeQ: null },
+    expressions: [],
+    tags: item.tags || [],
+    vector: [],
+    styleId: 'default',
+    themeId: 'dark-workshop',
+    locked: false,
+    consistencyScore: 80,
+    relatedIds: [],
+    createdAt: item.created_at ? new Date(item.created_at).getTime() : Date.now(),
+    updatedAt: item.updated_at ? new Date(item.updated_at).getTime() : Date.now(),
+  }
+}
 
 // ---------- 本地状态 (archetype 模板相关) ----------
 const localCharacters = ref<CharacterV2[]>(makeMockCharacters())
@@ -35,10 +78,27 @@ const selectedId = ref<string | null>(localCharacters.value[0]?.id ?? null)
 const searchQuery = ref('')
 const studioRoleFilter = ref<StudioRole | 'all'>('all')
 
-// ---------- 主题 ----------
-const themeId = ref<StudioThemeId>(
-  (localStorage.getItem('studio_theme') as StudioThemeId) ?? 'dark-workshop',
-)
+// ---------- 本地成员数据 (不走 store, store 只管角色 CRUD) ----------
+interface LocalMember {
+  user_id: string
+  display_name: string
+  email: string
+  avatar_url?: string
+  role: StudioRole
+  joined_at: string
+}
+
+const members = ref<LocalMember[]>([
+  { user_id: 'u_admin',   display_name: '林启',  email: 'admin@mhw.dev',  role: 'admin',   joined_at: new Date().toISOString() },
+  { user_id: 'u_writer1', display_name: '王编剧', email: 'writer@mhw.dev', role: 'writer',  joined_at: new Date().toISOString() },
+  { user_id: 'u_artist1', display_name: '李画师', email: 'artist@mhw.dev', role: 'artist',  joined_at: new Date().toISOString() },
+  { user_id: 'u_voice1',  display_name: '张配音', email: 'voice@mhw.dev',  role: 'voice',   joined_at: new Date().toISOString() },
+  { user_id: 'u_sub1',    display_name: '陈字幕', email: 'sub@mhw.dev',    role: 'viewer',  joined_at: new Date().toISOString() },
+])
+
+// ---------- 主题 (via useTheme composable) ----------
+const { theme } = useTheme()
+const themeId = ref<StudioThemeId>(theme.value as StudioThemeId ?? 'dark-workshop')
 
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', themeId.value)
@@ -49,7 +109,7 @@ function applyTheme() {
   }
 }
 watch(themeId, t => {
-  localStorage.setItem('studio_theme', t)
+  theme.value = t as any // sync to composable (handles localStorage persistence)
   applyTheme()
 }, { immediate: true })
 
@@ -67,43 +127,50 @@ function openMemberModal() {
   showMemberModal.value = true
 }
 
-async function submitMember() {
+function submitMember() {
   const email = memberForm.value.email.trim()
   if (!email) return
-  try {
-    await store.create({
-      email,
-      displayName: memberForm.value.displayName.trim() || email.split('@')[0] || '',
-      studioRole: memberForm.value.studioRole,
-    })
-    showMemberModal.value = false
-  } catch {
-    // 错误已在 store.error
-  }
+  members.value.push({
+    user_id: `u_${Date.now().toString(36)}`,
+    email,
+    display_name: memberForm.value.displayName.trim() || email.split('@')[0] || '',
+    role: memberForm.value.studioRole,
+    joined_at: new Date().toISOString(),
+  })
+  showMemberModal.value = false
 }
 
 // ---------- 初始化 ----------
 onMounted(async () => {
   applyTheme()
-  const mockMembers = (() => {
-    const now = new Date().toISOString()
-    return [
-      { user_id: 'u_admin',   display_name: '林启',  email: 'admin@mhw.dev',  avatar_url: undefined, role: 'owner'  as const, joined_at: now },
-      { user_id: 'u_writer1', display_name: '王编剧', email: 'writer@mhw.dev', avatar_url: undefined, role: 'editor' as const, joined_at: now },
-      { user_id: 'u_artist1', display_name: '李画师', email: 'artist@mhw.dev', avatar_url: undefined, role: 'editor' as const, joined_at: now },
-      { user_id: 'u_voice1',  display_name: '张配音', email: 'voice@mhw.dev',  avatar_url: undefined, role: 'editor' as const, joined_at: now },
-      { user_id: 'u_sub1',    display_name: '陈字幕', email: 'sub@mhw.dev',    avatar_url: undefined, role: 'viewer' as const, joined_at: now },
-    ]
-  })()
-  await store.load(DEFAULT_PROJECT_ID, mockMembers)
+  // store 只管角色 CRUD, 成员数据已是本地 ref
+  await store.load(DEFAULT_PROJECT_ID, [])
 })
 
-// ---------- 派生 (API 成员视图) ----------
+// API 数据加载后同步到 localCharacters (防 split-brain: store 与 local 双向合并)
+watch(() => store.characters, (storeChars) => {
+  if (store.lastSource === 'api') {
+    // Full replace from API — authoritative source
+    localCharacters.value = storeChars.map(itemToV2)
+    selectedId.value = localCharacters.value[0]?.id ?? null
+  } else if (store.lastSource === 'empty' && storeChars.length > 0) {
+    // Store got new data after a failed/empty load (e.g. post-create) — merge in
+    const localIds = new Set(localCharacters.value.map(c => c.id))
+    const newItems = storeChars.filter(c => !localIds.has(c.id))
+    if (newItems.length > 0) {
+      localCharacters.value = [...localCharacters.value, ...newItems.map(itemToV2)]
+      if (!selectedId.value) {
+        selectedId.value = localCharacters.value[0]?.id ?? null
+      }
+    }
+  }
+}, { deep: true })
+
+// ---------- 派生 (本地成员视图) ----------
 const filteredApiMembers = computed(() => {
-  let list = store.characters
+  let list = members.value
   if (studioRoleFilter.value !== 'all') {
-    const backendRole = studioRoleToBackend(studioRoleFilter.value)
-    list = list.filter(m => m.role === backendRole)
+    list = list.filter(m => m.role === studioRoleFilter.value)
   }
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase()
@@ -113,6 +180,13 @@ const filteredApiMembers = computed(() => {
     )
   }
   return list
+})
+
+const memberCountByRole = computed<Record<StudioRole, number>>(() => {
+  const counts: Record<string, number> = {}
+  for (const r of Object.keys(ROLE_BADGE)) counts[r] = 0
+  for (const m of members.value) counts[m.role] = (counts[m.role] ?? 0) + 1
+  return counts as Record<StudioRole, number>
 })
 
 // ---------- 派生 (archetype 模板视图) ----------
@@ -190,6 +264,8 @@ function onNew() {
   }
   localCharacters.value.unshift(c)
   selectedId.value = id
+  // Persist to API in background
+  store.create({ name: c.name, archetype: arch, description: c.description }).catch((e) => { console.warn('create character failed:', e) })
 }
 
 // 删除用 modal 确认, 不用 confirm()
@@ -202,11 +278,14 @@ function promptDelete() {
 
 function confirmDelete() {
   if (!selected.value) return
-  const i = localCharacters.value.findIndex(c => c.id === selected.value!.id)
+  const deleteId = selected.value.id
+  const i = localCharacters.value.findIndex(c => c.id === deleteId)
   if (i < 0) return
   localCharacters.value.splice(i, 1)
   selectedId.value = localCharacters.value[0]?.id ?? null
   showDeleteModal.value = false
+  // Persist to API in background
+  store.remove(deleteId).catch((e) => { console.warn('remove character failed:', e) })
 }
 
 function onDuplicate() {
@@ -218,16 +297,39 @@ function onDuplicate() {
   selectedId.value = id
 }
 
-// ---------- API 成员操作 ----------
-async function onDeleteMember(userId: string, displayName: string) {
-  if (!window.confirm(`删除成员 "${displayName}"?`)) return
-  try { await store.remove(userId) } catch { /* store.error */ }
+// ---------- 本地成员操作 ----------
+const showMemberDeleteModal = ref(false)
+const pendingDeleteMember = ref<{ userId: string; displayName: string } | null>(null)
+
+function onDeleteMember(userId: string, displayName: string) {
+  pendingDeleteMember.value = { userId, displayName }
+  showMemberDeleteModal.value = true
 }
 
-function studioRoleToBackend(role: StudioRole): 'owner' | 'editor' | 'viewer' {
-  if (role === 'admin') return 'owner'
-  if (role === 'subtitle') return 'viewer'
-  return 'editor'
+function confirmDeleteMember() {
+  if (!pendingDeleteMember.value) return
+  members.value = members.value.filter(m => m.user_id !== pendingDeleteMember.value!.userId)
+  showMemberDeleteModal.value = false
+  pendingDeleteMember.value = null
+}
+
+// ---------- 成员编辑 (placeholder — 编辑 UI 开发中) ----------
+const toastMessage = ref('')
+const toastVisible = ref(false)
+let toastTimer: ReturnType<typeof setTimeout> | null = null
+
+const toast = {
+  info(msg: string) {
+    toastMessage.value = msg
+    toastVisible.value = true
+    if (toastTimer) clearTimeout(toastTimer)
+    toastTimer = setTimeout(() => { toastVisible.value = false }, 3000)
+  },
+}
+
+function editMember(member: LocalMember) {
+  // For now, show member info
+  toast.info(`${member.display_name} — ${ROLE_BADGE[member.role]?.label ?? member.role}（编辑功能开发中）`)
 }
 
 function formatJoined(iso: string): string {
@@ -258,10 +360,9 @@ const currentAccent = computed(() => STUDIO_THEMES.find(t => t.id === themeId.va
     <header class="flex h-12 flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white/95 px-3 backdrop-blur dark:border-gray-700 dark:bg-gray-900/80">
       <!-- 左: 标题 + 数据源 -->
       <div class="flex items-center gap-2.5 text-sm font-semibold text-gray-700 dark:text-gray-100">
-        <span>🎭</span>
-        <span>② 素材库</span>
+        <span>🎭 角色管理</span>
         <span class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500 dark:bg-gray-800">
-          {{ store.count }} 成员 · {{ localCharacters.length }} archetype
+          {{ members.length }} 成员 · {{ localCharacters.length }} archetype
         </span>
         <span
           v-if="store.lastSource === 'api'"
@@ -282,7 +383,7 @@ const currentAccent = computed(() => STUDIO_THEMES.find(t => t.id === themeId.va
         <!-- Bug D: placeholder 明确搜角色, archetype 不受影响 -->
         <input
           v-model="searchQuery"
-          placeholder="搜角色（类型选择不响应）"
+          placeholder="搜索角色名称或标签"
           class="w-48 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-[11px] placeholder-gray-400 transition-colors focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-800 dark:placeholder-gray-500"
         />
 
@@ -331,7 +432,7 @@ const currentAccent = computed(() => STUDIO_THEMES.find(t => t.id === themeId.va
               ? 'border-blue-400 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
               : 'border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-700 dark:text-gray-400'"
             @click="studioRoleFilter = 'all'"
-          >全部 {{ store.count }}</button>
+          >全部 {{ members.length }}</button>
           <button
             v-for="r in (Object.keys(ROLE_BADGE) as StudioRole[])"
             :key="r"
@@ -341,7 +442,7 @@ const currentAccent = computed(() => STUDIO_THEMES.find(t => t.id === themeId.va
               ? 'border-blue-400 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
               : 'border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-700 dark:text-gray-400'"
             @click="studioRoleFilter = r"
-          >{{ ROLE_BADGE[r].icon }} {{ ROLE_BADGE[r].label }} {{ store.countByRole[r] }}</button>
+          >{{ ROLE_BADGE[r].icon }} {{ ROLE_BADGE[r].label }} {{ memberCountByRole[r] }}</button>
         </div>
       </div>
 
@@ -358,7 +459,7 @@ const currentAccent = computed(() => STUDIO_THEMES.find(t => t.id === themeId.va
 
       <!-- 空态 -->
       <div v-else-if="filteredApiMembers.length === 0" class="flex h-12 items-center justify-center text-[11px] text-gray-400">
-        {{ store.lastSource === 'api' ? '暂无成员，点击「+ 新成员」添加' : '本地数据为空' }}
+        {{ members.length === 0 ? '暂无成员，点击「+ 新成员」添加' : '无匹配成员' }}
       </div>
 
       <!-- 成员卡片: 横向大卡片, 圆形头像 + 姓名 + 角色徽章 + 邮箱 -->
@@ -389,11 +490,11 @@ const currentAccent = computed(() => STUDIO_THEMES.find(t => t.id === themeId.va
               <span
                 class="rounded-full px-2 py-0.5 text-[9px] font-semibold"
                 :class="{
-                  'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300':    m.role === 'owner',
-                  'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300':  m.role === 'editor',
-                  'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300':  m.role === 'viewer',
+                  'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300':    m.role === 'admin',
+                  'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300':  m.role === 'writer' || m.role === 'artist' || m.role === 'voice',
+                  'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300':  m.role === 'viewer' || m.role === 'subtitle',
                 }"
-              >{{ m.role === 'owner' ? '👑 管理员' : m.role === 'editor' ? '✏️ 编辑' : '👁️ 观看' }}</span>
+              >{{ ROLE_BADGE[m.role]?.icon ?? '👤' }} {{ ROLE_BADGE[m.role]?.label ?? m.role }}</span>
               <span class="text-[9px] text-gray-400">{{ formatJoined(m.joined_at) }}</span>
             </div>
           </div>
@@ -402,7 +503,8 @@ const currentAccent = computed(() => STUDIO_THEMES.find(t => t.id === themeId.va
           <div class="flex flex-shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
             <button
               class="rounded-lg bg-gray-100 p-1 text-[10px] hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
-              title="编辑 (TODO)" disabled
+              title="编辑"
+              @click="editMember(m)"
             >✏️</button>
             <button
               class="rounded-lg bg-red-50 p-1 text-[10px] text-red-500 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
@@ -513,6 +615,10 @@ const currentAccent = computed(() => STUDIO_THEMES.find(t => t.id === themeId.va
             {{ selectedMeta.icon }} 角色详情
           </h3>
           <div class="flex items-center gap-1">
+            <button
+              class="rounded-lg bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+              title="编辑" @click="editCharacter(selected.id)"
+            >✏️ 编辑</button>
             <button
               class="rounded-lg bg-gray-100 px-2 py-0.5 text-[10px] font-medium hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
               title="复制" @click="onDuplicate"
@@ -703,6 +809,44 @@ const currentAccent = computed(() => STUDIO_THEMES.find(t => t.id === themeId.va
         </div>
       </div>
     </Teleport>
+
+    <!-- ════════════ 成员删除确认 Modal ════════════ -->
+    <Teleport to="body">
+      <div
+        v-if="showMemberDeleteModal"
+        class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+        @click.self="showMemberDeleteModal = false"
+      >
+        <div class="w-full max-w-xs rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-900 dark:ring-1 dark:ring-gray-700">
+          <h3 class="mb-2 text-base font-semibold text-gray-800 dark:text-gray-100">确认删除成员</h3>
+          <p class="mb-4 text-xs text-gray-500">
+            删除成员 <strong class="text-gray-700 dark:text-gray-300">{{ pendingDeleteMember?.displayName }}</strong>？
+          </p>
+          <div class="flex justify-end gap-2">
+            <button
+              class="rounded-lg border border-gray-300 px-4 py-1.5 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+              @click="showMemberDeleteModal = false"
+            >取消</button>
+            <button
+              class="rounded-lg bg-red-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-600"
+              @click="confirmDeleteMember"
+            >确认删除</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ════════════ Toast 通知 ════════════ -->
+    <Teleport to="body">
+      <Transition name="toast-fade">
+        <div
+          v-if="toastVisible"
+          class="fixed bottom-6 left-1/2 z-[9999] -translate-x-1/2 rounded-lg bg-gray-800 px-4 py-2.5 text-sm text-white shadow-lg dark:bg-gray-200 dark:text-gray-900"
+        >
+          {{ toastMessage }}
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -775,4 +919,8 @@ button:active:not(:disabled) {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* ── Toast 通知 ── */
+.toast-fade-enter-active, .toast-fade-leave-active { transition: all 0.25s ease; }
+.toast-fade-enter-from, .toast-fade-leave-to { opacity: 0; transform: translate(-50%, 12px); }
 </style>

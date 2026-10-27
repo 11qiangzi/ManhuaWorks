@@ -3,22 +3,29 @@
 FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 
-COPY package.json ./
-RUN npm install --no-audit --no-fund
+# Enable pnpm via corepack
+RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
 
-COPY tsconfig.json ./
-COPY src ./src
-COPY tests ./tests
-RUN npx tsc -p tsconfig.json
+# Copy workspace root manifests
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY services/collab-service/package.json ./services/collab-service/
+
+# Install deps (workspace-aware)
+RUN pnpm install --frozen-lockfile --filter @manhuaworks/collab-service...
+
+COPY services/collab-service/tsconfig.json ./services/collab-service/
+COPY services/collab-service/src ./services/collab-service/src
+COPY services/collab-service/tests ./services/collab-service/tests
+RUN pnpm --filter @manhuaworks/collab-service build
 
 FROM node:20-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY package.json ./
-RUN npm install --omit=dev --no-audit --no-fund
+COPY --from=builder /app/services/collab-service/package.json ./
+COPY --from=builder /app/node_modules ./node_modules
 
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/services/collab-service/dist ./dist
 
 EXPOSE 8091
 USER node

@@ -1,5 +1,5 @@
 /**
- * ManhuaWorks Demo Server (W1 交付)
+ * 千机工坊 Demo Server (W1 交付)
  * --------------------------------
  * 职责：把 Toonflow 1.1.7 的 build（data/serve/app.js）作为子进程拉起，
  *      在 :10588 暴露 Toonflow 的 Web UI。

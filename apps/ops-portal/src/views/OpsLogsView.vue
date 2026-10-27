@@ -1,55 +1,107 @@
 <script setup lang="ts">
 /**
- * OpsLogsView.vue — 运维日志 (1:1 复刻 ops-logs.html)
- * 林染 🖥️ 2026-06-10 派单 33C
+ * OpsLogsView.vue — 运维日志
+ * 数据源: /api/v1/ops/logs
  */
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { fetchLogs } from '@/api/ops-api'
 
 const searchQuery = ref('')
 const levelFilter = ref('全部级别')
-const logs = ref([
-  { time: '13:02:45', level: 'INFO', msg: '[k8s] Pod user-service-7d8f9 ready — 3/3 replicas healthy', color: '#60a5fa' },
-  { time: '13:02:30', level: 'INFO', msg: '[monitor] CPU usage spike on worker-02 — 82% avg (threshold 80%)', color: '#60a5fa' },
-  { time: '13:02:15', level: 'WARN', msg: '[redis] Connection pool exhausted — 128/128 connections active', color: '#fbbf24' },
-  { time: '13:01:50', level: 'INFO', msg: '[cron] Daily backup completed — 1.2GB, took 8s', color: '#60a5fa' },
-  { time: '13:01:20', level: 'ERROR', msg: '[image-gen] GPU node gpu-worker-03 OOM — restarted process', color: '#fca5a5' },
-  { time: '13:00:45', level: 'INFO', msg: '[nginx] Rate limit trigger on ip=203.0.113.5 — 156 req/s', color: '#60a5fa' },
-  { time: '12:59:00', level: 'INFO', msg: '[docker] Container user-service healthy — uptime 2h 14m', color: '#60a5fa' },
-])
+const logs = ref<{ time: string; level: string; msg: string; color: string }[]>([])
+const loading = ref(true)
+const error = ref('')
+
+/* 动态统计 */
+const todayCount = ref(0)
+const warnCount = ref(0)
+const errorCount = ref(0)
+
+/* 客户端过滤 */
+const filteredLogs = computed(() => {
+  return logs.value.filter(l => {
+    if (levelFilter.value !== '全部级别' && l.level !== levelFilter.value) return false
+    if (searchQuery.value.trim()) {
+      const q = searchQuery.value.trim().toLowerCase()
+      if (!l.msg.toLowerCase().includes(q) && !l.level.toLowerCase().includes(q)) return false
+    }
+    return true
+  })
+})
 
 const refreshing = ref(false); const refreshError = ref('')
-async function refresh() {
+
+async function loadLogs() {
   refreshing.value = true; refreshError.value = ''
   try {
-    const token = localStorage.getItem('mhw.access_token') || ''
-    const r = await fetch('/api/v1/ops/logs', { headers: { Authorization: 'Bearer ' + token } })
-    if (r.ok) { const d = await r.json(); if (d.data?.items) { logs.value = d.data.items.map((l: any) => ({ time: new Date(l.created_at).toLocaleTimeString('zh-CN',{hour12:false}), level: l.level || 'INFO', msg: l.message || '', color: l.level === 'ERROR' ? '#fca5a5' : l.level === 'WARN' ? '#fbbf24' : '#60a5fa' })) } }
-  } catch (err: any) { refreshError.value = err.message || '刷新失败' }
-  finally { refreshing.value = false }
+    const data = await fetchLogs(200, 0)
+    if (data.items && data.items.length > 0) {
+      logs.value = data.items.map((l: any) => ({
+        time: l.time ?? new Date(l.created_at ?? l.createdAt).toLocaleTimeString('zh-CN', { hour12: false }),
+        level: l.level || 'INFO',
+        msg: l.msg ?? l.message ?? '',
+        color: (l.level === 'ERROR') ? '#fca5a5' : (l.level === 'WARN') ? '#fbbf24' : '#60a5fa',
+      }))
+    }
+    todayCount.value = data.todayCount ?? logs.value.length
+    warnCount.value = data.warnCount ?? logs.value.filter(l => l.level === 'WARN').length
+    errorCount.value = data.errorCount ?? logs.value.filter(l => l.level === 'ERROR').length
+  } catch (err: any) {
+    refreshError.value = err.message || '加载失败'
+  } finally {
+    refreshing.value = false
+    loading.value = false
+  }
 }
+
+async function refresh() {
+  loading.value = true
+  await loadLogs()
+}
+
+onMounted(async () => {
+  await loadLogs()
+})
 </script>
 
 <template>
   <div class="ops-logs">
     <div class="ol-header">
-      <div><span class="page-title">📋 运维日志</span><span class="ol-sub">实时日志 · 最近 200 条</span></div>
+      <div><span class="page-title">📋 运维日志</span><span class="ol-sub">实时日志 · 数据源: API</span></div>
       <div class="ol-toolbar">
         <div class="search-box"><input class="input" v-model="searchQuery" placeholder="搜索日志…" style="width:220px;font-size:12px;padding:6px 10px"></div>
         <select class="input" v-model="levelFilter" style="width:100px;font-size:12px;padding:6px 10px"><option>全部级别</option><option>INFO</option><option>WARN</option><option>ERROR</option></select>
         <button class="btn btn-xs btn-secondary" @click="refresh">🔄 刷新</button>
       </div>
     </div>
+
+    <p v-if="refreshError" class="ol-error">⚠️ {{ refreshError }}</p>
+
     <div class="ol-stats">
-      <div class="stat-card"><div class="stat-icon">📄</div><div class="stat-value">8,942</div><div class="stat-label">今日日志</div></div>
-      <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-value" style="color:#fbbf24">18</div><div class="stat-label">WARN</div></div>
-      <div class="stat-card"><div class="stat-icon">❌</div><div class="stat-value" style="color:#ef4444">3</div><div class="stat-label">ERROR</div></div>
+      <div class="stat-card"><div class="stat-icon">📄</div><div class="stat-value">{{ todayCount.toLocaleString() }}</div><div class="stat-label">今日日志</div></div>
+      <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-value" style="color:#fbbf24">{{ warnCount }}</div><div class="stat-label">WARN</div></div>
+      <div class="stat-card"><div class="stat-icon">❌</div><div class="stat-value" style="color:#ef4444">{{ errorCount }}</div><div class="stat-label">ERROR</div></div>
     </div>
-    <div class="ol-log-list">
-      <div v-for="(log, i) in logs" :key="i" class="log-entry">
-        <span class="log-time">{{ log.time }}</span>
-        <span class="log-level" :class="`log-level--${log.level.toLowerCase()}`">{{ log.level }}</span>
-        <span class="log-msg" v-html="highlightCode(log.msg)"></span>
+
+    <!-- 加载中 -->
+    <div v-if="loading && logs.length === 0" class="ol-log-list">
+      <div v-for="i in 7" :key="i" class="log-entry" style="opacity:0.4">
+        <span class="log-time">--:--:--</span>
+        <span class="log-level">…</span>
+        <span class="log-msg">加载中…</span>
       </div>
+    </div>
+
+    <!-- 日志列表 -->
+    <div v-else class="ol-log-list">
+      <template v-for="(log, i) in filteredLogs" :key="i">
+        <div class="log-entry">
+          <span class="log-time">{{ log.time }}</span>
+          <span class="log-level" :class="`log-level--${log.level.toLowerCase()}`">{{ log.level }}</span>
+          <span class="log-msg" v-html="highlightCode(log.msg)"></span>
+        </div>
+      </template>
+      <p v-if="filteredLogs.length === 0" style="color:#6b7280;text-align:center;padding:24px;font-size:12px;">无匹配日志</p>
     </div>
   </div>
 </template>
@@ -64,6 +116,7 @@ function highlightCode(msg: string): string {
 .ops-logs { flex: 1; padding: 20px 28px; overflow-y: auto; }
 .ol-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .ol-sub { font-size: 12px; color: var(--text-muted, #64748b); margin-left: 8px; }
+.ol-error { color: #fbbf24; background: #3b2415; border: 1px solid #f59e0b; padding: 8px 12px; border-radius: 6px; font-size: 12px; margin: 0 0 12px; }
 .ol-toolbar { display: flex; gap: 8px; }
 .ol-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 16px; }
 .stat-card { display: flex; flex-direction: column; gap: 4px; background: var(--bg-card, #141a2e); border: 1px solid var(--border, #1e293b); border-radius: var(--radius, 12px); padding: 18px 20px; }

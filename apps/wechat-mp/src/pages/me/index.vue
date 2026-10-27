@@ -47,7 +47,7 @@
     </view>
 
     <!-- 底部版权 -->
-    <text class="footer">ManhuaWorks · L5-B 真实接入</text>
+    <text class="footer">千机工坊 - L5-B 真实接入</text>
   </view>
 </template>
 

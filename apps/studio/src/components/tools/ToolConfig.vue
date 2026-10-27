@@ -181,7 +181,7 @@ function onRun() {
           v-model="batch"
           type="checkbox"
         />
-        <span>批量运行（按分镜/角色循环）</span>
+        <span>批量运行（按镜头/角色循环）</span>
       </label>
       <button
         class="ml-auto rounded bg-amber-500 px-3 py-1 text-[12px] font-semibold text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"

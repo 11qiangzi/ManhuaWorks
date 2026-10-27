@@ -1,6 +1,6 @@
 /**
  * web · billing Pinia store — 接 billing-service
- * ManhuaWorks · L2 task 8
+ * 千机工坊 · L2 task 8
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
@@ -52,7 +52,7 @@ export const useBillingStore = defineStore('billing', () => {
     }
   }
 
-  async function subscribe(plan: 'basic' | 'pro' | 'enterprise', cycle: 'monthly' | 'yearly' = 'monthly'): Promise<void> {
+  async function subscribe(plan: 'free' | 'pro' | 'enterprise', cycle: 'monthly' | 'yearly' = 'monthly'): Promise<void> {
     loading.value = true
     try {
       subscription.value = await api.billing.subscribe(plan, cycle)
@@ -76,7 +76,7 @@ export const useBillingStore = defineStore('billing', () => {
     return o
   }
 
-  async function payOrder(id: string, method: CreateOrderReq['payment_method'] = 'stripe'): Promise<OrderDTO> {
+  async function payOrder(id: string, method: string = 'stripe'): Promise<OrderDTO> {
     const o = await api.billing.payOrder(id, method)
     const idx = orders.value.findIndex((x) => x.id === id)
     if (idx >= 0) orders.value[idx] = o

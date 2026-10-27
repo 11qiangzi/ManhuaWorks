@@ -12,13 +12,15 @@
   },
   "dependencies": {
     "@manhuaworks/api-client": "workspace:^",
+    "@manhuaworks/shared-types": "workspace:^",
     "@manhuaworks/ui": "workspace:^",
     "@vueuse/core": "^10.9.0",
     "axios": "^1.6.8",
     "pinia": "^2.1.7",
     "tailwindcss": "^3.4.3",
     "vue": "^3.4.21",
-    "vue-router": "^4.3.0"
+    "vue-router": "^4.3.0",
+    "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
     "@types/node": "^25.9.2",

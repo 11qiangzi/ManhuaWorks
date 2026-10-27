@@ -1,6 +1,6 @@
 /**
  * useWebSocket — WebSocket 客户端 composable
- * ManhuaWorks · W3 工坊流程精修
+ * 千机工坊 · W3 工坊流程精修
  *
  * 功能：
  * 1. 自动重连（指数退避 1s → 2s → 4s → 8s → 最大 30s）
@@ -229,15 +229,13 @@ export function useWebSocket(url: string, options: WSOptions = {}) {
   /** 主动发送 */
   function send(data: unknown): boolean {
     if (!ws || ws.readyState !== WebSocket.OPEN) {
-      console.warn('[useWebSocket] 发送失败：连接未就绪')
       return false
     }
     try {
       const payload = typeof data === 'string' ? data : JSON.stringify(data)
       ws.send(payload)
       return true
-    } catch (err) {
-      console.warn('[useWebSocket] 发送失败', err)
+    } catch {
       return false
     }
   }

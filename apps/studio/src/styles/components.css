@@ -1,0 +1,136 @@
+/**
+ * 千机工坊 Component Utilities
+ * 可复用的组件样式模式，替代 DaisyUI btn/badge/alert 类
+ */
+
+/* === 按钮体系 === */
+.mw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius, 8px);
+  border: 1px solid var(--border, #1e293b);
+  background: var(--bg-card, #141a2e);
+  color: var(--text-primary, #e2e8f0);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition, 200ms ease);
+  white-space: nowrap;
+  user-select: none;
+}
+.mw-btn:hover { background: var(--bg-hover, #1e293b); border-color: var(--border-hover, #334155); }
+.mw-btn:active { transform: scale(0.97); }
+.mw-btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+.mw-btn--primary {
+  background: var(--accent, #6366f1);
+  color: var(--accent-text, #fff);
+  border-color: var(--accent, #6366f1);
+}
+.mw-btn--primary:hover { background: var(--accent-hover, #818cf8); }
+
+.mw-btn--secondary {
+  background: var(--accent-muted, rgba(99,102,241,0.15));
+  color: var(--accent, #6366f1);
+  border-color: transparent;
+}
+
+.mw-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary, #94a3b8);
+}
+.mw-btn--ghost:hover { background: var(--bg-hover, #1e293b); color: var(--text-primary, #e2e8f0); }
+
+.mw-btn--danger {
+  background: var(--error-bg, rgba(239,68,68,0.12));
+  color: var(--error, #ef4444);
+  border-color: transparent;
+}
+.mw-btn--danger:hover { background: var(--error, #ef4444); color: #fff; }
+
+.mw-btn--sm { padding: 4px 10px; font-size: 12px; border-radius: var(--radius-sm, 6px); }
+.mw-btn--xs { padding: 2px 8px; font-size: 11px; border-radius: var(--radius-sm, 6px); }
+
+/* === 徽章体系 === */
+.mw-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.mw-badge--default { background: var(--bg-tertiary, #1a2240); color: var(--text-secondary, #94a3b8); }
+.mw-badge--success { background: var(--success-bg); color: var(--success, #22c55e); }
+.mw-badge--warning { background: var(--warning-bg); color: var(--warning, #f59e0b); }
+.mw-badge--error { background: var(--error-bg); color: var(--error, #ef4444); }
+.mw-badge--info { background: var(--info-bg); color: var(--info, #3b82f6); }
+.mw-badge--accent { background: var(--accent-muted); color: var(--accent, #6366f1); }
+
+/* === 提示框 === */
+.mw-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: var(--radius, 8px);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.mw-alert--error { background: var(--error-bg); color: var(--error, #ef4444); border: 1px solid var(--error, #ef4444); }
+.mw-alert--warning { background: var(--warning-bg); color: var(--warning, #f59e0b); border: 1px solid var(--warning, #f59e0b); }
+.mw-alert--info { background: var(--info-bg); color: var(--info, #3b82f6); border: 1px solid var(--info, #3b82f6); }
+.mw-alert--success { background: var(--success-bg); color: var(--success, #22c55e); border: 1px solid var(--success, #22c55e); }
+
+/* === 卡片 === */
+.mw-card {
+  background: var(--bg-card, #141a2e);
+  border: 1px solid var(--border, #1e293b);
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+  transition: all var(--transition, 200ms ease);
+}
+.mw-card:hover { border-color: var(--border-hover, #334155); box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,0.3)); }
+
+/* === 输入框 === */
+.mw-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius, 8px);
+  border: 1px solid var(--border, #1e293b);
+  background: var(--bg-input, #0f1629);
+  color: var(--text-primary, #e2e8f0);
+  font-size: 13px;
+  transition: border-color var(--transition-fast, 120ms ease);
+}
+.mw-input:focus { outline: none; border-color: var(--border-focus, #6366f1); }
+.mw-input::placeholder { color: var(--text-muted, #64748b); }
+
+/* === 模态框 === */
+.mw-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-modal-overlay, rgba(0,0,0,0.6));
+  backdrop-filter: blur(4px);
+}
+.mw-modal {
+  background: var(--bg-card, #141a2e);
+  border: 1px solid var(--border, #1e293b);
+  border-radius: var(--radius-lg, 12px);
+  padding: 24px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: var(--shadow-lg);
+}
+.mw-modal__title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; }
+.mw-modal__actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }

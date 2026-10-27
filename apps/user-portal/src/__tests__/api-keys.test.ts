@@ -1,6 +1,6 @@
 /**
  * api-keys · BYOK UI 测试
- * ManhuaWorks · M1-W4 · L4-A
+ * 千机工坊 · M1-W4 · L4-A
  *
  * 真实后端契约 (L3.D 验证):
  *   - base: /api/v1/user/api-keys

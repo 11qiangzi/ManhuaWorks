@@ -1,6 +1,6 @@
 /**
  * project-service — 项目服务 API 客户端
- * ManhuaWorks · W4 用户后台
+ * 千机工坊 · W4 用户后台
  *
  * 后端：project-service（通过 api-gateway :8080 /v1/projects 代理）
  * 鉴权：Bearer JWT
@@ -73,6 +73,11 @@ export interface CreateProjectReq {
   tags?: string[]
   /** 模板 ID（可空：从空项目开始） */
   templateId?: string
+  /** 配乐风格偏好 */
+  musicStyle?: {
+    moods: string[]
+    aiRecommend: boolean
+  }
 }
 
 /** 更新请求 */
@@ -140,8 +145,7 @@ class ProjectService {
         page: d.page ?? 1,
         pageSize: d.pageSize ?? filter.pageSize ?? 20
       }
-    } catch (err) {
-      console.warn('[projectService.list] 失败，返回占位', err)
+    } catch {
       return { list: [], total: 0, page: 1, pageSize: filter.pageSize ?? 20 }
     }
   }
@@ -166,6 +170,7 @@ class ProjectService {
     if (req.cover) body.cover = req.cover
     if (req.tags) body.tags = req.tags
     if (req.templateId) body.templateId = req.templateId
+    if (req.musicStyle) body.musicStyle = req.musicStyle
     const res = await this.client.post<{ data: Project }>('/', body, {
       headers: authHeaders()
     })

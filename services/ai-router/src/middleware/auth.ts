@@ -23,13 +23,25 @@ function getSecretKey(): Uint8Array {
 }
 
 export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
+  // 如果 trustInternalMiddleware 已通过 x-internal-user 设置了用户，跳过 JWT
+  if (c.get("user")) {
+    await next();
+    return;
+  }
+
   const header = c.req.header("authorization");
   if (!header) {
-    return c.json({ error: "missing authorization header" }, 401);
+    return c.json(
+      { error: "missing authorization header", code: "auth_required" },
+      401,
+    );
   }
   const m = /^Bearer\s+(.+)$/i.exec(header);
   if (!m) {
-    return c.json({ error: "invalid authorization header" }, 401);
+    return c.json(
+      { error: "invalid authorization header", code: "auth_format" },
+      401,
+    );
   }
   const token = m[1]!;
 
@@ -37,7 +49,10 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
     const { payload } = await jwtVerify(token, getSecretKey(), { algorithms: ["HS256"] });
     const sub = typeof payload.sub === "string" ? payload.sub : undefined;
     if (!sub) {
-      return c.json({ error: "token missing sub" }, 401);
+      return c.json(
+        { error: "token missing sub", code: "auth_invalid" },
+        401,
+      );
     }
     const user: AuthUser = {
       userId: sub,
@@ -46,7 +61,14 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
     };
     c.set("user", user);
   } catch (err) {
-    return c.json({ error: "invalid token", detail: err instanceof Error ? err.message : "unknown" }, 401);
+    return c.json(
+      {
+        error: "invalid token",
+        code: "auth_invalid",
+        detail: err instanceof Error ? err.message : "unknown",
+      },
+      401,
+    );
   }
 
   await next();

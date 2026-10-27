@@ -1,7 +1,7 @@
 /**
  * @manhuaworks/admin-portal — 浏览器端 OpenTelemetry RUM
  *
- * ManhuaWorks L2 task 14
+ * 千机工坊 L2 task 14
  */
 import { diag, DiagConsoleLogger, DiagLogLevel, trace, SpanStatusCode } from '@opentelemetry/api';
 import { W3CTraceContextPropagator } from '@opentelemetry/core';

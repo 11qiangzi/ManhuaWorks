@@ -4,6 +4,7 @@ import viteCompression from 'vite-plugin-compression'
 import { viteWebpPlugin } from '../../scripts/build/vite-plugin-webp'
 import path from 'path'
 import fs from 'node:fs'
+import { BRAND } from './src/config/branding'
 
 /** BUG-RT-01 修: SPA middleware 兜底 */
 function spaApiFallback() {
@@ -34,7 +35,7 @@ function spaApiFallback() {
 
 /**
  * user-portal · Vite 配置
- * ManhuaWorks · W4 用户后台
+ * 千机工坊 · W4 用户后台
  *
  * 端口:5180
  * API 代理:localhost:8089 (project-service)
@@ -51,6 +52,19 @@ export default defineConfig({
     viteCompression({ algorithm: 'gzip', ext: '.gz', threshold: 1024, deleteOriginFile: false }),
     viteCompression({ algorithm: 'brotliCompress', ext: '.br', threshold: 1024, deleteOriginFile: false }),
     viteWebpPlugin({ quality: 80, silent: false }),
+    {
+      // 派单 21B · 林染: Vite 原生 transformIndexHtml 注入动态 title + meta
+      // (覆盖 apps/user-portal/index.html 里的 hardcode "千机工坊 - 用户中心")
+      name: 'qianji-html-inject',
+      transformIndexHtml(html) {
+        return html
+          .replace(/<title>.*?<\/title>/, `<title>${BRAND.nameCn} - 用户中心</title>`)
+          .replace(
+            '</head>',
+            `<meta name="description" content="${BRAND.nameCn} - ${BRAND.tagline}">\n</head>`
+          )
+      },
+    },
   ],
   base: cdnBase,
   resolve: {
@@ -59,6 +73,7 @@ export default defineConfig({
       '@manhuaworks/api-client': path.resolve(__dirname, '../../packages/api-client/src'),
       '@manhuaworks/ui': path.resolve(__dirname, '../../packages/ui/src'),
       '@manhuaworks/shared-types': path.resolve(__dirname, '../../packages/shared-types/src'),
+      '@dev-portal': path.resolve(__dirname, '../dev-portal/src'),
     }
   },
   // BUG-RT-01 修: SPA 模式 (vite 5 默认就是这个, 但显式声明)
@@ -112,6 +127,14 @@ export default defineConfig({
         target: 'http://localhost:8090',
         changeOrigin: true,
         rewrite: (path) => '/api' + path
+      },
+      '/api/v1/notifications': {
+        target: 'http://localhost:8091',
+        changeOrigin: true
+      },
+      '/api/v1/ops': {
+        target: 'http://localhost:8088',
+        changeOrigin: true
       },
       '/v1': {
         target: 'http://localhost:8089',

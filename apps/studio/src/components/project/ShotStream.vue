@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * ShotStream.vue — 分镜卡片流
+ * ShotStream.vue — 镜头卡片流
  * L2 林染 任务 2：
  *   - 网格/列表两种布局
  *   - 拖拽重排（HTML5 native drag&drop）
@@ -76,7 +76,7 @@ function onSelectAll() {
     <!-- 工具条 -->
     <div class="flex items-center justify-between border-b border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-900">
       <div class="flex items-center gap-2 text-[12px] text-gray-600 dark:text-gray-300">
-        <span class="font-semibold">分镜流</span>
+        <span class="font-semibold">镜头流</span>
         <span class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] dark:bg-gray-800">
           {{ shots.length }} 个
         </span>
@@ -103,7 +103,7 @@ function onSelectAll() {
     <!-- 卡片流 -->
     <div class="flex-1 overflow-y-auto p-3">
       <div v-if="sorted.length === 0" class="flex h-32 items-center justify-center text-[12px] text-gray-400">
-        暂无分镜，点击右上角 ➕ 新建第一个分镜
+        暂无镜头，点击右上角 ➕ 新建第一个镜头
       </div>
       <div
         v-else

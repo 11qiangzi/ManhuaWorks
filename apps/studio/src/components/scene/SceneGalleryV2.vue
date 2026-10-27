@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * SceneGalleryV2 · 场景画廊 v2
- * ManhuaWorks · W5 任务 5
+ * 千机工坊 · W5 任务 5
  *
  * 12 类场景 4-6 子场景网格 + 一致性预览
  */
@@ -203,7 +203,7 @@ function colorClass(token: string) {
             </div>
             <div class="scene-gallery-v2__sub-actions" @click.stop>
               <button type="button" title="预览" @click="onPreview(meta.id, sub.id, $event)">👁</button>
-              <button type="button" title="应用到分镜" @click="onApply(meta.id, sub.id, $event)">✨</button>
+              <button type="button" title="应用到镜头" @click="onApply(meta.id, sub.id, $event)">✨</button>
             </div>
           </article>
         </div>

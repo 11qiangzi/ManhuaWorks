@@ -2,7 +2,7 @@
  * Order 模型
  */
 
-import type { PlanIdDb } from "../config/plans";
+import type { PlanId } from "../config/plans";
 
 export type OrderStatus = "pending" | "paid" | "failed" | "refunded" | "cancelled";
 export type BillingCycle = "monthly" | "yearly" | "one_time";
@@ -11,7 +11,7 @@ export interface OrderRow {
   id: string;
   user_id: string;
   order_no: string;
-  plan: PlanIdDb;
+  plan: PlanId;
   billing_cycle: BillingCycle;
   amount_cents: string | number; // pg bigint → string
   currency: string;
@@ -28,7 +28,7 @@ export interface Order {
   id: string;
   userId: string;
   orderNo: string;
-  plan: PlanIdDb;
+  plan: PlanId;
   billingCycle: BillingCycle;
   amountCents: number;
   currency: string;

@@ -3,38 +3,181 @@
  * SceneEditView.vue — 场景详情编辑 (1:1 复刻 studio-scene-edit.html)
  * 林染 🖥️ 2026-06-10 派单 33C
  */
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import ImagePreview from '../components/ImagePreview.vue'
+import { getApi } from '../api-bridge'
+import { useSceneStore } from '../stores/sceneStore'
 
 const route = useRoute()
 const router = useRouter()
-const sceneName = ref('林府书房')
-const sceneType = ref('🏠 室内')
-const sceneDesc = ref('林启父亲的书房。檀木书桌靠窗，竹影透过纱帘投在地面，墙上挂一柄祖传断剑。')
-const lightPreset = ref('暖黄')
-const colorTemp = ref(3200)
-const brightness = ref(75)
-const prompt = ref('中式古典书房，檀木家具，窗外竹林摇曳，暖黄灯光，氛围安静庄严')
-const negativePrompt = ref('现代电器, 塑料材质, 过多人, 杂乱')
-const subScenes = ref([
-  { name: '🛋️ 沙发区', angle: '正面视角 · 暖光主光源', active: true },
-  { name: '🪟 窗边书桌', angle: '侧光氛围 · 竹影投窗', active: false },
-  { name: '📚 书架角', angle: '纵深构图 · 暗角补光', active: false },
-])
+const sceneStore = useSceneStore()
+
+const loading = ref(false)
+const loadError = ref<string | null>(null)
+
+// -- mock fallback (used when API unavailable) --
+const MOCK_SCENE = {
+  name: '林府书房',
+  type: '🏠 室内',
+  description: '林启父亲的书房。檀木书桌靠窗，竹影透过纱帘投在地面，墙上挂一柄祖传断剑。',
+  lightPreset: '暖黄',
+  colorTemp: 3200,
+  brightness: 75,
+  prompt: '中式古典书房，檀木家具，窗外竹林摇曳，暖黄灯光，氛围安静庄严',
+  negativePrompt: '现代电器, 塑料材质, 过多人, 杂乱',
+  subScenes: [
+    { name: '🛋️ 沙发区', angle: '正面视角 · 暖光主光源', active: true },
+    { name: '🪟 窗边书桌', angle: '侧光氛围 · 竹影投窗', active: false },
+    { name: '📚 书架角', angle: '纵深构图 · 暗角补光', active: false },
+  ],
+}
+
+const sceneName = ref(MOCK_SCENE.name)
+const imageUrl = ref<string | null>(null)
+const sceneType = ref(MOCK_SCENE.type)
+const sceneDesc = ref(MOCK_SCENE.description)
+const lightPreset = ref(MOCK_SCENE.lightPreset)
+const colorTemp = ref(MOCK_SCENE.colorTemp)
+const brightness = ref(MOCK_SCENE.brightness)
+const prompt = ref(MOCK_SCENE.prompt)
+const negativePrompt = ref(MOCK_SCENE.negativePrompt)
+const subScenes = ref(MOCK_SCENE.subScenes.map(s => ({ ...s })))
 const activeSub = ref(0)
 
-function goBack() { router.push('/materials?tab=scenes') }
+const originalData = ref<Record<string, any>>({})
+const sceneTypeOptions = ['室内', '室外', '战斗', '城镇', '荒野', '地下', '水上', '空中']
+
+/** Populate reactive refs from API scene data */
+function applySceneData(scene: Record<string, any>) {
+  if (scene.name) sceneName.value = scene.name
+  if (scene.scene_type) sceneType.value = scene.scene_type
+  if (scene.type) sceneType.value = scene.type
+  if (scene.description) sceneDesc.value = scene.description
+  if (scene.light_preset) lightPreset.value = scene.light_preset
+  if (scene.light_color_temp) lightPreset.value = scene.light_color_temp
+  if (scene.color_temp != null) colorTemp.value = scene.color_temp
+  if (scene.brightness != null) brightness.value = scene.brightness
+  if (scene.light_intensity != null) brightness.value = Math.round(Number(scene.light_intensity || 0) * 100)
+  if (scene.prompt) prompt.value = scene.prompt
+  if (scene.negative_prompt) negativePrompt.value = scene.negative_prompt
+  if (scene.thumbnail_url || scene.image_url) imageUrl.value = scene.thumbnail_url || scene.image_url
+  if (Array.isArray(scene.sub_scenes)) subScenes.value = scene.sub_scenes
+}
+
+/** Capture current form state as the original baseline for reset */
+function saveOriginalSnapshot() {
+  originalData.value = {
+    sceneName: sceneName.value,
+    sceneType: sceneType.value,
+    sceneDesc: sceneDesc.value,
+    lightPreset: lightPreset.value,
+    colorTemp: colorTemp.value,
+    brightness: brightness.value,
+    prompt: prompt.value,
+    negativePrompt: negativePrompt.value,
+    imageUrl: imageUrl.value,
+    subScenes: subScenes.value.map(s => ({ ...s })),
+    activeSub: activeSub.value,
+  }
+}
+
+/** Revert all form fields to the originally loaded data */
+function resetForm() {
+  sceneName.value = originalData.value.sceneName ?? ''
+  sceneType.value = originalData.value.sceneType ?? ''
+  sceneDesc.value = originalData.value.sceneDesc ?? ''
+  lightPreset.value = originalData.value.lightPreset ?? ''
+  colorTemp.value = originalData.value.colorTemp ?? 3200
+  brightness.value = originalData.value.brightness ?? 75
+  prompt.value = originalData.value.prompt ?? ''
+  negativePrompt.value = originalData.value.negativePrompt ?? ''
+  imageUrl.value = originalData.value.imageUrl ?? null
+  subScenes.value = (originalData.value.subScenes ?? []).map((s: any) => ({ ...s }))
+  activeSub.value = originalData.value.activeSub ?? 0
+}
+
+/** Add a new empty sub-scene */
+function addSubScene() {
+  subScenes.value.push({ name: '🆕 新子场景', angle: '默认视角', active: false })
+}
+
+onMounted(async () => {
+  const sceneId = route.params.id as string
+  if (!sceneId || sceneId === 'new') { saveOriginalSnapshot(); return }
+  loading.value = true
+  loadError.value = null
+  try {
+    // Try to find scene in already-loaded store first
+    const existing = sceneStore.scenes.find((s) => s.id === sceneId)
+    if (existing) {
+      applySceneData(existing)
+      saveOriginalSnapshot()
+      return
+    }
+    // Fetch from API using project ID from store or localStorage
+    const pid = sceneStore.projectId || localStorage.getItem('mhw.project_id')
+    if (!pid) {
+      loadError.value = '未关联项目，无法加载场景数据'
+      return
+    }
+    const api = getApi()
+    try {
+      const scene = await api.http.get<Record<string, any>>(
+        `/projects/${encodeURIComponent(pid)}/scenes/${encodeURIComponent(sceneId)}`,
+      )
+      applySceneData(scene)
+      saveOriginalSnapshot()
+    } catch {
+      // Direct endpoint may not exist — try list lookup
+      const resp = await api.http.get<any>(
+        `/projects/${encodeURIComponent(pid)}/scenes`,
+        undefined,
+        { timeoutMs: 2500 } as any,
+      )
+      const list = Array.isArray(resp) ? resp : (resp?.items ?? resp?.list ?? resp?.data ?? [])
+      const found = list.find((s: any) => s.id === sceneId)
+      if (found) {
+        applySceneData(found)
+        saveOriginalSnapshot()
+      } else {
+        loadError.value = '未找到对应场景'
+      }
+    }
+  } catch (e: any) {
+    loadError.value = e?.message || '加载失败'
+    // keep mock data as fallback
+  } finally {
+    loading.value = false
+  }
+})
+
+function goBack() { router.push('/scenes') }
 const saving = ref(false); const saveError = ref(''); const saveSuccess = ref(false)
 async function saveScene() {
   saving.value = true; saveError.value = ''; saveSuccess.value = false
   try {
-    const r = await fetch('/api/scenes/' + (route.params.id || 'new'), {
-      method: route.params.id ? 'PATCH' : 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (localStorage.getItem('mhw.access_token') || '') },
-      body: JSON.stringify({ name: sceneName.value, type: sceneType.value, description: sceneDesc.value, light_preset: lightPreset.value, color_temp: colorTemp.value, brightness: brightness.value, prompt: prompt.value, negative_prompt: negativePrompt.value, sub_scenes: subScenes.value })
-    })
-    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.message || '保存失败 (' + r.status + ')') }
-    saveSuccess.value = true; setTimeout(() => router.push('/materials?tab=scenes'), 1200)
+    const api = getApi()
+    const id = route.params.id as string
+    const pid = sceneStore.projectId || localStorage.getItem('mhw.project_id')
+    if (!pid) { saveError.value = '未关联项目，无法保存'; return }
+    const payload = {
+      name: sceneName.value,
+      type: sceneType.value,
+      description: sceneDesc.value,
+      light_preset: lightPreset.value,
+      color_temp: colorTemp.value,
+      brightness: brightness.value,
+      prompt: prompt.value,
+      negative_prompt: negativePrompt.value,
+      sub_scenes: subScenes.value,
+    }
+    if (id && id !== 'new') {
+      await api.http.patch(`/projects/${encodeURIComponent(pid)}/scenes/${encodeURIComponent(id)}`, payload)
+    } else {
+      await api.http.post(`/projects/${encodeURIComponent(pid)}/scenes`, payload)
+    }
+    saveSuccess.value = true; setTimeout(() => router.push('/scenes'), 1200)
   } catch (err: any) { saveError.value = err.message || '保存失败' }
   finally { saving.value = false }
 }
@@ -43,6 +186,8 @@ function selectSub(i: number) { activeSub.value = i; subScenes.value.forEach((s,
 
 <template>
   <div class="scene-edit">
+    <div v-if="loading" class="se-loading">⏳ 加载场景数据中...</div>
+    <div v-if="loadError" class="se-load-error">⚠️ {{ loadError }}</div>
     <div class="se-header">
       <div class="se-header-left">
         <a href="#" class="se-back-link" @click.prevent="goBack">← 返回素材库</a>
@@ -50,20 +195,20 @@ function selectSub(i: number) { activeSub.value = i; subScenes.value.forEach((s,
         <span class="badge badge-amber">室内</span>
       </div>
       <div class="se-header-right">
-        <button class="btn btn-sm btn-secondary">🔄 重置</button>
+        <button class="btn btn-sm btn-secondary" @click="resetForm">🔄 重置</button>
         <button class="btn btn-sm btn-primary" @click="saveScene" :disabled="saving">{{ saving ? '保存中...' : saveSuccess ? '✅ 已保存' : '💾 保存' }}</button>
       </div>
     </div>
     <div class="sd-layout">
       <div class="sd-left">
-        <div class="sd-preview">🏠</div>
-        <div class="section-title">📐 子场景 (3)</div>
+        <ImagePreview :src="imageUrl" fallback="🏠" aspect="16:9" class="sd-preview" />
+        <div class="section-title">📐 子场景 ({{ subScenes?.length || 0 }})</div>
         <div class="subscene-grid">
           <div v-for="(s, i) in subScenes" :key="i" class="sub-card" :class="{ active: s.active }" @click="selectSub(i)">
             <div class="sub-name">{{ s.name }}</div>
             <div class="sub-angle">{{ s.angle }}</div>
           </div>
-          <div class="sub-card sub-card--add"><span>+ 新增子场景</span></div>
+          <div class="sub-card sub-card--add" @click="addSubScene"><span>+ 新增子场景</span></div>
         </div>
       </div>
       <div class="sd-right">
@@ -71,7 +216,7 @@ function selectSub(i: number) { activeSub.value = i; subScenes.value.forEach((s,
           <div class="section-title">基本信息</div>
           <div class="form-grid">
             <div><label class="form-label">名称</label><input class="input" v-model="sceneName"></div>
-            <div><label class="form-label">类型</label><select class="input" v-model="sceneType"><option>🏠 室内</option><option>🌳 室外</option><option>⚔️ 战斗</option></select></div>
+            <div><label class="form-label">类型</label><select class="input" v-model="sceneType"><option v-for="opt in sceneTypeOptions" :key="opt" :value="opt">{{ opt }}</option></select></div>
             <div><label class="form-label">描述</label><textarea class="input" rows="3" v-model="sceneDesc"></textarea></div>
           </div>
         </div>
@@ -87,7 +232,7 @@ function selectSub(i: number) { activeSub.value = i; subScenes.value.forEach((s,
             <div>
               <label class="form-label">色温</label>
               <input type="range" style="width:100%" v-model.number="colorTemp" min="2000" max="8000">
-              <div class="range-labels"><span>冷 (2000K)</span><span>{{ colorTemp }}K</span><span>暖 (8000K)</span></div>
+              <div class="range-labels"><span>暖 (2000K)</span><span>{{ colorTemp }}K</span><span>冷 (8000K)</span></div>
             </div>
             <div>
               <label class="form-label">亮度</label>
@@ -96,9 +241,9 @@ function selectSub(i: number) { activeSub.value = i; subScenes.value.forEach((s,
           </div>
         </div>
         <div class="form-section">
-          <div class="section-title">🎨 场景 Prompt</div>
+          <div class="section-title">🎨 场景提示词</div>
           <textarea class="input" rows="3" v-model="prompt"></textarea>
-          <div style="margin-top:8px"><label class="form-label">Negative</label><input class="input" v-model="negativePrompt"></div>
+          <div style="margin-top:8px"><label class="form-label">反向提示词</label><input class="input" v-model="negativePrompt"></div>
         </div>
       </div>
     </div>
@@ -115,7 +260,7 @@ function selectSub(i: number) { activeSub.value = i; subScenes.value.forEach((s,
 .sd-layout { display: flex; gap: 20px; padding: 20px; flex: 1; overflow: hidden; }
 .sd-left { flex: 1; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
 .sd-right { width: 340px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
-.sd-preview { aspect-ratio: 16/9; border-radius: var(--radius, 12px); background: linear-gradient(135deg,rgba(245,158,11,.2),rgba(245,158,11,.05)); display: flex; align-items: center; justify-content: center; font-size: 72px; border: 1px solid var(--border, #1e293b); }
+.sd-preview { width: 100%; }
 .subscene-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
 .sub-card { padding: 14px; border: 1px solid var(--border, #1e293b); border-radius: 8px; background: var(--bg-card, #141a2e); cursor: pointer; }
 .sub-card:hover { border-color: var(--accent, #818cf8); }
@@ -141,4 +286,6 @@ function selectSub(i: number) { activeSub.value = i; subScenes.value.forEach((s,
 .input { padding: 10px 14px; border-radius: 8px; background: var(--bg-tertiary, #1a2332); border: 1px solid var(--border, #1e293b); color: var(--text-primary, #e2e8f0); font-size: 14px; outline: none; font-family: var(--font-sans); width: 100%; transition: border .2s; }
 .input:focus { border-color: var(--accent, #818cf8); }
 textarea.input { resize: vertical; }
+.se-loading { padding: 10px 20px; background: rgba(99,102,241,.08); color: var(--accent, #818cf8); font-size: 13px; text-align: center; }
+.se-load-error { padding: 10px 20px; background: rgba(239,68,68,.1); color: #f87171; font-size: 13px; text-align: center; }
 </style>

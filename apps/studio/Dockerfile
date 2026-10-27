@@ -3,13 +3,13 @@
 # 同 web，端口 3001。
 FROM node:20-alpine AS deps
 WORKDIR /repo
-COPY package.json pnpm-workspace.yaml* ./
+COPY package.json pnpm-workspace.yaml* pnpm-lock.yaml* ./
 COPY apps/studio/package.json ./apps/studio/
 COPY packages/api-client/package.json ./packages/api-client/ 2>/dev/null || true
 COPY packages/ui/package.json ./packages/ui/ 2>/dev/null || true
 COPY packages/ui-components/package.json ./packages/ui-components/ 2>/dev/null || true
-RUN npm install --no-audit --no-fund --workspaces=false \
- || (cd apps/studio && npm install --no-audit --no-fund)
+RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
+RUN pnpm install --frozen-lockfile --filter @manhuaworks/studio...
 
 FROM deps AS build
 WORKDIR /repo
@@ -17,7 +17,7 @@ COPY apps/studio ./apps/studio
 COPY packages/api-client ./packages/api-client 2>/dev/null || true
 COPY packages/ui ./packages/ui 2>/dev/null || true
 COPY packages/ui-components ./packages/ui-components 2>/dev/null || true
-RUN cd apps/studio && npx vite build
+RUN pnpm --filter @manhuaworks/studio build
 
 FROM node:20-alpine AS runtime
 WORKDIR /app

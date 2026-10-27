@@ -1,7 +1,7 @@
 <template>
   <view class="page">
     <view class="hero">
-      <text class="hero-title">ManhuaWorks</text>
+      <text class="hero-title">千机工坊</text>
       <text class="hero-sub">创作者工作台 · 登录</text>
     </view>
 

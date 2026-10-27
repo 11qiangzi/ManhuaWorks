@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * CharacterPickerV2 · 角色选择器 v2
- * ManhuaWorks · W5 任务 5
+ * 千机工坊 · W5 任务 5
  *
  * 6 类 archetype + 预览 + 相似度提示
  */

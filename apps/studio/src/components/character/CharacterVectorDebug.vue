@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * CharacterVectorDebug · 角色向量调试
- * ManhuaWorks · W5 任务 5
+ * 千机工坊 · W5 任务 5
  *
  * cosine 矩阵可视化 + 阈值调节
  */

@@ -128,6 +128,7 @@ export interface DebugEvent {
     | 'node-finished'
     | 'node-error'
     | 'run-finished'
+    | 'run-cancelled'
   runId: string
   nodeId?: string
   payload?: Record<string, unknown>
@@ -205,7 +206,7 @@ export const NODE_DEFINITIONS: NodeDefinition[] = [
     label: 'LLM 生成',
     icon: '🧠',
     color: 'purple',
-    description: '调大模型生成文本（剧本/对白/分镜描述）',
+    description: '调大模型生成文本（剧本/对白/镜头描述）',
     inputs: [
       { id: 'prompt', label: '提示词', dataType: 'text', required: true },
     ],
@@ -291,7 +292,7 @@ export const NODE_DEFINITIONS: NodeDefinition[] = [
     label: '角色替换',
     icon: '👤',
     color: 'purple',
-    description: 'ai-orchestrator character-replace.refined pipeline — 跨分镜角色一致性',
+    description: 'ai-orchestrator character-replace.refined pipeline — 跨镜头角色一致性',
     inputs: [
       { id: 'in', label: '目标资产', dataType: 'json' },
     ],
@@ -350,7 +351,7 @@ export const NODE_DEFINITIONS: NodeDefinition[] = [
   {
     type: 'novel-to-drama',
     category: 'ai',
-    label: '小说转漫剧',
+    label: '小说转动画',
     icon: '🎬',
     color: 'amber',
     description: 'ai-orchestrator novel-to-drama.refined pipeline — 7 步全链路',
@@ -358,7 +359,7 @@ export const NODE_DEFINITIONS: NodeDefinition[] = [
       { id: 'in', label: '小说文本', dataType: 'text' },
     ],
     outputs: [
-      { id: 'out', label: '漫剧', dataType: 'json' },
+      { id: 'out', label: '动画', dataType: 'json' },
     ],
     defaultParams: {
       text: '',

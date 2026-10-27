@@ -1,5 +1,5 @@
 /**
- * ManhuaWorks 微信小程序 - API + Auth Store 测试 (L5-B 真实接入)
+ * 千机工坊 微信小程序 - API + Auth Store 测试 (L5-B 真实接入)
  *
  * 6 测试:
  *   1. client.register 真实 envelope 解包 + access_token 字段

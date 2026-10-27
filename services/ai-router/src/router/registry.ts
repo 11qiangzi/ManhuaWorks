@@ -1,11 +1,17 @@
 // Provider 注册中心
 // 维护所有 Provider 实例 + 健康状态。
+// 派单 16 扩展: 加 qwen / replicate / fal / openai 4 家，共 8 家
 
 import { BaseProvider } from "../providers/base.js";
 import { MiniMaxProvider } from "../providers/minimax.js";
 import { DeepSeekProvider } from "../providers/deepseek.js";
 import { ZhipuProvider } from "../providers/zhipu.js";
 import { VolcengineProvider } from "../providers/volcengine.js";
+import { QwenProvider } from "../providers/qwen.js";
+import { OpenAIProvider } from "../providers/openai.js";
+import { ReplicateProvider } from "../providers/replicate.js";
+import { FalProvider } from "../providers/fal.js";
+import { AgnesProvider } from "../providers/agnes.js";
 import type { ProviderHealth, ProviderId, TaskType, ModelInfo } from "../types.js";
 
 class ProviderRegistry {
@@ -13,10 +19,17 @@ class ProviderRegistry {
   private health = new Map<ProviderId, ProviderHealth>();
 
   constructor() {
+    // W2 阶段老 4 家
     this.register(new MiniMaxProvider());
     this.register(new DeepSeekProvider());
     this.register(new ZhipuProvider());
     this.register(new VolcengineProvider());
+    // 派单 16 新增 4 家
+    this.register(new QwenProvider());
+    this.register(new OpenAIProvider());
+    this.register(new ReplicateProvider());
+    this.register(new FalProvider());
+    this.register(new AgnesProvider());
   }
 
   register(p: BaseProvider): void {
@@ -37,16 +50,37 @@ class ProviderRegistry {
     return Array.from(this.providers.values());
   }
 
-  /** 获取某任务类型的所有候选模型（来自所有 provider） */
+  /** 半开路：熔断后超过此时间（ms）则允许一次试探请求 */
+  static readonly HALF_OPEN_AFTER_MS = 60_000;
+
+  /**
+   * 获取某任务类型的所有候选模型。
+   * 半开路由：被标记为 unhealthy 的 provider，若超过 HALF_OPEN_AFTER_MS 未检查，
+   * 仍加入候选（排在末尾），让 failover 做一次真实请求来恢复健康状态。
+   */
   candidatesFor(task: TaskType): ModelInfo[] {
-    const out: ModelInfo[] = [];
+    const healthy: ModelInfo[] = [];
+    const halfOpen: ModelInfo[] = [];
+    const now = Date.now();
+
     for (const p of this.providers.values()) {
-      if (!this.isHealthy(p.id)) continue;
-      for (const m of p.getModels()) {
-        if (m.capabilities.includes(task)) out.push(m);
+      const h = this.health.get(p.id);
+      const isHealthy = h?.healthy ?? true;
+      const isHalfOpen =
+        !isHealthy &&
+        h !== undefined &&
+        now - h.lastCheckedAt > ProviderRegistry.HALF_OPEN_AFTER_MS;
+
+      const models = p.getModels().filter((m) => m.capabilities.includes(task));
+      if (isHealthy) {
+        healthy.push(...models);
+      } else if (isHalfOpen) {
+        halfOpen.push(...models);
       }
     }
-    return out;
+
+    // 健康的排前面，半开路的排后面作为最后备选
+    return [...healthy, ...halfOpen];
   }
 
   // ---- 健康状态 ----

@@ -1,6 +1,6 @@
 /**
  * work-service — 我的作品 API 客户端
- * ManhuaWorks · W4 用户后台
+ * 千机工坊 · W4 用户后台
  *
  * 区别于 asset-service：作品是"完整可发布的成果"
  * （视频/动画/合集）—— 来自 project-service 的发布产物
@@ -106,8 +106,7 @@ class WorkService {
         headers: authHeaders()
       })
       return res.data.data
-    } catch (err) {
-      console.warn('[workService.list] 失败，返回占位', err)
+    } catch {
       return { list: [], total: 0, page: 1, pageSize: filter.pageSize ?? 24 }
     }
   }

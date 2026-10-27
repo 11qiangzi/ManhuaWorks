@@ -11,7 +11,7 @@
  *   const user = await client.users.getProfile()
  */
 import { createApiClient, tokenStore } from '@manhuaworks/api-client'
-import { computed } from 'vue'
+import { computed, type ComputedRef } from 'vue'
 import type { ApiBundle, CreateApiClientOptions } from '@manhuaworks/api-client'
 
 let _singleton: ApiBundle | null = null
@@ -23,7 +23,7 @@ export interface UseApiOptions extends CreateApiClientOptions {
 
 export function useApi(opts: UseApiOptions = {}): {
   client: ApiBundle
-  isReady: ReturnType<typeof computed<boolean>>
+  isReady: ComputedRef<boolean>
 } {
   const { singleton = true, ...rest } = opts
 
@@ -41,11 +41,13 @@ export function useApi(opts: UseApiOptions = {}): {
     ...rest,
     onAuthLost: () => {
       tokenStore.clearAll()
-      // 重定向到登录页 (仅浏览器环境)
-      if (typeof window !== 'undefined') {
-        const host = window.location.hostname
-        window.location.href = `http://${host}:3000/login?return=${encodeURIComponent(window.location.href)}`
-      }
+      // 🔧 暂时禁用登录页重定向 — 开发环境无登录服务，重定向会导致页面打不开
+      // 后续接入正式 auth 后恢复:
+      // if (typeof window !== 'undefined') {
+      //   const host = window.location.hostname
+      //   window.location.href = `http://${host}:3000/login?return=${encodeURIComponent(window.location.href)}`
+      // }
+      console.warn('[api-client] auth lost, token cleared')
     },
   })
 
@@ -68,10 +70,8 @@ export function getClient(): ApiBundle {
       maxRetries: 3,
       onAuthLost: () => {
         tokenStore.clearAll()
-        if (typeof window !== 'undefined') {
-          const host = window.location.hostname
-          window.location.href = `http://${host}:3000/login?return=${encodeURIComponent(window.location.href)}`
-        }
+        // 🔧 暂时禁用登录页重定向
+        console.warn('[api-client] auth lost, token cleared')
       },
     })
   }

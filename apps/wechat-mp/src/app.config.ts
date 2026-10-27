@@ -1,4 +1,4 @@
-// ManhuaWorks 微信小程序全局配置
+// 千机工坊 微信小程序全局配置
 // M2 脚手架: 4 tabBar (首页 / 项目 / 我的 / 设置), 仿 web 风格
 // 真实后端接入留给 L5-B 阶段
 
@@ -40,7 +40,7 @@ const config: Config = {
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#0F172A',
-    navigationBarTitleText: 'ManhuaWorks',
+    navigationBarTitleText: '千机工坊',
     navigationBarTextStyle: 'white',
     backgroundColor: '#F8FAFC'
   },

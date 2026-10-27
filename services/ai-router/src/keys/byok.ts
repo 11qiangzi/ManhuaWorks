@@ -15,12 +15,19 @@ export interface ResolveOptions {
   requireByok?: boolean;
 }
 
-/** 平台共享 Key 兜底（来自环境变量） */
+/** 平台共享 Key 兜底（来自环境变量）
+ *  派单 16 扩展: 加 qwen / replicate / fal / openai
+ */
 const PLATFORM_FALLBACK: Record<ProviderId, string | null> = {
   minimax: process.env.MINIMAX_API_KEY ?? null,
   deepseek: process.env.DEEPSEEK_API_KEY ?? null,
   zhipu: process.env.ZHIPU_API_KEY ?? null,
   volcengine: process.env.VOLCENGINE_API_KEY ?? null,
+  qwen: process.env.QWEN_API_KEY ?? null,
+  openai: process.env.OPENAI_API_KEY ?? null,
+  replicate: process.env.REPLICATE_API_KEY ?? null,
+  fal: process.env.FAL_API_KEY ?? null,
+  agnes: process.env.AGNES_API_KEY ?? null,
 };
 
 class ByokResolver {

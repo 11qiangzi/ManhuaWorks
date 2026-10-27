@@ -7,11 +7,13 @@ import { ref, computed } from 'vue'
 import type { Workflow, WorkflowRun, NodeRuntimeResult } from '../types/workflow'
 import { startRun, cancelRun, subscribeRun, getRun } from '../api/orchestrator'
 
+// Module-level singleton state (shared across all callers)
+const run = ref<WorkflowRun | null>(null)
+const events = ref<Array<{ type: string; nodeId?: string; timestamp: number; payload?: unknown }>>([])
+const isRunning = computed(() => run.value?.status === 'running' || run.value?.status === 'pending')
+let unsubscribe: (() => void) | null = null
+
 export function useWorkflowRunner() {
-  const run = ref<WorkflowRun | null>(null)
-  const events = ref<Array<{ type: string; nodeId?: string; timestamp: number; payload?: unknown }>>([])
-  const isRunning = computed(() => run.value?.status === 'running' || run.value?.status === 'pending')
-  let unsubscribe: (() => void) | null = null
 
   async function runWorkflow(workflow: Workflow) {
     cleanup()
@@ -54,14 +56,14 @@ export function useWorkflowRunner() {
       }
       if (e.type === 'run-finished') {
         // 拉一次最终状态
-        getRun(e.runId).then(final => { run.value = final }).catch(() => {})
+        getRun(e.runId).then(final => { run.value = final }).catch((e) => { console.warn('poll run status failed:', e) })
       }
     })
   }
 
   async function cancel() {
     if (!run.value) return
-    await cancelRun(run.value.runId).catch(() => {})
+    await cancelRun(run.value.runId).catch((e) => { console.warn('cancel run failed:', e) })
     if (run.value) run.value.status = 'cancelled'
   }
 

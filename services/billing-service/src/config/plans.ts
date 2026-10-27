@@ -1,99 +1,115 @@
 /**
  * 订阅档位配置
  *
- * ⚠️ 数据库 schema 限制（subscriptions.plan CHECK）：
- *    plan IN ('free', 'pro', 'team')
+ * 数据库 schema（subscriptions.plan CHECK）：
+ *    plan IN ('free', 'basic', 'pro', 'enterprise')
  *
- * 任务描述里的 "enterprise" 实际对应数据库的 "team"（企业版/团队版）。
- * 本服务在 API 层做别名映射：UI 可传 "enterprise" → 内部存 "team"。
+ * 配额统一使用"次"（episodes）作为计量单位，
+ * 每次调用（拆稿/出图/配音/合成视频）消耗 1 次。
+ *
+ * 免费版 v3.0 P3: 从 monthlyEpisodes=9 改为 dailyEpisodes=3（月总量=90，每日限3次）
  */
 
-export type PlanIdDb = "free" | "pro" | "team";
-export type PlanIdAlias = "free" | "pro" | "enterprise" | "team";
+export type PlanId = "free" | "basic" | "pro" | "enterprise";
 
 export interface PlanConfig {
-  id: PlanIdDb;
-  alias: PlanIdAlias[];
+  id: PlanId;
   name: string;
   description: string;
-  /** 单位：分（CNY cents） */
-  priceCentsMonthly: number;
+  /** 单位：分（CNY cents）；null = 定制报价 */
+  priceCentsMonthly: number | null;
   /** 项目上限；null = 不限 */
   projectLimit: number | null;
-  /** 每月 token 配额 */
-  monthlyTokens: number;
-  /** 每月图片配额 */
-  monthlyImages: number;
-  /** 每月视频配额 */
-  monthlyVideos: number;
+  /** 每月"次"配额（-1 = 无限制） */
+  monthlyEpisodes: number;
+  /** 每日"次"配额（null = 不限日配额，>0 = 每日限制） */
+  dailyEpisodes: number | null;
+  /** 是否为加油包（非订阅，一次性额外配额） */
+  isBoostPack: boolean;
 }
 
-export const PLANS: Record<PlanIdDb, PlanConfig> = {
+export const PLANS: Record<PlanId, PlanConfig> = {
   free: {
     id: "free",
-    alias: ["free"],
     name: "免费版",
-    description: "上手即用，5 个项目 / 月度基础配额",
+    description: "体验 AI 漫剧创作，3 次/天",
     priceCentsMonthly: 0,
     projectLimit: 5,
-    monthlyTokens: 100_000,
-    monthlyImages: 50,
-    monthlyVideos: 10,
+    monthlyEpisodes: 90, // v3.0 P3: 3次/天 × 30天 = 90次/月
+    dailyEpisodes: 3,     // v3.0 P3: 每日限制 3 次
+    isBoostPack: false,
+  },
+  basic: {
+    id: "basic",
+    name: "基础版",
+    description: "个人创作者首选，50 次/月",
+    priceCentsMonthly: 3900, // ¥39
+    projectLimit: 20,
+    monthlyEpisodes: 50,
+    dailyEpisodes: null, // 不限日配额
+    isBoostPack: false,
   },
   pro: {
     id: "pro",
-    alias: ["pro"],
     name: "专业版",
-    description: "无限项目 / 大幅提升月度配额",
-    priceCentsMonthly: 9900, // ¥99
+    description: "团队与企业推荐，280 次/月",
+    priceCentsMonthly: 14900, // ¥149
     projectLimit: null,
-    monthlyTokens: 10_000_000,
-    monthlyImages: 5_000,
-    monthlyVideos: 500,
+    monthlyEpisodes: 280,
+    dailyEpisodes: null, // 不限日配额
+    isBoostPack: false,
   },
-  team: {
-    id: "team",
-    alias: ["team", "enterprise"],
-    name: "企业版（Team）",
-    description: "定制配额 + 团队协作 + 优先支持",
-    priceCentsMonthly: 49900, // ¥499 起
+  enterprise: {
+    id: "enterprise",
+    name: "企业版",
+    description: "大规模内容生产，无限制",
+    priceCentsMonthly: null, // 定制报价
     projectLimit: null,
-    monthlyTokens: 50_000_000,
-    monthlyImages: 20_000,
-    monthlyVideos: 2_000,
+    monthlyEpisodes: -1, // 无限制
+    dailyEpisodes: null, // 不限日配额
+    isBoostPack: false,
   },
 };
 
 export const PLAN_LIST: PlanConfig[] = Object.values(PLANS);
 
-/** 把外部 alias 解析为数据库 plan id，找不到返回 null */
-export function resolvePlanId(input: string | null | undefined): PlanIdDb | null {
+/** 9.9 元加油包 — 一次性额外配额（非订阅） */
+export const BOOST_PACK = {
+  id: "boost_9_9" as const,
+  name: "9.9 元加油包",
+  description: "一次性额外 20 次创作，用完即止",
+  priceCents: 990, // ¥9.90
+  episodes: 20,
+  validDays: 7, // 7 天内有效
+} as const;
+
+/** 加油包列表 */
+export const BOOST_PACKS = [BOOST_PACK];
+
+/** 把字符串解析为 plan id，找不到返回 null */
+export function resolvePlanId(input: string | null | undefined): PlanId | null {
   if (!input) return null;
   const lower = input.toLowerCase();
-  for (const p of PLAN_LIST) {
-    if (p.alias.includes(lower as PlanIdAlias)) return p.id;
-  }
+  if (lower in PLANS) return lower as PlanId;
   return null;
 }
 
-export function getPlan(id: PlanIdDb): PlanConfig {
+export function getPlan(id: PlanId): PlanConfig {
   return PLANS[id];
 }
 
-export function isPaidPlan(id: PlanIdDb): boolean {
+export function isPaidPlan(id: PlanId): boolean {
   return id !== "free";
 }
 
 /** 给订阅同步配额（plan → quotas 行） */
-export function quotasForPlan(id: PlanIdDb): {
-  monthlyTokens: number;
-  monthlyImages: number;
-  monthlyVideos: number;
+export function quotasForPlan(id: PlanId): {
+  monthlyEpisodes: number;
+  dailyEpisodes: number | null;
 } {
   const p = getPlan(id);
   return {
-    monthlyTokens: p.monthlyTokens,
-    monthlyImages: p.monthlyImages,
-    monthlyVideos: p.monthlyVideos,
+    monthlyEpisodes: p.monthlyEpisodes,
+    dailyEpisodes: p.dailyEpisodes,
   };
 }

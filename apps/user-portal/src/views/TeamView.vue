@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * TeamView · 团队协作
- * ManhuaWorks · L3.L 用户后台深耕
+ * 千机工坊 · L3.L 用户后台深耕
  *
  * 成员列表：头像 / 姓名 / 角色 / 最后活跃 / 操作
  * 邀请新成员 + 角色管理

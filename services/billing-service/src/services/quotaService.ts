@@ -1,11 +1,12 @@
 /**
  * Quota Service
- * 配额扣减 + 重置（每日/月）
+ * 配额扣减 + 重置（每月）
+ * 计量单位统一为"次"（episodes）
  */
 
 import { quotaRepository } from "../repositories/quotaRepository";
 import { HttpError } from "../middleware/error";
-import type { Quota, QuotaKind } from "../models/quota";
+import type { Quota } from "../models/quota";
 import { logger } from "../config/logger";
 
 export const quotaService = {
@@ -14,21 +15,20 @@ export const quotaService = {
   },
 
   /**
-   * 消费配额
+   * 消费配额（1 次 = 1 episode）
    * - 月度配额：超过返回 429
-   * - 每日/小时限额目前未单独建模（schema 只有 monthly_*），月度统一管
+   * - monthlyEpisodes = -1 表示无限制，始终放行
    */
   async consume(
     userId: string,
-    kind: QuotaKind,
     amount: number
   ): Promise<{ ok: true; quota: Quota } | { ok: false; reason: string; quota: Quota | null }> {
     if (!Number.isInteger(amount) || amount <= 0) {
       throw new HttpError(400, "invalid_amount");
     }
-    const res = await quotaRepository.consume(userId, kind, amount);
+    const res = await quotaRepository.consume(userId, amount);
     if (!res.ok) {
-      logger.warn({ userId, kind, amount, reason: res.reason }, "[quota] exceeded");
+      logger.warn({ userId, amount, reason: res.reason }, "[quota] exceeded");
       return { ok: false, reason: res.reason, quota: res.quota };
     }
     return { ok: true, quota: res.quota };
@@ -46,7 +46,7 @@ export const quotaService = {
   async setMonthly(
     userId: string,
     isAdmin: boolean,
-    patch: { monthlyTokens?: number; monthlyImages?: number; monthlyVideos?: number }
+    patch: { monthlyEpisodes?: number }
   ): Promise<Quota> {
     if (!isAdmin) throw new HttpError(403, "admin_only");
     const q = await quotaRepository.setMonthly(userId, patch);
@@ -55,8 +55,7 @@ export const quotaService = {
   },
 
   /**
-   * 定时任务：扫描到期用户，重置其 used_* 和 reset_at
-   * 每日/每月一刷（schema 当前只有月度 reset_at）
+   * 定时任务：扫描到期用户，重置其 used_episodes 和 reset_at
    */
   startResetCron(intervalSec: number): () => void {
     const tick = async () => {

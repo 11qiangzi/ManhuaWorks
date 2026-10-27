@@ -1,6 +1,6 @@
 /**
  * asset-service — 素材库 API 客户端
- * ManhuaWorks · W4 用户后台
+ * 千机工坊 · W4 用户后台
  *
  * 与 W3 studio 资产货架的区别：
  * 1. 多了"角色 / 场景"两个分类（用户后台管理所有素材）
@@ -102,8 +102,7 @@ class AssetLibraryService {
         headers: authHeaders()
       })
       return res.data.data
-    } catch (err) {
-      console.warn('[assetLibraryService.list] 失败，返回占位', err)
+    } catch {
       return { list: [], total: 0, page: 1, pageSize: filter.pageSize ?? 24 }
     }
   }

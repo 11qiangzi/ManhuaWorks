@@ -1,31 +1,37 @@
 /* =========================================================
  * Theme: Dark Workshop · 暗夜工坊
- * ManhuaWorks · 深夜沉浸式创作
- * 灵感：剪辑师工坊、漫改绘制台、低光护眼
+ * 千机工坊 · 墨韵科技风
+ * 设计规范 v3.0：千机青 #00BFA5 + 墨韵紫 #7C3AED
  * ========================================================= */
 
 .theme-dark-workshop,
 .theme-dark {
-  --bg-primary: #0e0f12;        /* 主背景 — 炭黑 */
-  --bg-secondary: #1a1c21;      /* 次背景 — 卡片/面板 */
-  --text-primary: #e8eaed;      /* 主文字 — 雾白 */
-  --text-secondary: #8a8f99;    /* 次文字 — 灰雾 */
-  --accent: #ff7a45;            /* 强调色 — 落日橙 */
-  --accent-soft: #ff9a6e;       /* 强调柔色（hover/光晕） */
-  --accent-deep: #d35a2a;       /* 强调深色（按下/边框） */
-  --border: #2a2d33;            /* 分割线 */
-  --border-strong: #3a3e46;     /* 强分割线（卡片边框） */
+  --bg-primary: #0E0F12;        /* 主背景 — 砚台黑 */
+  --bg-secondary: #1A1C21;      /* 次背景 — 宣纸灰 */
+  --bg-elevated: #23262E;       /* 面板高亮 */
+  --text-primary: #E8EAED;      /* 主文字 — 雾白 */
+  --text-secondary: #9CA3AF;    /* 次文字 — 灰雾 */
+  --accent: #00BFA5;            /* 强调色 — 千机青 */
+  --accent-soft: #5EEAD4;       /* 强调柔色（hover/光晕） */
+  --accent-deep: #0D9488;       /* 强调深色（按下/边框） */
+  --border: #2E3139;            /* 分割线 */
+  --border-strong: #3A3E46;     /* 强分割线（卡片边框） */
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-  --glow: 0 0 0 1px rgba(255, 122, 69, 0.18);
+  --glow: 0 0 20px rgba(0, 191, 165, 0.15);
   --code-bg: #14161a;
-  --success: #4ade80;
-  --warning: #fbbf24;
-  --danger: #f87171;
-  --gradient: linear-gradient(135deg, #ff7a45 0%, #ff4d6d 100%);
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --gradient: linear-gradient(135deg, #00BFA5 0%, #7C3AED 100%);
   --font-display: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+
+  /* 墨韵紫辅助变量 */
+  --accent-secondary: #7C3AED;
+  --accent-secondary-soft: #A78BFA;
+  --accent-secondary-deep: #5B21B6;
 }
 
-/* 暗夜工坊特有：左侧微光竖条 — 像工坊的台灯光晕 */
+/* 暗夜工坊特有：左侧千机青光晕竖条 */
 .theme-dark-workshop .app-root::before {
   content: '';
   position: fixed;

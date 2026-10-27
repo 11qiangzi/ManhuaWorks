@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * ThemeSwitcher · 5 主题选择器
- * ManhuaWorks · W1 交付
+ * 千机工坊 · W1 交付
  *
  * 两种模式：
  * 1. 横向卡片网格（5 主题全展示）— 用于 HomeView / 设置页

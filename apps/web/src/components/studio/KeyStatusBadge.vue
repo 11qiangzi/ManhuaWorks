@@ -1,46 +1,28 @@
 <script setup lang="ts">
 /**
- * KeyStatusBadge · Key 状态徽章
- * 状态：valid / expiring / invalid / unset
- * 颜色全部走主题 CSS 变量
+ * KeyStatusBadge - API Key 状态徽章
+ * ManhuaWorks studio component
  */
 
-import { computed } from 'vue'
-import type { KeyStatus } from '@/api/byok'
-import { keyStatusText, keyStatusVar } from '@/api/byok'
-
 interface Props {
-  status: KeyStatus
-  /** 紧凑模式（无文字，仅色点） */
-  compact?: boolean
-  /** 自定义标题 */
-  title?: string
+  status: 'valid' | 'expiring' | 'invalid' | string
 }
 
-const props = withDefaults(defineProps<Props>(), { compact: false, title: undefined })
+const props = defineProps<Props>()
 
-const label = computed(() => keyStatusText(props.status))
-const colorVar = computed(() => `var(${keyStatusVar(props.status)})`)
-const icon = computed(() => {
-  switch (props.status) {
-    case 'valid': return '✓'
-    case 'expiring': return '⚠'
-    case 'invalid': return '✗'
-    case 'unset': return '○'
-    default: return '?'
-  }
-})
+const STATUS_CONFIG: Record<string, { label: string; tone: string }> = {
+  valid: { label: '有效', tone: 'success' },
+  expiring: { label: '即将过期', tone: 'warning' },
+  invalid: { label: '失效', tone: 'danger' }
+}
+
+const config = STATUS_CONFIG[props.status] ?? { label: props.status, tone: 'neutral' }
 </script>
 
 <template>
-  <span
-    class="key-badge"
-    :class="[`key-badge--${status}`, { 'key-badge--compact': compact }]"
-    :title="title ?? label"
-    :style="{ '--badge-color': colorVar }"
-  >
-    <span class="key-badge__icon" aria-hidden="true">{{ icon }}</span>
-    <span v-if="!compact" class="key-badge__label">{{ label }}</span>
+  <span class="key-badge" :class="`key-badge--${config.tone}`">
+    <span class="key-badge__dot" />
+    <span class="key-badge__label">{{ config.label }}</span>
   </span>
 </template>
 
@@ -48,37 +30,55 @@ const icon = computed(() => {
 .key-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
+  gap: 5px;
+  padding: 3px 10px;
   border-radius: 999px;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.4;
-  border: 1px solid color-mix(in srgb, var(--badge-color) 35%, transparent);
-  background: color-mix(in srgb, var(--badge-color) 12%, transparent);
-  color: var(--badge-color);
+  font-size: 11px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
-.key-badge--compact {
-  padding: 3px;
-  width: 18px;
-  height: 18px;
-  justify-content: center;
+.key-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
 }
 
-.key-badge__icon {
-  font-size: 11px;
-  line-height: 1;
-  font-weight: 700;
+.key-badge--success {
+  background: color-mix(in srgb, var(--success, #22c55e) 14%, transparent);
+  color: var(--success, #22c55e);
+}
+.key-badge--success .key-badge__dot {
+  background: var(--success, #22c55e);
 }
 
-.key-badge--expiring .key-badge__icon {
-  animation: pulse 1.6s ease-in-out infinite;
+.key-badge--warning {
+  background: color-mix(in srgb, var(--warning, #f59e0b) 14%, transparent);
+  color: var(--warning, #f59e0b);
+}
+.key-badge--warning .key-badge__dot {
+  background: var(--warning, #f59e0b);
+  animation: blink 1.2s ease-in-out infinite;
 }
 
-@keyframes pulse {
+.key-badge--danger {
+  background: color-mix(in srgb, var(--danger, #ef4444) 14%, transparent);
+  color: var(--danger, #ef4444);
+}
+.key-badge--danger .key-badge__dot {
+  background: var(--danger, #ef4444);
+}
+
+.key-badge--neutral {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+.key-badge--neutral .key-badge__dot {
+  background: var(--text-secondary);
+}
+
+@keyframes blink {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.45; }
+  50% { opacity: 0.3; }
 }
 </style>

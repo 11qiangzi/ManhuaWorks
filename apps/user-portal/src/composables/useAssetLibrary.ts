@@ -1,6 +1,6 @@
 /**
  * useAssetLibrary — 素材库状态管理
- * ManhuaWorks · W4 用户后台
+ * 千机工坊 · W4 用户后台
  *
  * 功能：
  * 1. 列表 + 分页

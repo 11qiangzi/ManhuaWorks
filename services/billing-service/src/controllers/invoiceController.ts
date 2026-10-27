@@ -24,8 +24,11 @@ const createSchema = z.object({
 router.get("/", authRequired(), ah(async (req: AuthedRequest, res: Response) => {
   const limit = Math.min(Number(req.query.limit ?? 20), 100);
   const offset = Math.max(Number(req.query.offset ?? 0), 0);
-  const list = await invoiceService.listByUser(req.user!.sub, limit, offset);
-  res.json({ code: 0, message: "ok", data: { list, total: list.length } });
+  const [list, total] = await Promise.all([
+    invoiceService.listByUser(req.user!.sub, limit, offset),
+    invoiceService.countByUser(req.user!.sub),
+  ]);
+  res.json({ code: 0, message: "ok", data: { list, total } });
 }));
 
 router.post("/", authRequired(), ah(async (req: AuthedRequest, res: Response) => {

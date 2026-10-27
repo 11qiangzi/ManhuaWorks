@@ -5,6 +5,7 @@
  */
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { getApi } from '../api-bridge'
 
 const router = useRouter()
 const step = ref(1)
@@ -19,11 +20,11 @@ const archetype = ref('主角 · 剑修')
 const characterDesc = ref('')
 const creating = ref(false)
 const createError = ref<string | null>(null)
-const modeNames: Record<string,string> = { premium:'精品漫', commentary:'解说漫', liveaction:'真人剧' }
+const modeNames: Record<string,string> = { premium:'精品动画', commentary:'解说动画', liveaction:'真人剧' }
 
 const modes = [
-  { id: 'premium', icon: '🎨', name: '精品漫', desc: '高品质漫剧\n角色精致·分镜考究' },
-  { id: 'commentary', icon: '🎙️', name: '解说漫', desc: '故事驱动型\n智能多播·音色提取' },
+  { id: 'premium', icon: '🎨', name: '精品动画', desc: '高品质动画\n角色精致·镜头考究' },
+  { id: 'commentary', icon: '🎙️', name: '解说动画', desc: '故事驱动型\n智能多播·音色提取' },
   { id: 'liveaction', icon: '🎬', name: '真人剧', desc: '写实风格\n演员音色·专业运镜' },
 ]
 
@@ -34,22 +35,27 @@ function cancel() { router.push('/') }
 async function finish() {
   creating.value = true; createError.value = null
   try {
-    const token = localStorage.getItem('mhw.access_token')
-    const body = JSON.stringify({
-      title: projectName.value || '未命名项目',
-      synopsis: `${modeNames[selectedMode.value] || '精品漫'} 项目`,
-      genre: genre.value,
-      episodes: episodes.value,
-      mode: selectedMode.value,
-    })
-    const r = await fetch('/api/v1/projects', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body,
-    })
-    const d = await r.json()
-    if (!r.ok || d.code !== 0) throw new Error(d.message || '创建失败')
-    const newId = d.data?.id
+    const api = getApi()
+    const project = await api.http.post<{ id: string }>(
+      '/v1/projects',
+      {
+        name: projectName.value || '未命名项目',
+        description: `${modeNames[selectedMode.value] || '精品动画'} 项目`,
+      },
+    )
+    const newId = project?.id
+    // Step 3: 创建初始角色（如果用户填写了角色名）
+    if (newId && characterName.value.trim()) {
+      try {
+        await api.http.post(`/projects/${encodeURIComponent(newId)}/characters`, {
+          name: characterName.value.trim(),
+          archetype: archetype.value || '主角',
+          description: characterDesc.value || '',
+        })
+      } catch {
+        // Character creation failure is non-fatal — user can add later
+      }
+    }
     if (newId) router.push(`/project/${newId}`)
     else router.push('/project')
   } catch (e: any) {
@@ -89,7 +95,7 @@ async function finish() {
         <h2 class="wizard-heading">📋 基本信息</h2>
         <p class="wizard-sub">填写项目名称和简介</p>
         <div class="form-grid" style="margin-bottom:24px">
-          <div><label class="form-label">项目名称</label><input class="input" v-model="projectName" placeholder="我的第一个漫剧项目"></div>
+          <div><label class="form-label">项目名称</label><input class="input" v-model="projectName" placeholder="我的第一个动画项目"></div>
           <div><label class="form-label">题材</label><select class="input" v-model="genre"><option>古风</option><option>仙侠</option><option>都市</option><option>科幻</option></select></div>
           <div><label class="form-label">目标集数</label><input class="input" v-model.number="episodes" style="width:100px"></div>
         </div>
@@ -99,13 +105,13 @@ async function finish() {
         <p class="wizard-sub">添加你的第一个角色</p>
         <div class="form-grid" style="margin-bottom:24px">
           <div><label class="form-label">角色名称</label><input class="input" v-model="characterName" placeholder="主角姓名"></div>
-          <div><label class="form-label">Archetype</label><select class="input" v-model="archetype"><option>主角 · 剑修</option><option>主角 · 法师</option><option>反派</option><option>配角</option></select></div>
+          <div><label class="form-label">角色原型</label><select class="input" v-model="archetype"><option>主角 · 剑修</option><option>主角 · 法师</option><option>反派</option><option>配角</option></select></div>
           <div><label class="form-label">角色描述</label><textarea class="input" v-model="characterDesc" rows="2" placeholder="简短描述角色特征..."></textarea></div>
         </div>
       </template>
       <template v-if="step === 4">
         <div style="text-align:center;padding:20px 0">
-          <div v-if="createError" class="alert alert-error" style="margin-bottom:16px">{{ createError }}</div>
+          <div v-if="createError" class="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300" style="margin-bottom:16px">{{ createError }}</div>
           <div style="font-size:64px;margin-bottom:16px">{{ creating ? '⏳' : '🎉' }}</div>
           <h2 class="wizard-heading">{{ creating ? '正在创建项目...' : '项目创建完成！' }}</h2>
           <p class="wizard-sub">我们将自动为您拆解小说章节、提取角色和场景。进入项目后，可以在工作流中随时调整。</p>

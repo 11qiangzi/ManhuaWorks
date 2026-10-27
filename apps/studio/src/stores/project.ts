@@ -1,6 +1,6 @@
 /**
- * studio · project Pinia store — 接 project-service（含分镜 shot 状态机）
- * ManhuaWorks · L2 task 8
+ * studio · project Pinia store — 接 project-service（含镜头 shot 状态机）
+ * 千机工坊 · L2 task 8
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
@@ -20,7 +20,7 @@ export const useProjectStore = defineStore('project', () => {
   const page = ref(1)
   const pageSize = ref(50)
 
-  const active = computed(() => projects.value.filter((p) => p.status !== 3))
+  const active = computed(() => projects.value.filter((p) => p.status !== 'archived'))
   const currentShots = computed(() => shots.value)
 
   const shotStats = computed(() => {
@@ -28,9 +28,9 @@ export const useProjectStore = defineStore('project', () => {
     return {
       total: list.length,
       draft: list.filter((s) => s.status === 'draft').length,
-      rendering: list.filter((s) => s.status === 'rendering').length,
+      wip: list.filter((s) => s.status === 'wip').length,
       done: list.filter((s) => s.status === 'done').length,
-      failed: list.filter((s) => s.status === 'failed').length,
+      archived: list.filter((s) => s.status === 'archived').length,
     }
   })
 
@@ -43,7 +43,11 @@ export const useProjectStore = defineStore('project', () => {
         projects.value = []
       }
       const r = await api.projects.list({ page: page.value, pageSize: pageSize.value })
-      projects.value = r.list
+      if (reset) {
+        projects.value = r.list
+      } else {
+        projects.value = [...projects.value, ...r.list]
+      }
       total.value = r.total
     } catch (e) {
       error.value = e instanceof ApiError ? e.userMessage : '加载项目失败'
@@ -62,25 +66,47 @@ export const useProjectStore = defineStore('project', () => {
   }
 
   async function create(req: CreateProjectReq): Promise<ProjectDTO> {
-    const p = await api.projects.create(req)
-    projects.value.unshift(p)
-    return p
+    loading.value = true
+    error.value = null
+    try {
+      const p = await api.projects.create(req)
+      projects.value.unshift(p)
+      current.value = p
+      return p
+    } catch (e) {
+      error.value = e instanceof ApiError ? e.userMessage : (e as Error).message
+      throw e
+    } finally {
+      loading.value = false
+    }
   }
 
   async function update(id: string, patch: import('@manhuaworks/api-client').UpdateProjectReq): Promise<void> {
-    const u = await api.projects.update(id, patch)
-    const idx = projects.value.findIndex((p) => p.id === id)
-    if (idx >= 0) projects.value[idx] = u
-    if (current.value?.id === id) current.value = u
+    loading.value = true
+    error.value = null
+    try {
+      const u = await api.projects.update(id, patch)
+      const idx = projects.value.findIndex((p) => p.id === id)
+      if (idx >= 0) projects.value[idx] = u
+      if (current.value?.id === id) current.value = u
+    } catch (e) {
+      error.value = e instanceof ApiError ? e.userMessage : (e as Error).message
+      throw e
+    } finally {
+      loading.value = false
+    }
   }
 
   async function archive(id: string): Promise<void> {
     await api.projects.archive(id)
     projects.value = projects.value.filter((p) => p.id !== id)
-    if (current.value?.id === id) current.value = null
+    if (current.value?.id === id) {
+      current.value = null
+      shots.value = []
+    }
   }
 
-  /* ---- Shots（分镜） ---- */
+  /* ---- Shots（镜头） ---- */
 
   async function loadShots(projectId: string): Promise<void> {
     const r = await api.projects.listShots(projectId, { pageSize: 200 })
@@ -90,7 +116,7 @@ export const useProjectStore = defineStore('project', () => {
   async function createShot(projectId: string, req: CreateShotReq): Promise<ShotDTO> {
     const s = await api.projects.createShot(projectId, req)
     shots.value.push(s)
-    shots.value.sort((a, b) => a.order - b.order)
+    shots.value.sort((a, b) => a.order_index - b.order_index)
     return s
   }
 
@@ -106,13 +132,22 @@ export const useProjectStore = defineStore('project', () => {
     shots.value = shots.value.filter((s) => s.id !== shotId)
   }
 
-  /** 乐观更新：状态机 draft → rendering → done/failed */
+  /** 乐观更新：状态机 draft → wip → done / archived */
+  const VALID_TRANSITIONS: Record<string, string[]> = {
+    draft: ['wip'],
+    wip: ['review', 'draft'],
+    review: ['done', 'wip'],
+    done: ['archived'],
+    archived: [],
+  }
+
   function optimisticUpdateStatus(shotId: string, status: ShotDTO['status']): void {
     const idx = shots.value.findIndex((s) => s.id === shotId)
-    if (idx >= 0) {
-      const cur = shots.value[idx]!
-      shots.value[idx] = { ...cur, status }
-    }
+    if (idx < 0) return
+    const cur = shots.value[idx]!
+    const allowed = VALID_TRANSITIONS[cur.status]
+    if (!allowed || !allowed.includes(status)) return
+    shots.value[idx] = { ...cur, status }
   }
 
   return {

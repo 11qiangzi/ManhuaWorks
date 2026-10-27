@@ -1,378 +1,241 @@
 <script setup lang="ts">
 /**
- * CostEstimator · 成本估算器
- * 输入：供应商 / 模型 / 输入 token / 输出 token / 图片数 / 视频秒数
- * 输出：分项成本 + 总价
- *
- * 用本地静态表（不调后端）→ 即时反馈
+ * CostEstimator - 成本估算器
+ * ManhuaWorks studio component
  */
 
-import { ref, computed, watch } from 'vue'
-import { PROVIDERS, MODELS, localEstimate, estimateTokens, type Provider, type CallType } from '@/api/ai-router'
+import { ref, computed } from 'vue'
 
 interface Props {
-  /** 默认供应商 */
-  defaultProvider?: Provider
-  /** 默认模型 */
-  defaultModel?: string
-  /** 默认调用类型 */
-  defaultCallType?: CallType
-  /** 是否显示文本框（自动算 token） */
+  defaultProvider: string
+  defaultModel: string
+  defaultCallType: string
   showTextInput?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  defaultProvider: 'openai',
-  defaultModel: 'gpt-4o-mini',
-  defaultCallType: 'text',
   showTextInput: true
 })
 
-const emit = defineEmits<{
-  (e: 'change', value: { costUsd: number; inputTokens: number; outputTokens: number }): void
-}>()
+function estimateTokens(text: string): number {
+  if (!text) return 0
+  const cjk = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length
+  const nonCjk = text.length - cjk
+  return Math.ceil(cjk * 1.5 + nonCjk * 0.4)
+}
 
-const provider = ref<Provider>(props.defaultProvider)
-const callType = ref<CallType>(props.defaultCallType)
-const model = ref<string>(props.defaultModel)
+const PRICE_TABLE: Record<string, { input: number; output: number }> = {
+  text: { input: 0.002, output: 0.006 },
+  image: { input: 0.02, output: 0.04 },
+  video: { input: 0.05, output: 0.10 }
+}
+
 const inputText = ref('')
-const inputTokens = ref(0)
-const outputTokens = ref(1000)
-const imageCount = ref(1)
-const videoSeconds = ref(10)
+const tokenInput = ref(1000)
+const outputTokenRatio = ref(0.6)
 
-/** 当前 provider 的可用模型（按 callType 过滤） */
-const availableModels = computed(() => {
-  if (callType.value === 'text') {
-    return MODELS.filter((m) => m.provider === provider.value && m.capabilities.includes('text'))
+const inputTokens = computed(() => {
+  if (props.showTextInput && inputText.value) {
+    return estimateTokens(inputText.value)
   }
-  return MODELS.filter((m) => m.provider === provider.value && m.capabilities.includes(callType.value))
+  return tokenInput.value
 })
 
-/** 当前 provider 的元数据 */
-const providerMeta = computed(() => PROVIDERS.find((p) => p.id === provider.value))
-
-/** 默认模型（首项） */
-const defaultModelForType = computed(() => {
-  return availableModels.value[0]?.id ?? MODELS[0]!.id
-})
-
-/** 切换供应商/类型时，自动选首个可用模型 */
-watch([provider, callType], () => {
-  if (!availableModels.value.find((m) => m.id === model.value)) {
-    model.value = defaultModelForType.value
-  }
-})
-
-/** 文本输入 → token 估算 */
-watch(inputText, (v) => {
-  inputTokens.value = estimateTokens(v)
-})
-
-/** 当前 model 的元数据 */
-const currentModel = computed(() => MODELS.find((m) => m.id === model.value))
-
-/** 实时成本 */
-const estimate = computed(() => {
-  return localEstimate({
-    provider: provider.value,
-    model: model.value,
-    inputTokens: inputTokens.value,
-    outputTokens: callType.value === 'text' ? outputTokens.value : 0,
-    imageCount: callType.value === 'image' ? imageCount.value : 0,
-    videoSeconds: callType.value === 'video' ? videoSeconds.value : 0
-  })
-})
-
-watch(estimate, (v) => {
-  emit('change', { costUsd: v.costUsd, inputTokens: inputTokens.value, outputTokens: outputTokens.value })
-}, { immediate: true })
-
-const fmt = (n: number) => n.toFixed(n < 0.01 ? 6 : 4)
+const outputTokens = computed(() => Math.ceil(inputTokens.value * outputTokenRatio.value))
+const prices = computed(() => PRICE_TABLE[props.defaultCallType] ?? PRICE_TABLE.text!)
+const inputCost = computed(() => (inputTokens.value / 1000) * prices.value.input)
+const outputCost = computed(() => (outputTokens.value / 1000) * prices.value.output)
+const totalCost = computed(() => inputCost.value + outputCost.value)
 </script>
 
 <template>
   <div class="cost-estimator">
-    <header class="cost-estimator__head">
-      <h3>💰 成本估算</h3>
-      <p>输入参数 → 实时计算（本地静态表）</p>
-    </header>
+    <h3 class="cost-estimator__title">成本估算</h3>
 
-    <div class="cost-estimator__grid">
-      <!-- 调用类型 -->
-      <label class="cost-estimator__field">
-        <span>调用类型</span>
-        <select v-model="callType" class="ce-input">
-          <option value="text">文字</option>
-          <option value="image">图片</option>
-          <option value="video">视频</option>
-        </select>
-      </label>
-
-      <!-- 供应商 -->
-      <label class="cost-estimator__field">
-        <span>供应商</span>
-        <select v-model="provider" class="ce-input">
-          <option v-for="p in PROVIDERS" :key="p.id" :value="p.id">
-            {{ p.logo }} {{ p.name }}
-          </option>
-        </select>
-      </label>
-
-      <!-- 模型 -->
-      <label class="cost-estimator__field cost-estimator__field--wide">
-        <span>模型</span>
-        <select v-model="model" class="ce-input">
-          <option v-for="m in availableModels" :key="m.id" :value="m.id">
-            {{ m.name }} · {{ m.id }}
-          </option>
-        </select>
-      </label>
+    <div class="cost-estimator__info">
+      <span class="cost-estimator__tag">{{ props.defaultProvider }}</span>
+      <span class="cost-estimator__tag">{{ props.defaultModel }}</span>
+      <span class="cost-estimator__tag cost-estimator__tag--type">{{ props.defaultCallType }}</span>
     </div>
 
-    <!-- 文字参数 -->
-    <div v-if="callType === 'text'" class="cost-estimator__text">
-      <label v-if="showTextInput" class="cost-estimator__field cost-estimator__field--full">
-        <span>小说 / 提示词（自动算 token）</span>
-        <textarea
-          v-model="inputText"
-          rows="4"
-          class="ce-input"
-          placeholder="粘贴小说片段或提示词..."
-        />
+    <div v-if="props.showTextInput" class="cost-estimator__input">
+      <label class="cost-estimator__label">输入文本</label>
+      <textarea
+        v-model="inputText"
+        rows="3"
+        class="cost-estimator__textarea"
+        placeholder="粘贴文本以估算成本..."
+      />
+    </div>
+
+    <div v-if="!props.showTextInput || !inputText" class="cost-estimator__slider">
+      <label class="cost-estimator__label">
+        输入 tokens: <strong>{{ inputTokens.toLocaleString() }}</strong>
       </label>
+      <input
+        v-model.number="tokenInput"
+        type="range"
+        min="100"
+        max="100000"
+        step="100"
+        class="cost-estimator__range"
+      />
+    </div>
+
+    <div class="cost-estimator__slider">
+      <label class="cost-estimator__label">
+        输出比例: <strong>{{ (outputTokenRatio * 100).toFixed(0) }}%</strong>
+      </label>
+      <input
+        v-model.number="outputTokenRatio"
+        type="range"
+        min="0.1"
+        max="2.0"
+        step="0.1"
+        class="cost-estimator__range"
+      />
+    </div>
+
+    <div class="cost-estimator__breakdown">
       <div class="cost-estimator__row">
-        <div class="cost-estimator__stat">
-          <span>输入 token</span>
-          <strong>{{ inputTokens.toLocaleString() }}</strong>
-        </div>
-        <label class="cost-estimator__field">
-          <span>期望输出 token</span>
-          <input v-model.number="outputTokens" type="number" min="0" step="100" class="ce-input" />
-        </label>
+        <span>输入 ({{ inputTokens.toLocaleString() }} tokens)</span>
+        <code>${{ inputCost.toFixed(4) }}</code>
+      </div>
+      <div class="cost-estimator__row">
+        <span>输出 ({{ outputTokens.toLocaleString() }} tokens)</span>
+        <code>${{ outputCost.toFixed(4) }}</code>
+      </div>
+      <div class="cost-estimator__row cost-estimator__row--total">
+        <span>预估总计</span>
+        <strong>${{ totalCost.toFixed(4) }}</strong>
       </div>
     </div>
 
-    <!-- 图片参数 -->
-    <div v-else-if="callType === 'image'" class="cost-estimator__row">
-      <label class="cost-estimator__field">
-        <span>生成张数</span>
-        <input v-model.number="imageCount" type="number" min="1" max="100" class="ce-input" />
-      </label>
-      <div class="cost-estimator__stat">
-        <span>单张价格</span>
-        <strong>${{ providerMeta?.imagePricePerUnit?.toFixed(3) ?? '—' }}</strong>
-      </div>
-    </div>
-
-    <!-- 视频参数 -->
-    <div v-else-if="callType === 'video'" class="cost-estimator__row">
-      <label class="cost-estimator__field">
-        <span>视频时长（秒）</span>
-        <input v-model.number="videoSeconds" type="number" min="1" max="600" class="ce-input" />
-      </label>
-      <div class="cost-estimator__stat">
-        <span>每秒价格</span>
-        <strong>${{ providerMeta?.videoPricePerSecond?.toFixed(2) ?? '—' }}</strong>
-      </div>
-    </div>
-
-    <!-- 成本展示 -->
-    <div class="cost-estimator__result">
-      <div class="cost-estimator__breakdown">
-        <div v-if="callType === 'text'" class="cost-estimator__line">
-          <span>输入：{{ inputTokens.toLocaleString() }} × ${{ currentModel?.inputPricePer1k.toFixed(4) }}/1k</span>
-          <code>${{ fmt(estimate.breakdown.inputCost) }}</code>
-        </div>
-        <div v-if="callType === 'text'" class="cost-estimator__line">
-          <span>输出：{{ outputTokens.toLocaleString() }} × ${{ currentModel?.outputPricePer1k.toFixed(4) }}/1k</span>
-          <code>${{ fmt(estimate.breakdown.outputCost) }}</code>
-        </div>
-        <div v-if="callType === 'image'" class="cost-estimator__line">
-          <span>图片：{{ imageCount }} × ${{ providerMeta?.imagePricePerUnit?.toFixed(3) }}</span>
-          <code>${{ fmt(estimate.breakdown.imageCost) }}</code>
-        </div>
-        <div v-if="callType === 'video'" class="cost-estimator__line">
-          <span>视频：{{ videoSeconds }}s × ${{ providerMeta?.videoPricePerSecond?.toFixed(2) }}</span>
-          <code>${{ fmt(estimate.breakdown.videoCost) }}</code>
-        </div>
-      </div>
-      <div class="cost-estimator__total">
-        <span>预计花费</span>
-        <strong>${{ fmt(estimate.costUsd) }}</strong>
-        <small>≈ ¥{{ (estimate.costUsd * 7.2).toFixed(2) }}</small>
-      </div>
-    </div>
+    <p class="cost-estimator__hint">
+      单价: 输入 ${{ prices.input }}/1k · 输出 ${{ prices.output }}/1k
+    </p>
   </div>
 </template>
 
 <style scoped>
 .cost-estimator {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 20px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 12px;
-}
-
-.cost-estimator__head h3 {
-  margin: 0 0 4px;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.cost-estimator__head p {
-  margin: 0;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.cost-estimator__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
-.cost-estimator__field {
+.cost-estimator__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cost-estimator__info {
   display: flex;
-  flex-direction: column;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cost-estimator__tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-family: monospace;
+  border: 1px solid var(--border);
+}
+
+.cost-estimator__tag--type {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.cost-estimator__label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
   gap: 6px;
 }
 
-.cost-estimator__field--wide { grid-column: span 2; }
-.cost-estimator__field--full { grid-column: 1 / -1; }
-
-.cost-estimator__field > span {
-  font-size: 12px;
-  color: var(--text-secondary);
-  font-weight: 500;
+.cost-estimator__label strong {
+  color: var(--text-primary);
+  font-family: monospace;
 }
 
-.ce-input {
-  padding: 8px 12px;
+.cost-estimator__textarea {
+  width: 100%;
+  padding: 8px 10px;
   background: var(--bg-primary);
   color: var(--text-primary);
   border: 1px solid var(--border);
   border-radius: 6px;
   font-family: inherit;
-  font-size: 13px;
-  transition: border-color 200ms;
-  width: 100%;
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
   box-sizing: border-box;
 }
 
-.ce-input:focus {
+.cost-estimator__textarea:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: var(--glow);
 }
 
-textarea.ce-input {
-  resize: vertical;
-  min-height: 70px;
-  font-family: inherit;
-}
-
-.cost-estimator__text {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.cost-estimator__row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-end;
-}
-
-.cost-estimator__stat {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 8px 12px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  min-width: 120px;
-}
-
-.cost-estimator__stat > span {
-  font-size: 11px;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.cost-estimator__stat > strong {
-  font-size: 14px;
-  font-weight: 600;
-  font-family: monospace;
-  color: var(--text-primary);
-}
-
-.cost-estimator__result {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 14px 16px;
-  background: color-mix(in srgb, var(--accent) 6%, var(--bg-primary));
-  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
-  border-radius: 8px;
+.cost-estimator__range {
+  width: 100%;
+  accent-color: var(--accent);
 }
 
 .cost-estimator__breakdown {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
-.cost-estimator__line {
+.cost-estimator__row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 12px;
   color: var(--text-secondary);
-  gap: 12px;
 }
 
-.cost-estimator__line code {
+.cost-estimator__row code {
   font-family: monospace;
-  color: var(--text-primary);
   font-size: 12px;
-  white-space: nowrap;
+  color: var(--text-primary);
 }
 
-.cost-estimator__total {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--border);
-  flex-wrap: wrap;
-}
-
-.cost-estimator__total > span {
+.cost-estimator__row--total {
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
-.cost-estimator__total > strong {
-  font-size: 24px;
+.cost-estimator__row--total strong {
+  font-size: 15px;
   font-weight: 700;
   color: var(--accent);
   font-family: monospace;
 }
 
-.cost-estimator__total > small {
-  font-size: 12px;
+.cost-estimator__hint {
+  margin: 0;
+  font-size: 10px;
   color: var(--text-secondary);
   font-family: monospace;
-}
-
-@media (max-width: 640px) {
-  .cost-estimator__field--wide { grid-column: span 1; }
 }
 </style>

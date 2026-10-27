@@ -1,6 +1,7 @@
 # ManhuaWorks — Full Stack (Production)
 # 2026-06-08 谢擎 L2-task-12
-# 15 services: postgres, redis, 4 backend, api-gateway, monitor,
+# 2026-06-21 程构 P4-2 部署终验：补完 6 个 AI/辅助后端
+# 21 services: postgres, redis, 10 backend, api-gateway, monitor,
 #             prometheus, alertmanager, grafana, 4 frontend.
 #
 # Usage:
@@ -16,6 +17,12 @@
 #   billing-service 8090
 #   collab-service (HTTP+WS) 8091
 #   api-gateway   8080
+#   ai-router     8082     ← P4-2 补完
+#   ai-keys-svc   8083     ← P4-2 补完
+#   workflow-eng  8084     ← P4-2 补完
+#   asset-service 8085     ← P4-2 补完
+#   ai-helper     8086     ← P4-2 补完
+#   ai-orch       8087     ← P4-2 补完
 #   monitor       8092
 #   prometheus    9090
 #   alertmanager  9093
@@ -28,7 +35,7 @@
 # 网络：manhuaworks_net (custom bridge)
 # 数据卷：postgres-data / redis-data / grafana-data / prometheus-data / alertmanager-data
 # 健康检查：30s interval / 5s timeout / 3 retries (postgres 单独 5s/5s/5 启动重试)
-# 启动顺序：postgres → redis → 4 backend → api-gateway → monitor → 4 frontend / prom / grafana
+# 启动顺序：postgres → redis → 10 backend → api-gateway → monitor → 4 frontend / prom / grafana
 
 name: manhuaworks
 
@@ -241,7 +248,209 @@ services:
     logging: *default-logging
 
   # ============================================================
-  # 7. api-gateway :8080 (统一入口 / 限流 / 路由)
+  # 7. ai-router :8082 (AI 路由分发 — 统一 AI 请求入口)
+  # ============================================================
+  ai-router:
+    build:
+      context: ..
+      dockerfile: services/ai-router/Dockerfile
+    container_name: mhw-ai-router
+    <<: *default-restart
+    ports:
+      - "8082:8082"
+    environment:
+      NODE_ENV: production
+      PORT: "8082"
+      HOST: "0.0.0.0"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mhw}:${POSTGRES_PASSWORD:-mhw_dev_only}@postgres:5432/${POSTGRES_DB:-manhuaworks}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8082/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging: *default-logging
+
+  # ============================================================
+  # 8. ai-keys-service :8083 (API Key 生命周期管理)
+  # ============================================================
+  ai-keys-service:
+    build:
+      context: ..
+      dockerfile: services/ai-keys-service/Dockerfile
+    container_name: mhw-ai-keys-service
+    <<: *default-restart
+    ports:
+      - "8083:8083"
+    environment:
+      NODE_ENV: production
+      PORT: "8083"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mhw}:${POSTGRES_PASSWORD:-mhw_dev_only}@postgres:5432/${POSTGRES_DB:-manhuaworks}
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8083/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging: *default-logging
+
+  # ============================================================
+  # 9. workflow-engine :8084 (工作流编排引擎 / FFmpeg)
+  # ============================================================
+  workflow-engine:
+    build:
+      context: ..
+      dockerfile: services/workflow-engine/Dockerfile
+    container_name: mhw-workflow-engine
+    <<: *default-restart
+    ports:
+      - "8084:8084"
+    environment:
+      NODE_ENV: production
+      PORT: "8084"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mhw}:${POSTGRES_PASSWORD:-mhw_dev_only}@postgres:5432/${POSTGRES_DB:-manhuaworks}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8084/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging: *default-logging
+
+  # ============================================================
+  # 10. asset-service :8085 (资产导出 / 格式转换)
+  # ============================================================
+  asset-service:
+    build:
+      context: ..
+      dockerfile: services/asset-service/Dockerfile
+    container_name: mhw-asset-service
+    <<: *default-restart
+    ports:
+      - "8085:8085"
+    environment:
+      NODE_ENV: production
+      PORT: "8085"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mhw}:${POSTGRES_PASSWORD:-mhw_dev_only}@postgres:5432/${POSTGRES_DB:-manhuaworks}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8085/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging: *default-logging
+
+  # ============================================================
+  # 11. ai-helper :8086 (AI 辅助工具 / 字幕 / 翻译)
+  # ============================================================
+  ai-helper:
+    build:
+      context: ..
+      dockerfile: services/ai-helper/Dockerfile
+    container_name: mhw-ai-helper
+    <<: *default-restart
+    ports:
+      - "8086:8086"
+    environment:
+      NODE_ENV: production
+      PORT: "8086"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mhw}:${POSTGRES_PASSWORD:-mhw_dev_only}@postgres:5432/${POSTGRES_DB:-manhuaworks}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8086/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging: *default-logging
+
+  # ============================================================
+  # 12. ai-orchestrator :8087 (AI 编排 / Pipeline 调度)
+  # ============================================================
+  ai-orchestrator:
+    build:
+      context: ..
+      dockerfile: services/ai-orchestrator/Dockerfile
+    container_name: mhw-ai-orchestrator
+    <<: *default-restart
+    ports:
+      - "8087:8087"
+    environment:
+      NODE_ENV: production
+      PORT: "8087"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mhw}:${POSTGRES_PASSWORD:-mhw_dev_only}@postgres:5432/${POSTGRES_DB:-manhuaworks}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - manhuaworks_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8087/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging: *default-logging
+
+  # ============================================================
+  # 13. api-gateway :8080 (统一入口 / 限流 / 路由)
   # ============================================================
   api-gateway:
     build:
@@ -263,6 +472,7 @@ services:
       PROJECT_SERVICE_URL: http://project-service:8089
       BILLING_SERVICE_URL: http://billing-service:8090
       COLLAB_SERVICE_URL: http://collab-service:8091
+      AI_ROUTER_URL: http://ai-router:8082
       MONITOR_SERVICE_URL: http://monitor:8092
       RATE_LIMIT_PER_MIN: ${RATE_LIMIT_PER_MIN:-120}
     depends_on:
@@ -273,6 +483,8 @@ services:
       billing-service:
         condition: service_healthy
       collab-service:
+        condition: service_healthy
+      ai-router:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -287,7 +499,7 @@ services:
     logging: *default-logging
 
   # ============================================================
-  # 8. monitor :8092 (健康探针 / 指标采集 / 告警路由)
+  # 14. monitor :8092 (健康探针 / 指标采集 / 告警路由)
   # ============================================================
   monitor:
     build:
@@ -335,7 +547,7 @@ services:
     logging: *default-logging
 
   # ============================================================
-  # 9. prometheus :9090
+  # 15. prometheus :9090
   # ============================================================
   prometheus:
     image: prom/prometheus:v2.55.0
@@ -365,7 +577,7 @@ services:
     logging: *default-logging
 
   # ============================================================
-  # 10. alertmanager :9093
+  # 16. alertmanager :9093
   # ============================================================
   alertmanager:
     image: prom/alertmanager:v0.27.0
@@ -390,7 +602,7 @@ services:
     logging: *default-logging
 
   # ============================================================
-  # 11. grafana :3000 (host 3010)
+  # 17. grafana :3000 (host 3010)
   # ============================================================
   grafana:
     image: grafana/grafana:11.3.0
@@ -422,7 +634,7 @@ services:
     logging: *default-logging
 
   # ============================================================
-  # 12. web :3000 (主门户)
+  # 18. web :3000 (主门户)
   # ============================================================
   web:
     build:
@@ -449,7 +661,7 @@ services:
     logging: *default-logging
 
   # ============================================================
-  # 13. studio :3001
+  # 19. studio :3001
   # ============================================================
   studio:
     build:
@@ -475,7 +687,7 @@ services:
     logging: *default-logging
 
   # ============================================================
-  # 14. admin-portal :3002
+  # 20. admin-portal :3002
   # ============================================================
   admin-portal:
     build:
@@ -501,7 +713,7 @@ services:
     logging: *default-logging
 
   # ============================================================
-  # 15. user-portal :3003
+  # 21. user-portal :3003
   # ============================================================
   user-portal:
     build:

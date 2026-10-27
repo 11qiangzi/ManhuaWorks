@@ -1,14 +1,16 @@
 /**
  * ManhuaWorks user-service 数据库 Schema
  *
- * 对应 PostgreSQL 7 表（参考 docs/database/ER.md + migrations/001_init.sql）：
+ * 对应 PostgreSQL 9 表（参考 docs/database/ER.md + migrations/001_init.sql）：
  *  1. users          - 用户
  *  2. projects       - 作品/项目
  *  3. subscriptions  - 订阅
  *  4. quotas         - 配额
- *  5. api_keys       - BYOK 加密存储
+ *  5. api_keys       - BYOK 加密存储 (派单 16, 内存表 pg 化待办)
  *  6. api_call_logs  - API 调用日志 + 成本
  *  7. role_vectors   - 角色一致性向量
+ *  8. user_api_keys  - BYOK 用户自带 API Key (派单 17, 加密存储 + 6 provider)
+ *  9. rate_limit_counters - BYOK 限流计数器 (派单 17, 1 小时 60 次/key)
  *
  * Drizzle ORM 0.36.x + postgres-js 驱动
  */
@@ -23,6 +25,7 @@ import {
   boolean,
   timestamp,
   bigserial,
+  jsonb,
   customType,
   index,
   uniqueIndex,
@@ -83,6 +86,7 @@ export const users = pgTable(
     avatarUrl: text("avatar_url"),
     role: smallint("role").notNull().default(1),
     status: smallint("status").notNull().default(1),
+    preferences: jsonb("preferences").default(sql`'{}'::jsonb`),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -246,7 +250,76 @@ export const apiCallLogs = pgTable(
 );
 
 /* ------------------------------------------------------------------ */
-/*  7. role_vectors                                                    */
+/*  7. user_api_keys  (派单 17: BYOK)                                 */
+/* ------------------------------------------------------------------ */
+// 用户自带 API Key, 加密存储 (AES-256-GCM, masterKey 在 BYOK_MASTER_KEY env)
+// 派单 17 要求字段: provider / api_key_encrypted (JSONB 存 EncryptedPayload) / base_url
+//                  / nickname / is_default / last_used_at / last_test_at / last_test_status
+// 派单 17 要求索引: idx_user_api_keys_user_id
+export const userApiKeys = pgTable(
+  "user_api_keys",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`uuid_generate_v4()`),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    provider: varchar("provider", { length: 50 }).notNull(),
+    // api_key_encrypted: 存 EncryptedPayload JSON (iv/authTag/ciphertext 全部 base64)
+    // 用 jsonb 而不是 bytea, 方便前端调用 + 跨服务
+    apiKeyEncrypted: jsonb("api_key_encrypted").notNull(),
+    baseUrl: varchar("base_url", { length: 500 }),
+    nickname: varchar("nickname", { length: 100 }).notNull(),
+    isDefault: smallint("is_default").notNull().default(0),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    lastTestAt: timestamp("last_test_at", { withTimezone: true }),
+    lastTestStatus: varchar("last_test_status", { length: 20 }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    userProviderNicknameIdx: uniqueIndex("idx_user_api_keys_unique").on(
+      t.userId,
+      t.provider,
+      t.nickname
+    ),
+    userIdx: index("idx_user_api_keys_user_id").on(t.userId),
+    userProviderIdx: index("idx_user_api_keys_user_provider").on(t.userId, t.provider),
+    defaultIdx: index("idx_user_api_keys_default").on(t.userId, t.provider, t.isDefault),
+  })
+);
+
+/* ------------------------------------------------------------------ */
+/*  8. rate_limit_counters  (派单 17: BYOK 限流 60次/h/key)          */
+/* ------------------------------------------------------------------ */
+// 限流 scope 格式:
+//   "byok_key:<key_id>"  →  限单 key 1 小时 60 次
+//   "user:<user_id>"     →  限总用户 1 小时 N 次 (后续按 plan 配)
+// window_start 用整点小时 (向下取整), 保证固定窗口可聚合
+export const rateLimitCounters = pgTable(
+  "rate_limit_counters",
+  {
+    id: bigserial("id", { mode: "bigint" }).primaryKey(),
+    scope: varchar("scope", { length: 100 }).notNull(),
+    windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
+    requestCount: integer("request_count").notNull().default(1),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    scopeWindowIdx: uniqueIndex("idx_rate_limit_unique").on(t.scope, t.windowStart),
+    scopeWindowDescIdx: index("idx_rate_limit_scope_window").on(t.scope, t.windowStart),
+  })
+);
+
+/* ------------------------------------------------------------------ */
+/*  9. role_vectors                                                    */
 /* ------------------------------------------------------------------ */
 export const roleVectors = pgTable(
   "role_vectors",
@@ -284,5 +357,9 @@ export type ApiKey = typeof apiKeys.$inferSelect;
 export type NewApiKey = typeof apiKeys.$inferInsert;
 export type ApiCallLog = typeof apiCallLogs.$inferSelect;
 export type NewApiCallLog = typeof apiCallLogs.$inferInsert;
+export type UserApiKey = typeof userApiKeys.$inferSelect;
+export type NewUserApiKey = typeof userApiKeys.$inferInsert;
+export type RateLimitCounter = typeof rateLimitCounters.$inferSelect;
+export type NewRateLimitCounter = typeof rateLimitCounters.$inferInsert;
 export type RoleVector = typeof roleVectors.$inferSelect;
 export type NewRoleVector = typeof roleVectors.$inferInsert;

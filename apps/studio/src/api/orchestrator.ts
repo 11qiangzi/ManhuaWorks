@@ -42,27 +42,65 @@ export async function getRun(runId: string): Promise<WorkflowRun> {
   return await resp.json() as WorkflowRun
 }
 
-/** 订阅运行事件（WebSocket） */
+/** 订阅运行事件（WebSocket + 自动重连） */
 export function subscribeRun(
   runId: string,
   onEvent: (e: DebugEvent) => void,
   onError?: (err: Event) => void,
 ): () => void {
   const wsBase = BASE_URL.replace(/^http/, 'ws')
-  const ws = new WebSocket(`${wsBase}/ws/runs/${runId}`)
-  ws.onmessage = (msg) => {
-    try {
-      const data = JSON.parse(msg.data) as DebugEvent
-      onEvent(data)
-    } catch (err) {
-      console.error('subscribeRun parse error', err)
+  const url = `${wsBase}/ws/runs/${runId}`
+
+  let ws: WebSocket | null = null
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  let reconnectDelay = 1000
+  let attempts = 0
+  let cancelled = false
+  const MAX_DELAY = 30_000
+
+  function connect() {
+    if (cancelled) return
+    ws = new WebSocket(url)
+    ws.onopen = () => {
+      reconnectDelay = 1000
+      attempts = 0
+    }
+    ws.onmessage = (msg) => {
+      try {
+        const data = JSON.parse(msg.data) as DebugEvent
+        // 收到 run-finished 或 run-cancelled 后停止重连
+        if (data.type === 'run-finished' || data.type === 'run-cancelled') {
+          cancelled = true
+        }
+        onEvent(data)
+      } catch (err) {
+        console.error('subscribeRun parse error', err)
+      }
+    }
+    ws.onerror = (e) => {
+      console.error('subscribeRun ws error', e)
+      onError?.(e)
+    }
+    ws.onclose = () => {
+      if (cancelled) return
+      attempts++
+      const jitter = Math.random() * 400 - 200
+      const delay = Math.min(reconnectDelay + jitter, MAX_DELAY)
+      console.info(`subscribeRun reconnecting in ${Math.round(delay)}ms (attempt ${attempts})`)
+      reconnectTimer = setTimeout(() => {
+        reconnectDelay = Math.min(reconnectDelay * 2, MAX_DELAY)
+        connect()
+      }, delay)
     }
   }
-  ws.onerror = (e) => {
-    console.error('subscribeRun ws error', e)
-    onError?.(e)
+
+  connect()
+
+  return () => {
+    cancelled = true
+    if (reconnectTimer) clearTimeout(reconnectTimer)
+    if (ws) ws.close()
   }
-  return () => ws.close()
 }
 
 /** 保存工作流（draft） */

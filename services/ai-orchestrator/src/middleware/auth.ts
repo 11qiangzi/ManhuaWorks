@@ -4,6 +4,7 @@
  * 通过后把 user 注入 context，供后续 cost-tracker / quota 使用。
  */
 
+import { createHmac } from "node:crypto";
 import type { Context, MiddlewareHandler } from "hono";
 import { ErrorCodes } from "@manhuaworks/shared";
 import { config } from "../config.js";
@@ -40,13 +41,57 @@ function extractToken(authHeader: string | undefined, apiKeyHeader: string | und
   return authHeader.trim();
 }
 
-/** JWT 简化版解码（不签名校验，留给 api-gateway 兜底） */
-function decodeJwtPayload(token: string): { sub?: string; tier?: UserTier; byok?: boolean } | null {
+// ─── JWT Secret 安全策略 (P0-1 统一, 与 @manhuaworks/shared 对齐) ───
+//
+// 生产环境 JWT_SECRET 必须设置，缺失则拒绝启动。
+// 开发环境缺失时使用临时密钥 (每次重启变化)，并输出警告。
+let _jwtSecretCache: string | null = null;
+let _jwtSecretWarned = false;
+
+function getJwtSecretForOrch(): string {
+  if (_jwtSecretCache) return _jwtSecretCache;
+
+  const secret = process.env.JWT_SECRET;
+  if (secret && secret.length >= 16) {
+    _jwtSecretCache = secret;
+    return secret;
+  }
+
+  const isProduction = process.env.NODE_ENV === "production";
+  if (isProduction) {
+    throw new Error(
+      "[ai-orchestrator] FATAL: JWT_SECRET 环境变量未设置或长度不足16字符。生产环境禁止使用默认密钥。"
+    );
+  }
+
+  if (!_jwtSecretWarned) {
+    console.warn(
+      "[ai-orchestrator] WARNING: JWT_SECRET 环境变量未设置，使用临时开发密钥。此密钥每次重启后变化，仅适用于本地调试。请在 .env 中设置 JWT_SECRET。"
+    );
+    _jwtSecretWarned = true;
+  }
+
+  _jwtSecretCache = "dev-only-temporary-key-" + process.pid;
+  return _jwtSecretCache;
+}
+
+/** JWT 签名验证 + 解码（HMAC-SHA256） */
+
+export function verifyAndDecodeJwt(token: string): { sub?: string; tier?: UserTier; byok?: boolean } | null {
   const parts = token.split(".");
   if (parts.length !== 3) return null;
+
+  const [headerB64, payloadB64, sigB64] = parts;
+
+  // Verify HMAC-SHA256 signature
+  const expected = createHmac("sha256", getJwtSecretForOrch())
+    .update(`${headerB64}.${payloadB64}`)
+    .digest("base64url");
+
+  if (expected !== sigB64) return null;
+
   try {
-    const payload = parts[1];
-    const json = Buffer.from(payload.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8");
+    const json = Buffer.from(payloadB64.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8");
     const obj = JSON.parse(json) as Record<string, unknown>;
     return {
       sub: typeof obj.sub === "string" ? obj.sub : undefined,
@@ -81,7 +126,7 @@ export const authMiddleware: MiddlewareHandler<AppEnv> = async (c, next) => {
     // 内部服务账号 → 视为 enterprise
     c.set("user", { userId: "internal", tier: "enterprise" });
   } else if (config.auth.mode === "jwt") {
-    const payload = decodeJwtPayload(token);
+    const payload = verifyAndDecodeJwt(token);
     if (!payload?.sub) {
       return c.json({ code: ErrorCodes.INVALID_TOKEN, message: "invalid jwt" }, 401);
     }

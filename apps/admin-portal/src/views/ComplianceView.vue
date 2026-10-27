@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * ComplianceView —合规与审计 ·3 大模块
- * ManhuaWorks · M1-W3 L3.K
+ * 千机工坊 · M1-W3 L3.K
  *
  *1) API Key审计 —所有用户的 BYOK key + 最近变更 +异常登录
  *2) 数据合规 —用户导出/删除 + GDPR/CCPA状态
@@ -168,7 +168,7 @@ const sysLevelClass: Record<string, string> = {
  </table>
  </section>
 
- <div v-if="cmp.error.value" class="cmp-error">⚠️ {{ cmp.error.value }}（已回退 mock）</div>
+ <div v-if="cmp.error.value" class="cmp-error">⚠️ {{ cmp.error.value }}</div>
  </div>
 </template>
 

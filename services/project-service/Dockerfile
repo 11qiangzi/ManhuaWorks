@@ -14,17 +14,24 @@
 # ==================== Stage 1: deps ====================
 FROM node:20-alpine AS deps
 WORKDIR /app
-COPY package.json ./
-# 没 lockfile 也能装（npm 会基于 package.json 解析）
-RUN npm install --no-audit --no-fund
+
+# Enable pnpm via corepack
+RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
+
+# Copy workspace root manifests (for pnpm hoisting resolution)
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY services/project-service/package.json ./services/project-service/
+
+# Install deps (workspace-aware)
+RUN pnpm install --frozen-lockfile --filter @manhuaworks/project-service...
 
 # ==================== Stage 2: build ====================
 FROM deps AS build
 WORKDIR /app
-COPY tsconfig.json ./
-COPY src ./src
-COPY tests ./tests
-RUN npx tsc -p tsconfig.json
+COPY services/project-service/tsconfig.json ./services/project-service/
+COPY services/project-service/src ./services/project-service/src
+COPY services/project-service/tests ./services/project-service/tests
+RUN pnpm --filter @manhuaworks/project-service build
 
 # ==================== Stage 3: runtime ====================
 FROM node:20-alpine AS runtime
@@ -33,11 +40,11 @@ ENV NODE_ENV=production
 ENV PORT=8089
 
 # 仅安装生产依赖（精简镜像）
-COPY package.json ./
+COPY --from=deps /app/services/project-service/package.json ./package.json
 COPY --from=deps /app/node_modules ./node_modules
 
 # 拷贝构建产物
-COPY --from=build /app/dist ./dist
+COPY --from=build /app/services/project-service/dist ./dist
 
 # node:20-alpine 镜像自带 node (uid 1000)，无需手动 adduser
 USER node

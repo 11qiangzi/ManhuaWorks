@@ -166,7 +166,7 @@ sequenceDiagram
     R->>V: 9. 用用户 Key 调用供应商
     V-->>R: 10. 返回结果
     R-->>S: 11. 返回给前端
-    Note over R,V: 平台**不抽佣**<br/>只用 ai-router 0.5% 通道费
+    Note over R,V: 平台**不抽佣**<br/>只用 ai-router 平台服务费
 ```
 
 ### 5.1 BYOK 收费策略

@@ -12,9 +12,11 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { useToolbox, type ToolDefinition, type ToolboxCategory } from '../composables/toolbox'
+import { useProjectStore } from '../stores/project'
 
-// ---------- 默认 project ----------
-const projectId = ref('proj_default_001')
+// ---------- 从项目 store 获取 projectId ----------
+const projectStore = useProjectStore()
+const projectId = computed(() => projectStore.current?.id ?? 'proj_default_001')
 
 // ---------- composable ----------
 const {
@@ -37,7 +39,7 @@ const modalOutput = ref('')
 const modalRunning = ref(false)
 const modalError = ref<string | null>(null)
 
-const activeCategoryChips: Array<ToolboxCategory | 'all'> = ['all', 'text', 'character', 'plot', 'dialogue', 'world', 'export']
+const activeCategoryChips: Array<ToolboxCategory | 'all'> = ['all', 'text', 'character', 'plot', 'dialogue', 'world', 'export', 'audio']
 
 // ---------- 主题 ----------
 const themeAccent = '#8b5cf6'
@@ -75,6 +77,12 @@ async function executeTool() {
   } finally {
     modalRunning.value = false
   }
+}
+
+// ---------- 判断 icon 是 emoji 还是 SVG path ----------
+function isEmojiIcon(icon: string): boolean {
+  // Emoji chars are typically outside ASCII range and not in ICON_PATHS
+  return !ICON_PATHS[icon] && icon.length <= 4
 }
 
 // SVG 图标 map
@@ -116,7 +124,7 @@ const ICON_PATHS: Record<string, string> = {
         </div>
         <div class="flex flex-col">
           <h1 class="text-sm font-semibold tracking-wide text-white">工具库</h1>
-          <p class="text-[10px] text-slate-400">6 大类 · {{ tools.length }} 工具 · 创作小工具集合</p>
+          <p class="text-[10px] text-slate-400">7 大类 · {{ tools.length }} 工具 · 创作小工具集合</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
@@ -188,6 +196,7 @@ const ICON_PATHS: Record<string, string> = {
           :key="t.id"
           type="button"
           class="group relative flex flex-col gap-2 rounded-xl border border-white/5 bg-slate-900/60 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-purple-500/30 hover:bg-slate-800/80 hover:shadow-[0_8px_30px_rgba(139,92,246,0.15)]"
+          :class="{ 'opacity-75': t.comingSoon }"
           @click="openToolModal(t)"
         >
           <!-- 顶部：图标 + 徽章 -->
@@ -196,13 +205,24 @@ const ICON_PATHS: Record<string, string> = {
               class="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br text-white shadow-md"
               :class="categories.find(c => c.id === t.category)?.color ?? 'from-slate-500 to-slate-700'"
             >
-              <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                <path :d="ICON_PATHS[t.icon] ?? ICON_PATHS.style" />
-              </svg>
+              <template v-if="isEmojiIcon(t.icon)">
+                <span class="text-lg">{{ t.icon }}</span>
+              </template>
+              <template v-else>
+                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path :d="ICON_PATHS[t.icon] ?? ICON_PATHS.style" />
+                </svg>
+              </template>
             </div>
             <div class="flex flex-col items-end gap-1">
               <span
-                v-if="t.isNew"
+                v-if="t.comingSoon"
+                class="rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-semibold text-amber-300"
+              >
+                即将上线
+              </span>
+              <span
+                v-if="t.isNew && !t.comingSoon"
                 class="rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300"
               >
                 NEW
@@ -224,12 +244,21 @@ const ICON_PATHS: Record<string, string> = {
 
           <!-- 底部信息 -->
           <div class="mt-auto flex items-center justify-between border-t border-white/5 pt-2 text-[10px] text-slate-500">
-            <span class="flex items-center gap-1">
-              <span class="h-1 w-1 rounded-full bg-emerald-400"></span>
-              ${{ t.estimatedCost.toFixed(3) }}
-            </span>
-            <span>~{{ t.estimatedTime }}s</span>
-            <span class="text-purple-300/70 group-hover:text-purple-200">运行 →</span>
+            <template v-if="t.comingSoon">
+              <span class="flex items-center gap-1 text-amber-400/70">
+                <span class="h-1 w-1 rounded-full bg-amber-400/50"></span>
+                即将上线
+              </span>
+              <span class="text-slate-600">敬请期待</span>
+            </template>
+            <template v-else>
+              <span class="flex items-center gap-1">
+                <span class="h-1 w-1 rounded-full bg-emerald-400"></span>
+                ¥{{ t.estimatedCost.toFixed(2) }}
+              </span>
+              <span>~{{ t.estimatedTime }}s</span>
+              <span class="text-purple-300/70 group-hover:text-purple-200">运行 →</span>
+            </template>
           </div>
         </button>
       </div>
@@ -249,17 +278,22 @@ const ICON_PATHS: Record<string, string> = {
               <div class="flex items-center gap-3">
                 <div
                   class="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br text-white shadow-md"
-                  :class="categories.find(c => c.id === activeTool.category)?.color ?? 'from-slate-500 to-slate-700'"
+                  :class="categories.find(c => c.id === activeTool!.category)?.color ?? 'from-slate-500 to-slate-700'"
                 >
-                  <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path :d="ICON_PATHS[activeTool.icon] ?? ICON_PATHS.style" />
-                  </svg>
+                  <template v-if="isEmojiIcon(activeTool!.icon)">
+                    <span class="text-lg">{{ activeTool!.icon }}</span>
+                  </template>
+                  <template v-else>
+                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path :d="ICON_PATHS[activeTool!.icon] ?? ICON_PATHS.style" />
+                    </svg>
+                  </template>
                 </div>
                 <div>
-                  <h2 class="text-[15px] font-semibold text-white">{{ activeTool.name }}</h2>
+                  <h2 class="text-[15px] font-semibold text-white">{{ activeTool!.name }}</h2>
                   <p class="text-[11px] text-slate-400">
-                    {{ categories.find(c => c.id === activeTool.category)?.name }} ·
-                    ${{ activeTool.estimatedCost.toFixed(3) }} · ~{{ activeTool.estimatedTime }}s
+                    {{ categories.find(c => c.id === activeTool!.category)?.name }} ·
+                    ¥{{ activeTool!.estimatedCost.toFixed(2) }} · ~{{ activeTool!.estimatedTime }}s
                   </p>
                 </div>
               </div>
@@ -276,38 +310,59 @@ const ICON_PATHS: Record<string, string> = {
               <p class="mb-3 text-[12px] leading-relaxed text-slate-300">
                 {{ activeTool.description }}
               </p>
-              <label class="block">
-                <span class="text-[11px] font-medium text-slate-300">输入内容（可选）</span>
-                <textarea
-                  v-model="modalInput"
-                  rows="5"
-                  placeholder="粘贴文本、角色名、剧情片段等…"
-                  class="mt-1 w-full rounded-lg border border-white/10 bg-slate-800/60 px-3 py-2 text-[12px] text-white placeholder-slate-500 outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50"
-                />
-              </label>
 
+              <!-- Coming Soon 占位 -->
               <div
-                v-if="modalError"
-                class="mt-3 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-[11px] text-red-300"
+                v-if="activeTool.comingSoon"
+                class="flex flex-col items-center justify-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 py-12 text-center"
               >
-                ⚠️ {{ modalError }}
-              </div>
-
-              <div
-                v-if="modalOutput"
-                class="mt-3 rounded-lg border border-white/5 bg-slate-950/60 p-3"
-              >
-                <div class="mb-2 flex items-center justify-between">
-                  <span class="text-[11px] font-semibold text-slate-300">运行结果</span>
-                  <button
-                    class="rounded px-1.5 py-0.5 text-[10px] text-slate-400 hover:bg-white/5"
-                    @click="modalOutput = ''"
-                  >
-                    清空
-                  </button>
+                <span class="text-4xl">🚧</span>
+                <h3 class="text-[15px] font-semibold text-amber-200">功能即将上线</h3>
+                <p class="max-w-xs text-[12px] leading-relaxed text-slate-400">
+                  「{{ activeTool.name }}」正在开发中，预计很快与大家见面。请关注更新通知！
+                </p>
+                <div class="mt-2 flex items-center gap-2 text-[11px] text-slate-500">
+                  <span>预估费用: ¥{{ activeTool.estimatedCost.toFixed(2) }}/次</span>
+                  <span>·</span>
+                  <span>预估耗时: ~{{ activeTool.estimatedTime }}s</span>
                 </div>
-                <pre class="max-h-72 overflow-y-auto whitespace-pre-wrap text-[11px] leading-relaxed text-slate-200">{{ modalOutput }}</pre>
               </div>
+
+              <!-- 正常工具界面 -->
+              <template v-else>
+                <label class="block">
+                  <span class="text-[11px] font-medium text-slate-300">输入内容（可选）</span>
+                  <textarea
+                    v-model="modalInput"
+                    rows="5"
+                    placeholder="粘贴文本、角色名、剧情片段等…"
+                    class="mt-1 w-full rounded-lg border border-white/10 bg-slate-800/60 px-3 py-2 text-[12px] text-white placeholder-slate-500 outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50"
+                  />
+                </label>
+
+                <div
+                  v-if="modalError"
+                  class="mt-3 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-[11px] text-red-300"
+                >
+                  ⚠️ {{ modalError }}
+                </div>
+
+                <div
+                  v-if="modalOutput"
+                  class="mt-3 rounded-lg border border-white/5 bg-slate-950/60 p-3"
+                >
+                  <div class="mb-2 flex items-center justify-between">
+                    <span class="text-[11px] font-semibold text-slate-300">运行结果</span>
+                    <button
+                      class="rounded px-1.5 py-0.5 text-[10px] text-slate-400 hover:bg-white/5"
+                      @click="modalOutput = ''"
+                    >
+                      清空
+                    </button>
+                  </div>
+                  <pre class="max-h-72 overflow-y-auto whitespace-pre-wrap text-[11px] leading-relaxed text-slate-200">{{ modalOutput }}</pre>
+                </div>
+              </template>
             </div>
 
             <!-- Footer -->
@@ -319,6 +374,7 @@ const ICON_PATHS: Record<string, string> = {
                 关闭
               </button>
               <button
+                v-if="!activeTool.comingSoon"
                 class="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 px-5 py-1.5 text-[12px] font-semibold text-white shadow-lg transition hover:shadow-purple-500/50 disabled:opacity-50"
                 :disabled="modalRunning"
                 @click="executeTool"
@@ -326,6 +382,12 @@ const ICON_PATHS: Record<string, string> = {
                 <span v-if="modalRunning" class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
                 <span>{{ modalRunning ? '运行中…' : '🚀 运行' }}</span>
               </button>
+              <span
+                v-else
+                class="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-[12px] font-medium text-amber-300"
+              >
+                即将上线
+              </span>
             </div>
           </div>
         </div>

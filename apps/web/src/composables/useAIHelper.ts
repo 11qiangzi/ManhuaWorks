@@ -1,9 +1,9 @@
 /**
  * useAIHelper — AI 辅助面板状态管理
- * ManhuaWorks · W3 工坊流程精修
+ * 千机工坊 · W3 工坊流程精修
  *
  * 6 大 AI 功能：
- * 1. auto_storyboard   — 自动分镜（小说 → 分镜列表）
+ * 1. auto_storyboard   — 自动镜头（小说 → 镜头列表）
  * 2. suggest_shot      — 推荐镜头（基于上下文）
  * 3. dialogue_polish   — 对白润色
  * 4. expression_gen    — 表情生成
@@ -122,7 +122,7 @@ export const AI_HELPER_FEATURES: Array<{
   desc: string
   hotkey?: string
 }> = [
-  { type: 'auto_storyboard', label: '自动分镜', icon: '🎬', desc: '从小说文本智能拆分镜头', hotkey: 'A' },
+  { type: 'auto_storyboard', label: '自动镜头', icon: '🎬', desc: '从小说文本智能拆分为镜头', hotkey: 'A' },
   { type: 'suggest_shot', label: '推荐镜头', icon: '💡', desc: '基于上下文推荐镜头角度' },
   { type: 'dialogue_polish', label: '对白润色', icon: '✍️', desc: '让对白更自然有张力' },
   { type: 'expression_gen', label: '表情生成', icon: '😊', desc: '为角色生成 8 种表情' },

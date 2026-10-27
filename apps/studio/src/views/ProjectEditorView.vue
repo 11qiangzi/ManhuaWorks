@@ -3,23 +3,28 @@
  * ProjectEditorView.vue — 项目编辑器
  * 林染 🔮 2026-06-10: 参照阅文「我的作品」重设计
  *   - 深色主题统一
- *   - 更精致的分镜卡片
+ *   - 更精致的镜头卡片
  *   - 项目概览 header
  */
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { makeMockProject } from '../data/studio-mock'
 import { STUDIO_THEMES, type StudioThemeId } from '../types/studio'
 import type { Shot, ShotStatus, Project as StudioProject } from '../types/studio'
+import { SHOT_TYPE_LABELS, CAMERA_ANGLE_LABELS, CAMERA_MOVE_LABELS, SHOT_STATUS_LABELS } from '../types/studio'
 import { SCENE_TEMPLATES_V2, getSceneTemplateMeta } from '../data/scene-templates-v2'
 import { CHARACTER_ARCHETYPES_V2, getArchetypeMeta } from '../data/character-archetypes-v2'
 import { SCENE_TEMPLATES, type SceneTemplate } from '../types/scene'
 import { CHARACTER_ARCHETYPES } from '../types/character'
 import ShotStream from '../components/project/ShotStream.vue'
 import { getApi } from '../api-bridge'
+// Editor theme is independent from global useTheme (dark/light/auto).
+// useTheme manages app-wide dark mode via .dark class on <html>.
+// STUDIO_THEMES manages the editor's visual accent theme locally.
 import type { ProjectDTO } from '@manhuaworks/api-client'
 
 const route = useRoute()
+const router = useRouter()
 const api = getApi()
 const project = ref<StudioProject>(makeMockProject(1))
 const selectedIds = ref<string[]>([])
@@ -27,15 +32,25 @@ const editingId = ref<string | null>(null)
 const loadingProject = ref(false)
 const projectError = ref<string | null>(null)
 
-const themeId = ref<StudioThemeId>(
-  (localStorage.getItem('studio_theme') as StudioThemeId) ?? 'dark-workshop',
+// Independent editor theme — separate from global useTheme (dark/light/auto).
+// Persisted under its own localStorage key; never reads/writes useTheme.
+const EDITOR_THEME_KEY = 'studio_editor_theme'
+const validEditorThemes: StudioThemeId[] = STUDIO_THEMES.map(t => t.id)
+const savedEditorTheme = localStorage.getItem(EDITOR_THEME_KEY) as StudioThemeId | null
+const editorTheme = ref<StudioThemeId>(
+  savedEditorTheme && validEditorThemes.includes(savedEditorTheme)
+    ? savedEditorTheme
+    : 'dark-workshop'
 )
 
-function applyTheme() {
-  document.documentElement.setAttribute('data-theme', themeId.value)
+function applyEditorTheme() {
+  document.documentElement.setAttribute('data-theme', editorTheme.value)
 }
 
-watch(themeId, t => { localStorage.setItem('studio_theme', t); applyTheme() }, { immediate: true })
+watch(editorTheme, t => {
+  localStorage.setItem(EDITOR_THEME_KEY, t)
+  applyEditorTheme()
+}, { immediate: true })
 
 function dtoToStudioProject(dto: ProjectDTO, fallbackName?: string): StudioProject {
   const mock = makeMockProject(1) as unknown as StudioProject
@@ -50,16 +65,29 @@ function dtoToStudioProject(dto: ProjectDTO, fallbackName?: string): StudioProje
   }
 }
 
-function shotDtoToStudio(s: { id: string; title?: string; description?: string; duration?: number; status?: string; index?: number; scene_template?: string }, p: StudioProject): Shot {
+function mapShotStatus(apiStatus: string): ShotStatus {
+  const map: Record<string, ShotStatus> = {
+    'draft': 'draft',
+    'wip': 'generating',
+    'review': 'ready',
+    'done': 'approved',
+    'archived': 'approved',
+  }
+  return map[apiStatus] ?? 'draft'
+}
+
+function mapShotDTO(dto: any): Shot {
   const mockShot = makeMockProject(1).shots[0]
   return {
     ...mockShot,
-    id: s.id, index: s.index ?? 0,
-    title: s.title ?? mockShot.title,
-    description: s.description ?? mockShot.description,
-    duration: s.duration ?? mockShot.duration,
-    status: (s.status as ShotStatus) ?? 'draft',
-    sceneTemplate: (s.scene_template ?? mockShot.sceneTemplate) as SceneTemplate,
+    id: dto.id,
+    index: dto.order_index ?? 0,
+    title: dto.name || `镜头 ${(dto.order_index ?? 0) + 1}`,
+    description: dto.description ?? mockShot.description,
+    duration: dto.duration_ms != null ? dto.duration_ms / 1000 : (dto.duration ?? mockShot.duration),
+    status: mapShotStatus(dto.status),
+    imageUrl: dto.thumbnail_url ?? null,
+    sceneTemplate: (dto.scene_template ?? mockShot.sceneTemplate) as SceneTemplate,
   }
 }
 
@@ -74,16 +102,57 @@ async function loadProject(): Promise<void> {
       project.value = dtoToStudioProject(dto)
       project.value.shots = []
       try {
-        const rawShots = await api.projects.listShots(id, { page: 1, pageSize: 100 }) as unknown as { data?: { items?: unknown[] }; items?: unknown[] }
-        const items = rawShots?.data?.items ?? rawShots?.items ?? []
-        project.value.shots = (items as Array<{ id: string; title?: string; description?: string; duration?: number; status?: string; index?: number; scene_template?: string }>).map(s => shotDtoToStudio(s, project.value))
-      } catch {}
+        const rawShots = await api.projects.listShots(id, { pageSize: 200 })
+        project.value.shots = (rawShots?.list ?? []).map(s => mapShotDTO(s))
+      } catch (shotErr) { console.warn('[ProjectEditor] shot load failed:', shotErr) }
     }
   } catch (e) { projectError.value = (e as Error).message }
   finally { loadingProject.value = false }
 }
 
-onMounted(() => { applyTheme(); void loadProject() })
+onMounted(() => { applyEditorTheme(); void loadProject() })
+
+// ── Debounced project name save ──
+let _nameSaveTimer: ReturnType<typeof setTimeout> | null = null
+watch(() => project.value.name, (newName, oldName) => {
+  if (!newName || newName === oldName) return
+  if (_nameSaveTimer) clearTimeout(_nameSaveTimer)
+  _nameSaveTimer = setTimeout(async () => {
+    const pid = projectId.value
+    if (!pid || pid === 'new' || pid.startsWith('m') || pid.startsWith('local-') || pid.startsWith('p-')) return
+    try {
+      await api.http.patch(`/projects/${encodeURIComponent(pid)}`, { name: newName })
+    } catch (e) {
+      console.warn('project name save failed:', e)
+    }
+  }, 3000)
+})
+
+// ── Shot persistence (fire-and-forget, graceful fallback) ──
+let _updateTimer: ReturnType<typeof setTimeout> | null = null
+async function persistShot(action: 'create' | 'update' | 'delete', shot: Shot) {
+  const pid = projectId.value
+  if (!pid || pid === 'new' || pid.startsWith('m') || pid.startsWith('local-')) return
+  try {
+    const payload = {
+      title: shot.title, description: shot.description,
+      duration: shot.duration, status: shot.status,
+      index: shot.index, scene_template: shot.sceneTemplate,
+      shot_type: shot.shotType, camera_angle: shot.cameraAngle,
+      camera_move: shot.cameraMove, dialogue: shot.dialogue,
+      narration: shot.narration, note: shot.note,
+    }
+    if (action === 'create') {
+      await api.http.post(`/projects/${encodeURIComponent(pid)}/shots`, payload)
+    } else if (action === 'update') {
+      await api.http.patch(`/projects/${encodeURIComponent(pid)}/shots/${encodeURIComponent(shot.id)}`, payload)
+    } else {
+      await api.http.delete(`/projects/${encodeURIComponent(pid)}/shots/${encodeURIComponent(shot.id)}`, {})
+    }
+  } catch (e) {
+    console.warn('shot persist failed:', e)
+  }
+}
 
 const editingShot = computed<Shot | null>(() => project.value.shots.find(s => s.id === editingId.value) ?? null)
 const hasShots = computed(() => project.value.shots.length > 0)
@@ -117,10 +186,12 @@ function onEdit(shotId: string) { editingId.value = shotId }
 function onDelete(shotId: string) {
   const idx = project.value.shots.findIndex(s => s.id === shotId)
   if (idx < 0) return
+  const deleted = project.value.shots[idx]
   project.value.shots.splice(idx, 1)
   project.value.shots.forEach((s, i) => (s.index = i + 1))
   selectedIds.value = selectedIds.value.filter(x => x !== shotId)
   if (editingId.value === shotId) editingId.value = null
+  persistShot('delete', deleted)
 }
 
 function onDuplicate(shotId: string) {
@@ -131,6 +202,7 @@ function onDuplicate(shotId: string) {
   project.value.shots.splice(idx + 1, 0, copy)
   project.value.shots.forEach((s, i) => (s.index = i + 1))
   editingId.value = copy.id
+  persistShot('create', copy)
 }
 
 function onLock(shotId: string) { const s = project.value.shots.find(x => x.id === shotId); if (s) s.locked = !s.locked }
@@ -146,20 +218,45 @@ function onReorder(fromId: string, toId: string) {
 }
 
 function onAddShot() {
-  const newShot: Shot = { id: `shot_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`, index: project.value.shots.length + 1, title: `新分镜 ${project.value.shots.length + 1}`, description: '点击编辑填写分镜描述…', characterArchetypes: ['youth'], sceneTemplate: 'cyberpunk', subSceneId: null, shotType: 'medium', cameraAngle: 'eye', cameraMove: 'static', dialogue: '', narration: '', duration: 4.0, status: 'draft', imageUrl: null, tags: [], note: '', weight: 1.0, locked: false, createdAt: Date.now(), updatedAt: Date.now() }
+  const newShot: Shot = { id: `shot_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`, index: project.value.shots.length + 1, title: `新镜头 ${project.value.shots.length + 1}`, description: '点击编辑填写镜头描述…', characterArchetypes: ['youth'], sceneTemplate: 'cyberpunk', subSceneId: null, shotType: 'medium', cameraAngle: 'eye', cameraMove: 'static', dialogue: '', narration: '', duration: 4.0, status: 'draft', imageUrl: null, tags: [], note: '', weight: 1.0, locked: false, createdAt: Date.now(), updatedAt: Date.now() }
   project.value.shots.push(newShot)
   editingId.value = newShot.id; selectedIds.value = [newShot.id]
+  persistShot('create', newShot)
 }
 
 function onUpdateShot(patch: Partial<Shot>) {
   if (!editingShot.value) return
   Object.assign(editingShot.value, patch, { updatedAt: Date.now() })
+  // Debounced persist — wait 800ms after last edit before saving
+  if (_updateTimer) clearTimeout(_updateTimer)
+  const shot = editingShot.value
+  _updateTimer = setTimeout(() => { persistShot('update', shot) }, 800)
 }
 
 function onRemoveArchetype(arch: string) { if (!editingShot.value) return; editingShot.value.characterArchetypes = editingShot.value.characterArchetypes.filter(a => a !== arch) }
 function onAddArchetype(arch: string) { if (!editingShot.value) return; if (!editingShot.value.characterArchetypes.includes(arch as never)) editingShot.value.characterArchetypes.push(arch as never) }
 
-const themeAccent = computed(() => STUDIO_THEMES.find(x => x.id === themeId.value)?.accent ?? '#f59e0b')
+const themeAccent = computed(() => STUDIO_THEMES.find(x => x.id === editorTheme.value)?.accent ?? '#f59e0b')
+
+const projectId = computed(() => (route.params?.id as string) ?? '')
+
+const isMockData = computed(() => {
+  const id = route.params.id as string
+  return !id || id === 'new' || id.startsWith('m') || id.startsWith('local-')
+})
+
+function goToSettings() {
+  router.push(`/project/${projectId.value}/settings`)
+}
+function goToShots() {
+  router.push(`/project/${projectId.value}/shots`)
+}
+function goToStoryboard() {
+  router.push(`/project/${projectId.value}/storyboard`)
+}
+function onOpenShot(shotId: string) {
+  router.push(`/project/${projectId.value}/shots/${shotId}`)
+}
 </script>
 
 <template>
@@ -177,23 +274,44 @@ const themeAccent = computed(() => STUDIO_THEMES.find(x => x.id === themeId.valu
           <div class="pe-header-meta">
             <span class="pe-badge" :class="`pe-badge--${project.status}`">{{ project.status }}</span>
             <span class="pe-meta-dot">·</span>
-            <span>{{ stats.total }} 个分镜</span>
+            <span>{{ stats.total }} 个镜头</span>
             <span class="pe-meta-dot">·</span>
             <span>总时长 {{ stats.totalDuration.toFixed(1) }}s</span>
           </div>
         </div>
       </div>
       <div class="pe-header-right">
-        <select v-model="themeId" class="pe-theme-select">
+        <button class="pe-btn" @click="goToSettings">⚙️ 项目设置</button>
+        <button class="pe-btn" @click="goToShots">🎞️ 镜头总览</button>
+        <button class="pe-btn" @click="goToStoryboard">🎼 配乐编辑</button>
+        <select v-model="editorTheme" class="pe-theme-select">
           <option v-for="t in STUDIO_THEMES" :key="t.id" :value="t.id">{{ t.icon }} {{ t.label }}</option>
         </select>
         <button class="pe-btn pe-btn--primary" @click="onAddShot">
-          + 新分镜
+          + 新镜头
         </button>
       </div>
     </header>
 
+    <!-- ===== Mock Data Banner ===== -->
+    <div v-if="isMockData" class="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+      📌 当前显示示例数据，连接到项目后将自动加载真实数据
+    </div>
+
+    <!-- ===== Loading State ===== -->
+    <div v-if="loadingProject" class="pe-loading">
+      <div class="pe-spinner"></div>
+      <span>加载项目中…</span>
+    </div>
+
+    <!-- ===== Error Banner ===== -->
+    <div v-else-if="projectError" class="pe-error">
+      <span>加载失败：{{ projectError }}</span>
+      <button class="pe-btn pe-btn--ghost pe-btn--sm" @click="loadProject()">重试</button>
+    </div>
+
     <!-- ===== Stats Bar ===== -->
+    <template v-if="!loadingProject && !projectError">
     <div class="pe-stats">
       <span
         v-for="(count, key) in stats.byStatus"
@@ -212,10 +330,10 @@ const themeAccent = computed(() => STUDIO_THEMES.find(x => x.id === themeId.valu
       <!-- 🆕 空状态 -->
       <div v-if="!hasShots" class="pe-empty">
         <div class="pe-empty-icon">📝</div>
-        <h2 class="pe-empty-title">项目还没有分镜</h2>
-        <p class="pe-empty-desc">点击上方「+ 新分镜」创建第一个分镜，或用工作流批量生成</p>
+        <h2 class="pe-empty-title">项目还没有镜头</h2>
+        <p class="pe-empty-desc">点击上方「+ 新镜头」创建第一个镜头，或用工作流批量生成</p>
         <div class="pe-empty-actions">
-          <button class="pe-btn pe-btn--primary" @click="onAddShot">+ 创建第一个分镜</button>
+          <button class="pe-btn pe-btn--primary" @click="onAddShot">+ 创建第一个镜头</button>
           <router-link to="/workflow" class="pe-btn pe-btn--ghost">🔀 去工作流生成</router-link>
         </div>
       </div>
@@ -241,9 +359,12 @@ const themeAccent = computed(() => STUDIO_THEMES.find(x => x.id === themeId.valu
           <div class="pe-editor-head">
             <h3 class="pe-editor-title">
               <span class="pe-editor-no">#{{ editingShot.index }}</span>
-              分镜编辑
+              动画编辑
             </h3>
-            <button class="pe-editor-close" @click="editingId = null">✕</button>
+            <div class="pe-editor-head-actions">
+              <button class="pe-editor-nav-btn" @click="onOpenShot(editingShot.id)" title="在独立编辑器中打开">🔗</button>
+              <button class="pe-editor-close" @click="editingId = null">✕</button>
+            </div>
           </div>
 
           <div class="pe-editor-body">
@@ -261,19 +382,19 @@ const themeAccent = computed(() => STUDIO_THEMES.find(x => x.id === themeId.valu
               <label class="pe-field pe-field--sm">
                 <span class="pe-field-label">景别</span>
                 <select :value="editingShot.shotType" class="pe-input pe-select" @change="(e) => onUpdateShot({ shotType: (e.target as HTMLSelectElement).value as Shot['shotType'] })">
-                  <option v-for="(_, k) in { 'extreme-wide': '1', wide: '2', medium: '3', 'close-up': '4', 'extreme-close': '5', 'over-shoulder': '6', pov: '7' }" :key="k" :value="k">{{ k }}</option>
+                  <option v-for="(label, k) in SHOT_TYPE_LABELS" :key="k" :value="k">{{ label }}</option>
                 </select>
               </label>
               <label class="pe-field pe-field--sm">
                 <span class="pe-field-label">视角</span>
                 <select :value="editingShot.cameraAngle" class="pe-input pe-select" @change="(e) => onUpdateShot({ cameraAngle: (e.target as HTMLSelectElement).value as Shot['cameraAngle'] })">
-                  <option v-for="(_, k) in { eye: '1', high: '2', low: '3', 'birds-eye': '4', 'worms-eye': '5', dutch: '6' }" :key="k" :value="k">{{ k }}</option>
+                  <option v-for="(label, k) in CAMERA_ANGLE_LABELS" :key="k" :value="k">{{ label }}</option>
                 </select>
               </label>
               <label class="pe-field pe-field--sm">
                 <span class="pe-field-label">运镜</span>
                 <select :value="editingShot.cameraMove" class="pe-input pe-select" @change="(e) => onUpdateShot({ cameraMove: (e.target as HTMLSelectElement).value as Shot['cameraMove'] })">
-                  <option v-for="(_, k) in { static: '1', push: '2', pull: '3', pan: '4', tilt: '5', track: '6', zoom: '7' }" :key="k" :value="k">{{ k }}</option>
+                  <option v-for="(label, k) in CAMERA_MOVE_LABELS" :key="k" :value="k">{{ label }}</option>
                 </select>
               </label>
             </div>
@@ -317,7 +438,7 @@ const themeAccent = computed(() => STUDIO_THEMES.find(x => x.id === themeId.valu
               <label class="pe-field pe-field--sm">
                 <span class="pe-field-label">状态</span>
                 <select :value="editingShot.status" class="pe-input pe-select" @change="(e) => onUpdateShot({ status: (e.target as HTMLSelectElement).value as ShotStatus })">
-                  <option v-for="s in statusList" :key="s" :value="s">{{ s }}</option>
+                  <option v-for="s in statusList" :key="s" :value="s">{{ SHOT_STATUS_LABELS[s] ?? s }}</option>
                 </select>
               </label>
             </div>
@@ -333,7 +454,7 @@ const themeAccent = computed(() => STUDIO_THEMES.find(x => x.id === themeId.valu
         <aside v-else class="pe-tips">
           <h3 class="pe-tips-title">💡 使用提示</h3>
           <ul class="pe-tips-list">
-            <li>点击分镜卡片进行编辑</li>
+            <li>点击镜头卡片进行编辑</li>
             <li>按住 Shift / Ctrl 批量选择</li>
             <li>拖拽卡片可调整顺序</li>
             <li>双击快速进入编辑模式</li>
@@ -347,6 +468,7 @@ const themeAccent = computed(() => STUDIO_THEMES.find(x => x.id === themeId.valu
         </aside>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
@@ -461,6 +583,25 @@ const themeAccent = computed(() => STUDIO_THEMES.find(x => x.id === themeId.valu
 .pe-btn--primary:hover { box-shadow: 0 4px 16px rgba(102,126,234,0.3); transform: translateY(-1px); }
 
 .pe-btn--ghost { background: transparent; border: 1px dashed var(--border, #1f2937); }
+.pe-btn--sm { padding: 4px 10px; font-size: 12px; }
+
+/* ===== Loading & Error ===== */
+.pe-loading {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 32px 24px; color: var(--text-secondary, #94a3b8); font-size: 14px;
+}
+.pe-spinner {
+  width: 20px; height: 20px; border: 2px solid var(--border, #1f2937);
+  border-top-color: var(--studio-accent, #f59e0b); border-radius: 50%;
+  animation: pe-spin 0.7s linear infinite;
+}
+@keyframes pe-spin { to { transform: rotate(360deg); } }
+.pe-error {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 24px; margin: 8px 24px 0; border-radius: 8px;
+  background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25);
+  color: #fca5a5; font-size: 13px;
+}
 
 /* ===== Stats ===== */
 .pe-stats {
@@ -555,6 +696,21 @@ const themeAccent = computed(() => STUDIO_THEMES.find(x => x.id === themeId.valu
 }
 
 .pe-editor-close:hover { color: #ef4444; }
+
+.pe-editor-head-actions { display: flex; align-items: center; gap: 4px; }
+
+.pe-editor-nav-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #94a3b8);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 150ms;
+}
+
+.pe-editor-nav-btn:hover { color: var(--accent, #818cf8); background: var(--bg-tertiary, #1f2937); }
 
 .pe-editor-body {
   flex: 1;

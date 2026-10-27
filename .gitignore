@@ -39,3 +39,32 @@ smoke.json
 # Temp
 *.tmp
 *.swp
+
+# === Secrets / tokens (do NOT commit) ===
+docs/testing/admin_token.txt
+docs/testing/inject_token.js
+services/user-service/gen_admin_real.js
+services/ai-router/gen-token.cjs
+services/ai-router/gen-token.mjs
+
+# WorkBuddy workspace
+.workbuddy/
+
+# Backups
+.bak-*/
+*.bak
+*.bak.*
+
+# Temp / scratch / diag artifacts
+_dev.log
+npm-fail
+nul
+diag-shot.png
+e2e-screenshots/
+.e2e_result.json
+_check_corrupt.py
+_fix_pv.py
+
+# AI router runtime data & test drafts
+services/ai-router/data/
+services/ai-router/test-draft.json

@@ -5,6 +5,12 @@
 /* dark - default */
 .theme-dark,
 :root[data-theme="dark"] {
+  --brand-cyan: #00BFA5;
+  --brand-cyan-dark: #0D9488;
+  --brand-cyan-light: #5EEAD4;
+  --brand-purple: #7C3AED;
+  --brand-purple-dark: #5B21B6;
+  --brand-purple-light: #A78BFA;
   --primary: #ff7a45;
   --primary-hover: #ff8e5e;
   --primary-active: #d35a2a;
@@ -60,6 +66,12 @@
 /* light */
 .theme-light,
 :root[data-theme="light"] {
+  --brand-cyan: #00BFA5;
+  --brand-cyan-dark: #0D9488;
+  --brand-cyan-light: #5EEAD4;
+  --brand-purple: #7C3AED;
+  --brand-purple-dark: #5B21B6;
+  --brand-purple-light: #A78BFA;
   --primary: #2563eb;
   --primary-hover: #3b76f0;
   --primary-active: #1d4ed8;
@@ -115,6 +127,12 @@
 /* sepia (国风墨韵) */
 .theme-sepia,
 :root[data-theme="sepia"] {
+  --brand-cyan: #00BFA5;
+  --brand-cyan-dark: #0D9488;
+  --brand-cyan-light: #5EEAD4;
+  --brand-purple: #7C3AED;
+  --brand-purple-dark: #5B21B6;
+  --brand-purple-light: #A78BFA;
   --primary: #a8302b;
   --primary-hover: #bf3a35;
   --primary-active: #8b1e1a;
@@ -170,6 +188,12 @@
 /* midnight (暖夜橙) */
 .theme-midnight,
 :root[data-theme="midnight"] {
+  --brand-cyan: #00BFA5;
+  --brand-cyan-dark: #0D9488;
+  --brand-cyan-light: #5EEAD4;
+  --brand-purple: #7C3AED;
+  --brand-purple-dark: #5B21B6;
+  --brand-purple-light: #A78BFA;
   --primary: #ff6b1a;
   --primary-hover: #ff7d35;
   --primary-active: #cc4f0d;
@@ -225,6 +249,12 @@
 /* neon (霓虹赛博) */
 .theme-neon,
 :root[data-theme="neon"] {
+  --brand-cyan: #00BFA5;
+  --brand-cyan-dark: #0D9488;
+  --brand-cyan-light: #5EEAD4;
+  --brand-purple: #7C3AED;
+  --brand-purple-dark: #5B21B6;
+  --brand-purple-light: #A78BFA;
   --primary: #ff00aa;
   --primary-hover: #ff33bb;
   --primary-active: #cc0088;
@@ -279,6 +309,12 @@
 
 /* default: dark */
 :root {
+  --brand-cyan: #00BFA5;
+  --brand-cyan-dark: #0D9488;
+  --brand-cyan-light: #5EEAD4;
+  --brand-purple: #7C3AED;
+  --brand-purple-dark: #5B21B6;
+  --brand-purple-light: #A78BFA;
   --primary: #ff7a45;
   --bg-primary: #0e0f12;
   --text-primary: #e8eaed;

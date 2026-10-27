@@ -1,6 +1,6 @@
 /**
  * user-portal · api bridge — 4 客户端单例
- * ManhuaWorks · L2 task 8
+ * 千机工坊 · L2 task 8
  */
 import { createApiClient, ApiError, tokenStore } from '@manhuaworks/api-client'
 import type { ApiBundle } from '@manhuaworks/api-client'

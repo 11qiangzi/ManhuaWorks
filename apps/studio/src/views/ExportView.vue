@@ -1,9 +1,9 @@
 <script setup lang="ts">
 /**
- * ExportView.vue — 导出中心主视图 (L3.G 林染: 4 类 × 13 格式)
+ * ExportView.vue — 导出中心主视图 (L3.G 林染: 5 大类 × 13+ 格式)
  *
  * L2: 5 格式 + 平台发布
- * L3.G: 4 大类 × 13 格式，历史记录持久化，深色渐变蓝紫
+ * L3.G: 5 大类 × 13+ 格式，历史记录持久化，深色渐变蓝紫
  *
  * 数据流：
  *   1. useExport(projectId) → formats, categories, records
@@ -11,17 +11,36 @@
  *   3. 模拟进度（前端推进）→ ready / failed
  *   4. 历史记录 localStorage 持久化（最近 20 条）
  */
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useToast } from '@manhuaworks/ui'
+import { useProjectStore } from '../stores/project'
 import {
   useExport,
   type ExportFormat,
   type ExportCategory,
   type ExportRecord,
   type ExportStatus,
+  type VideoExportOptions,
+  type PlatformPresetId,
+  type ResolutionId,
+  PLATFORM_PRESETS,
+  RESOLUTION_OPTIONS,
+  createDefaultVideoOptions,
 } from '../composables/export'
 
 // ---------- 默认 project ----------
-const projectId = ref('proj_default_001')
+const route = useRoute()
+const projectStore = useProjectStore()
+const projectId = computed(() =>
+  projectStore.current?.id ?? (route.params.projectId as string) ?? 'proj_default_001',
+)
+const router = useRouter()
+const toast = useToast()
+
+function goToExportSettings() {
+  router.push('/export/settings')
+}
 
 // ---------- composable ----------
 const {
@@ -33,14 +52,47 @@ const {
   activeCategory,
   filteredFormats,
   formatCountByCategory,
+  videoOptions,
+  batchQueue,
   triggerExport,
   cancelExport,
   retryExport,
   removeRecord,
   clearCompleted,
+  addToBatch,
+  removeFromBatch,
+  clearBatch,
+  triggerBatchExport,
+  cleanupTimers,
 } = useExport(projectId)
 
-const activeCategoryChips: Array<ExportCategory | 'all'> = ['all', 'episode', 'character', 'project', 'asset']
+const activeCategoryChips: Array<ExportCategory | 'all'> = ['all', 'episode', 'character', 'project', 'asset', 'video']
+
+// ---------- 视频选项面板 ----------
+const showVideoPanel = ref(false)
+const showBatchPanel = ref(false)
+const batchRunning = ref(false)
+
+// ---------- 🎵 音频导出选项 ----------
+const showAudioPanel = ref(false)
+const audioExportOptions = ref({
+  includeBGM: true,
+  includeSFX: true,
+  includeVoiceover: true,
+  exportSeparateTrack: false,
+  separateTrackFormat: 'mp3' as 'mp3' | 'flac' | 'wav',
+  syncToMaterialLib: false,
+  audioQuality: 'high' as 'standard' | 'high' | 'lossless',
+})
+
+const selectedPlatform = computed({
+  get: () => videoOptions.value.platform,
+  set: (v: PlatformPresetId) => { videoOptions.value.platform = v },
+})
+const selectedResolution = computed({
+  get: () => videoOptions.value.resolution,
+  set: (v: ResolutionId) => { videoOptions.value.resolution = v },
+})
 
 // ---------- 主题 ----------
 const themeAccent = '#6366f1'
@@ -72,10 +124,35 @@ const totalSize = computed(() => {
 // ---------- 操作 ----------
 async function onExport(fmt: ExportFormat) {
   try {
-    await triggerExport(fmt.id)
+    const isVideo = ['video-mp4', 'video-mov', 'video-gif', 'video-vertical'].includes(fmt.id)
+    await triggerExport(fmt.id, isVideo ? videoOptions.value : undefined)
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('Export failed', e)
+    const msg = e instanceof Error ? e.message : '导出失败，请重试'
+    error.value = msg
+    toast.error(`导出失败: ${msg}`)
+  }
+}
+
+function onAddToBatch(fmt: ExportFormat) {
+  addToBatch(fmt.id, fmt.name)
+  showBatchPanel.value = true
+  toast.info(`已加入批量队列: ${fmt.name}`)
+}
+
+async function onBatchExport() {
+  if (batchQueue.length === 0 || batchRunning.value) return
+  batchRunning.value = true
+  try {
+    const ids = await triggerBatchExport()
+    toast.success(`批量导出已启动: ${ids.length} 个任务`)
+    showBatchPanel.value = false
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : '批量导出失败'
+    toast.error(`批量导出失败: ${msg}`)
+  } finally {
+    batchRunning.value = false
   }
 }
 
@@ -133,8 +210,16 @@ function timeAgo(ts: number): string {
 
 function downloadRecord(r: ExportRecord) {
   if (!r.outputUrl) return
-  // 模拟下载 — 实际后端会返回 blob
-  alert(`下载: ${r.formatName}\nURL: ${r.outputUrl}\n(本地 mock 不会真正下载)`)
+  if (r.outputUrl.startsWith('blob:manhuaworks')) {
+    toast.info('模拟导出暂不支持下载')
+    return
+  }
+  if (r.outputUrl.startsWith('blob:') || r.outputUrl.startsWith('http')) {
+    window.open(r.outputUrl, '_blank')
+  } else {
+    // 模拟下载 — mock URL 不会真正下载
+    toast.info(`下载: ${r.formatName} — ${r.outputUrl || '(本地 mock 不会真正下载)'}`)
+  }
 }
 
 // SVG 图标 map (按 ext 分类)
@@ -148,11 +233,16 @@ function extIcon(ext: string): string {
     png: 'M21 19V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5z',
     zip: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zm-1 7V3.5L18.5 9zM12 18v-2h-1v-2h1v-1h-1v-2h3v2h-1v1h1v2h-1v2z',
     sqlite: 'M12 3a9 9 0 109 9 9 9 0 00-9-9zm0 4a3 3 0 11-3 3 3 3 0 013-3z',
+    mp4: 'M4 4h16v16H4zm6 4v8l6-4z',
+    mov: 'M4 4h16v16H4zm6 4v8l6-4z',
+    gif: 'M4 4h16v16H4zm3 5h2v6H7zm4 0h2v4h2v2h-4zm6 0h2v6h-2z',
   }[ext] ?? 'M3 3h18v18H3z'
 }
 
-const _keepRef = onUnmounted // 防止 lint 警告
-void _keepRef
+onUnmounted(() => {
+  cleanupTimers?.()
+  document.documentElement.style.removeProperty('--studio-accent')
+})
 </script>
 
 <template>
@@ -165,7 +255,7 @@ void _keepRef
         </div>
         <div class="flex flex-col">
           <h1 class="text-sm font-semibold tracking-wide text-white">导出中心</h1>
-          <p class="text-[10px] text-slate-400">4 大类 · {{ formats.length }} 格式 · 多场景导出</p>
+          <p class="text-[10px] text-slate-400">5 大类 · {{ formats.length }} 格式 · 多场景导出</p>
         </div>
       </div>
       <div class="flex items-center gap-3 text-[11px] text-slate-300">
@@ -180,6 +270,24 @@ void _keepRef
         </div>
         <span class="text-slate-600">|</span>
         <span>总计 <strong class="font-mono">{{ formatBytes(totalSize) }}</strong></span>
+        <button
+          v-if="batchQueue.length > 0"
+          class="rounded-lg border border-violet-500/40 bg-violet-500/15 px-3 py-1.5 text-[11px] font-medium text-violet-200 transition hover:bg-violet-500/25"
+          @click="showBatchPanel = !showBatchPanel"
+        >📋 批量队列 ({{ batchQueue.length }})</button>
+        <button
+          v-if="activeCategory === 'video' || activeCategory === 'all'"
+          class="rounded-lg border border-white/10 bg-slate-800 px-3 py-1.5 text-[11px] text-slate-300 transition hover:border-rose-500/50 hover:bg-slate-700"
+          @click="showVideoPanel = !showVideoPanel"
+        >🎥 {{ showVideoPanel ? '收起' : '视频选项' }}</button>
+        <button
+          class="rounded-lg border border-white/10 bg-slate-800 px-3 py-1.5 text-[11px] text-slate-300 transition hover:border-amber-500/50 hover:bg-slate-700"
+          @click="showAudioPanel = !showAudioPanel"
+        >🎵 {{ showAudioPanel ? '收起' : '音频选项' }}</button>
+        <button
+          class="rounded-lg border border-white/10 bg-slate-800 px-3 py-1.5 text-[11px] text-slate-300 transition hover:border-indigo-500/50 hover:bg-slate-700"
+          @click="goToExportSettings"
+        >⚙️ 导出设置</button>
       </div>
     </header>
 
@@ -211,6 +319,243 @@ void _keepRef
         </span>
       </button>
     </div>
+
+    <!-- 视频导出选项面板 -->
+    <Transition name="panel">
+      <div
+        v-if="showVideoPanel"
+        class="flex-shrink-0 border-b border-rose-500/20 bg-gradient-to-r from-slate-900/80 via-slate-900/60 to-rose-950/30 px-4 py-3"
+      >
+        <div class="mb-2 flex items-center justify-between">
+          <h3 class="text-[12px] font-semibold text-rose-200">🎥 视频导出选项</h3>
+          <span class="text-[10px] text-slate-500">选择平台预设、分辨率和音频配置</span>
+        </div>
+        <div class="grid grid-cols-1 gap-3 lg:grid-cols-3">
+          <!-- 平台适配 -->
+          <div class="flex flex-col gap-1.5">
+            <span class="text-[10px] font-medium text-slate-400">平台适配</span>
+            <div class="flex flex-wrap gap-1.5">
+              <button
+                v-for="p in PLATFORM_PRESETS.filter(x => x.id !== 'custom')"
+                :key="p.id"
+                type="button"
+                class="flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] transition-all"
+                :class="selectedPlatform === p.id
+                  ? 'border-rose-500/50 bg-rose-500/20 text-rose-200'
+                  : 'border-white/5 bg-slate-800/50 text-slate-400 hover:border-white/10'"
+                @click="selectedPlatform = p.id"
+              >
+                <span>{{ p.icon }}</span>
+                <span>{{ p.name }}</span>
+                <span class="font-mono text-[9px] opacity-60">{{ p.aspectRatio }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 分辨率 -->
+          <div class="flex flex-col gap-1.5">
+            <span class="text-[10px] font-medium text-slate-400">分辨率</span>
+            <div class="flex flex-wrap gap-1.5">
+              <button
+                v-for="r in RESOLUTION_OPTIONS"
+                :key="r.id"
+                type="button"
+                class="flex flex-col items-start rounded-md border px-2.5 py-1.5 text-[10px] transition-all"
+                :class="selectedResolution === r.id
+                  ? 'border-rose-500/50 bg-rose-500/20 text-rose-200'
+                  : 'border-white/5 bg-slate-800/50 text-slate-400 hover:border-white/10'"
+                @click="selectedResolution = r.id"
+              >
+                <span class="font-semibold">{{ r.name }}</span>
+                <span class="text-[9px] opacity-60">{{ r.description }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 音频选项 -->
+          <div class="flex flex-col gap-1.5">
+            <span class="text-[10px] font-medium text-slate-400">音频选项</span>
+            <div class="flex flex-col gap-1.5 rounded-md border border-white/5 bg-slate-800/30 p-2">
+              <label class="flex cursor-pointer items-center gap-2 text-[10px] text-slate-300">
+                <input
+                  v-model="videoOptions.audio.includeBGM"
+                  type="checkbox"
+                  class="h-3 w-3 rounded border-white/20 bg-slate-700 accent-rose-500"
+                />
+                <span>包含背景音乐 (BGM)</span>
+              </label>
+              <label class="flex cursor-pointer items-center gap-2 text-[10px] text-slate-300">
+                <input
+                  v-model="videoOptions.audio.includeSFX"
+                  type="checkbox"
+                  class="h-3 w-3 rounded border-white/20 bg-slate-700 accent-rose-500"
+                />
+                <span>包含音效 (SFX)</span>
+              </label>
+              <div class="flex items-center gap-2 text-[10px] text-slate-300">
+                <span>音质:</span>
+                <select
+                  v-model="videoOptions.audio.audioQuality"
+                  class="rounded border border-white/10 bg-slate-800 px-1.5 py-0.5 text-[10px] text-white outline-none"
+                >
+                  <option value="low">低 (128kbps)</option>
+                  <option value="medium">中 (256kbps)</option>
+                  <option value="high">高 (320kbps)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- 🎵 音频导出选项面板 -->
+    <Transition name="panel">
+      <div
+        v-if="showAudioPanel"
+        class="flex-shrink-0 border-b border-amber-500/20 bg-gradient-to-r from-slate-900/80 via-slate-900/60 to-amber-950/20 px-4 py-3"
+      >
+        <div class="mb-2 flex items-center justify-between">
+          <h3 class="text-[12px] font-semibold text-amber-200">🎵 音频导出选项</h3>
+          <span class="text-[10px] text-slate-500">配置音频轨道导出参数</span>
+        </div>
+        <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <!-- 左列：音频轨道包含选项 -->
+          <div class="flex flex-col gap-2">
+            <span class="text-[10px] font-medium text-slate-400">包含音频轨道</span>
+            <div class="flex flex-col gap-1.5 rounded-md border border-white/5 bg-slate-800/30 p-2.5">
+              <label class="flex cursor-pointer items-center gap-2 text-[11px] text-slate-300">
+                <input
+                  v-model="audioExportOptions.includeBGM"
+                  type="checkbox"
+                  class="h-3.5 w-3.5 rounded border-white/20 bg-slate-700 accent-amber-500"
+                />
+                <span>包含BGM</span>
+                <span class="ml-auto rounded bg-indigo-500/15 px-1.5 py-0.5 text-[9px] text-indigo-300">背景音乐</span>
+              </label>
+              <label class="flex cursor-pointer items-center gap-2 text-[11px] text-slate-300">
+                <input
+                  v-model="audioExportOptions.includeSFX"
+                  type="checkbox"
+                  class="h-3.5 w-3.5 rounded border-white/20 bg-slate-700 accent-amber-500"
+                />
+                <span>包含音效</span>
+                <span class="ml-auto rounded bg-amber-500/15 px-1.5 py-0.5 text-[9px] text-amber-300">SFX</span>
+              </label>
+              <label class="flex cursor-pointer items-center gap-2 text-[11px] text-slate-300">
+                <input
+                  v-model="audioExportOptions.includeVoiceover"
+                  type="checkbox"
+                  class="h-3.5 w-3.5 rounded border-white/20 bg-slate-700 accent-amber-500"
+                />
+                <span>包含配音</span>
+                <span class="ml-auto rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] text-emerald-300">VO</span>
+              </label>
+
+              <div class="mt-1 border-t border-white/5 pt-2">
+                <label class="flex cursor-pointer items-center gap-2 text-[11px] text-slate-300">
+                  <input
+                    v-model="audioExportOptions.exportSeparateTrack"
+                    type="checkbox"
+                    class="h-3.5 w-3.5 rounded border-white/20 bg-slate-700 accent-amber-500"
+                  />
+                  <span>导出单独音频轨</span>
+                  <select
+                    v-if="audioExportOptions.exportSeparateTrack"
+                    v-model="audioExportOptions.separateTrackFormat"
+                    class="ml-auto rounded border border-white/10 bg-slate-800 px-2 py-0.5 text-[10px] text-white outline-none"
+                  >
+                    <option value="mp3">MP3</option>
+                    <option value="flac">FLAC</option>
+                    <option value="wav">WAV</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右列：音质与同步 -->
+          <div class="flex flex-col gap-2">
+            <span class="text-[10px] font-medium text-slate-400">音质与同步</span>
+            <div class="flex flex-col gap-2.5 rounded-md border border-white/5 bg-slate-800/30 p-2.5">
+              <!-- 音频质量 -->
+              <div class="flex flex-col gap-1.5">
+                <span class="text-[10px] font-medium text-slate-400">音频质量</span>
+                <div class="flex gap-1.5">
+                  <button
+                    v-for="q in [
+                      { id: 'standard', label: '标准', detail: '128kbps', icon: '🔈' },
+                      { id: 'high', label: '高', detail: '320kbps', icon: '🔉' },
+                      { id: 'lossless', label: '无损', detail: 'FLAC/WAV', icon: '🔊' },
+                    ]"
+                    :key="q.id"
+                    type="button"
+                    class="flex flex-1 flex-col items-center gap-0.5 rounded-md border px-2 py-2 text-[10px] transition-all"
+                    :class="audioExportOptions.audioQuality === q.id
+                      ? 'border-amber-500/50 bg-amber-500/20 text-amber-200'
+                      : 'border-white/5 bg-slate-800/50 text-slate-400 hover:border-white/10'"
+                    @click="audioExportOptions.audioQuality = q.id as any"
+                  >
+                    <span class="text-[14px]">{{ q.icon }}</span>
+                    <span class="font-semibold">{{ q.label }}</span>
+                    <span class="text-[9px] opacity-60">{{ q.detail }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 同步导出 -->
+              <label class="flex cursor-pointer items-center gap-2 text-[11px] text-slate-300">
+                <input
+                  v-model="audioExportOptions.syncToMaterialLib"
+                  type="checkbox"
+                  class="h-3.5 w-3.5 rounded border-white/20 bg-slate-700 accent-amber-500"
+                />
+                <span>配乐文件同步导出至素材库</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- 批量导出队列面板 -->
+    <Transition name="panel">
+      <div
+        v-if="showBatchPanel && batchQueue.length > 0"
+        class="flex-shrink-0 border-b border-violet-500/20 bg-gradient-to-r from-slate-900/80 via-slate-900/60 to-violet-950/30 px-4 py-3"
+      >
+        <div class="mb-2 flex items-center justify-between">
+          <h3 class="text-[12px] font-semibold text-violet-200">📋 批量导出队列 ({{ batchQueue.length }})</h3>
+          <div class="flex items-center gap-2">
+            <button
+              class="rounded border border-white/10 bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300 transition hover:bg-slate-700"
+              @click="clearBatch"
+            >清空队列</button>
+            <button
+              class="flex items-center gap-1 rounded-md bg-gradient-to-r from-violet-500 to-indigo-600 px-3 py-1 text-[10px] font-semibold text-white shadow-sm transition hover:shadow-violet-500/50 disabled:opacity-50"
+              :disabled="batchRunning"
+              @click="onBatchExport"
+            >
+              <span v-if="batchRunning" class="inline-block h-2.5 w-2.5 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
+              <span>{{ batchRunning ? '导出中…' : '🚀 批量导出' }}</span>
+            </button>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <div
+            v-for="(item, idx) in batchQueue"
+            :key="idx"
+            class="flex items-center gap-1.5 rounded-md border border-violet-500/20 bg-violet-500/10 px-2 py-1 text-[10px] text-violet-200"
+          >
+            <span class="font-medium">{{ item.label }}</span>
+            <button
+              class="ml-1 text-violet-400/60 transition hover:text-rose-300"
+              @click="removeFromBatch(idx)"
+            >✕</button>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- 主体：左导出格式 / 右历史记录 -->
     <div class="flex flex-1 overflow-hidden">
@@ -256,14 +601,25 @@ void _keepRef
                 <span>📦</span>
                 <span>{{ fmt.estimatedSize }}</span>
               </span>
-              <button
-                class="flex items-center gap-1 rounded-md bg-gradient-to-r from-indigo-500 to-violet-600 px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm transition hover:shadow-indigo-500/50 disabled:opacity-50"
-                :disabled="loading"
-                @click="onExport(fmt)"
-              >
-                <span>📤</span>
-                <span>导出</span>
-              </button>
+              <div class="flex items-center gap-1.5">
+                <button
+                  class="flex items-center gap-1 rounded-md border border-white/10 bg-slate-800/80 px-2 py-1 text-[10px] text-slate-300 transition hover:border-violet-500/30 hover:bg-slate-700"
+                  :disabled="loading"
+                  title="加入批量队列"
+                  @click="onAddToBatch(fmt)"
+                >
+                  <span>📋</span>
+                  <span>批量</span>
+                </button>
+                <button
+                  class="flex items-center gap-1 rounded-md bg-gradient-to-r from-indigo-500 to-violet-600 px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm transition hover:shadow-indigo-500/50 disabled:opacity-50"
+                  :disabled="loading"
+                  @click="onExport(fmt)"
+                >
+                  <span>📤</span>
+                  <span>导出</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -381,5 +737,24 @@ void _keepRef
 .export-view {
   min-height: 0;
   flex: 1;
+}
+
+.panel-enter-active,
+.panel-leave-active {
+  transition: all 0.2s ease;
+}
+.panel-enter-from,
+.panel-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+.panel-enter-to,
+.panel-leave-from {
+  opacity: 1;
+  max-height: 300px;
+  overflow: hidden;
 }
 </style>

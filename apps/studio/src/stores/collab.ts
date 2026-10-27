@@ -1,18 +1,19 @@
 /**
  * studio · collab Pinia store — 接 collab-service（HTTP + WebSocket）
- * ManhuaWorks · L2 task 8
+ * 千机工坊 · L2 task 8
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { ApiError } from '@manhuaworks/api-client'
 import type {
-  CollabEvent, CollabEventType, CollabSocketState, ShotDTO,
+  CollabEnvelope, CollabMessageType, CollabHandler, ShotDTO,
   CommentDTO, NotificationDTO, PresenceDTO, ActivityDTO,
-  CreateCommentReq,
+  CreateCommentReq, CommentPayload, JoinPayload,
 } from '@manhuaworks/api-client'
 import { getApi } from '../api-bridge'
+import { useAuthStore } from './auth'
 
-export type CollabEventHandler = (evt: CollabEvent) => void
+export type CollabEventHandler = (env: CollabEnvelope) => void
 
 export const useCollabStore = defineStore('collab', () => {
   const api = getApi()
@@ -26,7 +27,7 @@ export const useCollabStore = defineStore('collab', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  const socketState = ref<CollabSocketState>('closed')
+  const socketState = ref<'idle' | 'connecting' | 'open' | 'closing' | 'closed'>('closed')
   const currentProjectId = ref<string | null>(null)
 
   let socket: ReturnType<typeof api.collab.socket> | null = null
@@ -34,9 +35,12 @@ export const useCollabStore = defineStore('collab', () => {
 
   /* ---------------- Computed ---------------- */
   const isConnected = computed(() => socketState.value === 'open')
-  const myPresence = computed<PresenceDTO | null>(() =>
-    presence.value.find(() => true) ?? null,
-  )
+  const myPresence = computed<PresenceDTO | null>(() => {
+    const auth = useAuthStore()
+    const uid = auth.user?.id
+    if (!uid) return null
+    return presence.value.find(p => p.user_id === uid) ?? null
+  })
 
   /* ---------------- Comments ---------------- */
 
@@ -115,8 +119,8 @@ export const useCollabStore = defineStore('collab', () => {
     presence.value = await api.collab.listProjectPresence(projectId)
   }
 
-  async function join(projectId: string, currentTarget?: string): Promise<PresenceDTO> {
-    const p = await api.collab.join(projectId, currentTarget)
+  async function join(projectId: string, target?: { target_type: string; target_id: string }): Promise<PresenceDTO> {
+    const p = await api.collab.join(projectId, target as any)
     const idx = presence.value.findIndex((x) => x.user_id === p.user_id)
     if (idx >= 0) presence.value[idx] = p
     else presence.value.push(p)
@@ -125,7 +129,12 @@ export const useCollabStore = defineStore('collab', () => {
 
   async function leave(projectId: string): Promise<void> {
     await api.collab.leave(projectId)
-    presence.value = presence.value.filter((x) => x.project_id !== projectId)
+    // Only remove the current user's presence, keep others
+    const auth = useAuthStore()
+    const uid = auth.user?.id
+    if (uid) {
+      presence.value = presence.value.filter(p => p.user_id !== uid)
+    }
   }
 
   /* ---------------- Activities ---------------- */
@@ -144,18 +153,53 @@ export const useCollabStore = defineStore('collab', () => {
     currentProjectId.value = projectId
     socket = api.collab.socket(projectId)
 
-    socket.onState((s) => { socketState.value = s })
+    // 监听 socket 状态变化（轮询检查 state 属性）
+    const stateInterval = setInterval(() => {
+      if (socket) {
+        socketState.value = socket.state
+      } else {
+        clearInterval(stateInterval)
+      }
+    }, 500)
 
-    socket.onEvent((evt) => {
-      // 默认处理：把入站事件合并到 store
-      onSocketEvent(evt)
+    // 监听评论事件
+    socket.on<CommentPayload>('comment', (env) => {
+      const { comment, verb } = env.data
+      if (verb === 'create' && comment && !comments.value.find(x => x.id === comment.id)) {
+        comments.value.push(comment)
+      } else if (verb === 'resolve' || verb === 'reopen') {
+        const idx = comments.value.findIndex(x => x.id === comment.id)
+        if (idx >= 0) comments.value[idx] = { ...comments.value[idx]!, ...comment }
+      } else if (verb === 'delete') {
+        comments.value = comments.value.filter(x => x.id !== comment.id)
+      }
       // 转发给应用层
       for (const fn of eventHandlers) {
-        try { fn(evt) } catch { /* noop */ }
+        try { fn(env) } catch { /* noop */ }
       }
     })
 
-    socket.connect()
+    // 监听加入/离开事件
+    socket.on<JoinPayload>('join', (env) => {
+      const p = env.data.presence
+      if (p && p.user_id) {
+        const idx = presence.value.findIndex(x => x.user_id === p.user_id)
+        if (idx >= 0) presence.value[idx] = p
+        else presence.value.push(p)
+      }
+      for (const fn of eventHandlers) {
+        try { fn(env) } catch { /* noop */ }
+      }
+    })
+
+    // 其他事件类型也转发给应用层
+    for (const msgType of ['typing', 'cursor', 'edit'] as CollabMessageType[]) {
+      socket.on(msgType, (env) => {
+        for (const fn of eventHandlers) {
+          try { fn(env) } catch { /* noop */ }
+        }
+      })
+    }
   }
 
   function disconnect(): void {
@@ -165,11 +209,12 @@ export const useCollabStore = defineStore('collab', () => {
     }
     currentProjectId.value = null
     socketState.value = 'closed'
+    presence.value = []
   }
 
-  function send(type: CollabEventType, data: unknown, extra: Partial<CollabEvent> = {}): void {
+  function send(type: CollabMessageType, data: unknown): void {
     if (!socket) return
-    socket.send(type, data, extra)
+    socket.send(type, data)
   }
 
   function onEvent(fn: CollabEventHandler): () => void {
@@ -177,60 +222,25 @@ export const useCollabStore = defineStore('collab', () => {
     return () => eventHandlers.delete(fn)
   }
 
-  /** 入站事件合并到本地状态 */
-  function onSocketEvent(evt: CollabEvent): void {
-    switch (evt.type) {
-      case 'comment.add': {
-        const c = evt.data as CommentDTO
-        if (c && c.id && !comments.value.find((x) => x.id === c.id)) {
-          comments.value.push(c)
+  /** 入站事件合并到本地状态（兼容旧调用） */
+  function onSocketEvent(env: CollabEnvelope): void {
+    switch (env.type) {
+      case 'comment': {
+        const { comment, verb } = env.data as CommentPayload
+        if (verb === 'create' && comment && !comments.value.find((x) => x.id === comment.id)) {
+          comments.value.push(comment)
+        } else if (verb === 'resolve' || verb === 'reopen') {
+          const idx = comments.value.findIndex((x) => x.id === comment.id)
+          if (idx >= 0) comments.value[idx] = { ...comments.value[idx]!, ...comment }
         }
         break
       }
-      case 'comment.resolve': {
-        const c = evt.data as CommentDTO
-        const idx = comments.value.findIndex((x) => x.id === c.id)
-        if (idx >= 0) comments.value[idx] = { ...comments.value[idx]!, ...c }
-        break
-      }
-      case 'presence.join': {
-        const p = evt.data as PresenceDTO
+      case 'join': {
+        const p = (env.data as JoinPayload).presence
         if (p && p.user_id) {
           const idx = presence.value.findIndex((x) => x.user_id === p.user_id)
           if (idx >= 0) presence.value[idx] = p
           else presence.value.push(p)
-        }
-        break
-      }
-      case 'presence.leave': {
-        const p = evt.data as PresenceDTO
-        if (p && p.user_id) {
-          presence.value = presence.value.filter((x) => x.user_id !== p.user_id)
-        }
-        break
-      }
-      case 'presence.update': {
-        const p = evt.data as PresenceDTO
-        if (p && p.user_id) {
-          const idx = presence.value.findIndex((x) => x.user_id === p.user_id)
-          if (idx >= 0) presence.value[idx] = p
-        }
-        break
-      }
-      case 'notification': {
-        const n = evt.data as NotificationDTO
-        if (n && n.id) {
-          notifications.value.unshift(n)
-          if (!n.read) unreadCount.value += 1
-        }
-        break
-      }
-      case 'shot.update': {
-        // 推给 project store（如果当前 store 持有了 shot）
-        const s = evt.data as ShotDTO
-        if (s && s.id) {
-          // 不直接改另一个 store，由应用层负责刷新
-          // 这里只 emit，不写入
         }
         break
       }
@@ -241,11 +251,11 @@ export const useCollabStore = defineStore('collab', () => {
 
   return {
     comments, notifications, unreadCount, presence, activities,
-    loading, error, socketState, currentProjectId, isConnected,
+    loading, error, socketState, currentProjectId, isConnected, myPresence,
     loadComments, addComment, resolveComment, reopenComment, deleteComment,
     loadNotifications, refreshUnreadCount, markRead, markAllRead, archive,
     loadPresence, join, leave,
     loadActivities,
-    connect, disconnect, send, onEvent,
+    connect, disconnect, send, onEvent, onSocketEvent,
   }
 })

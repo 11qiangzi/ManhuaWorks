@@ -5,6 +5,14 @@
  * ========================================================= */
 
 :root {
+  /* ── v2.0 brand tokens (constant across all themes) ── */
+  --brand-cyan: #00BFA5;           /* 千机青 */
+  --brand-cyan-dark: #0D9488;
+  --brand-cyan-light: #5EEAD4;
+  --brand-purple: #7C3AED;         /* 墨韵紫 */
+  --brand-purple-dark: #5B21B6;
+  --brand-purple-light: #A78BFA;
+
   /* spacing scale (8 档) */
   --space-0: 0;
   --space-1: 4px;

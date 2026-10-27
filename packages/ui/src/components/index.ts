@@ -51,3 +51,6 @@ export { default as LazyImage } from './LazyImage.vue'
 export { default as AppShell } from './AppShell.vue'
 export type { AppShellProps } from './AppShell.vue'
 export { default as SidebarNavItem } from './SidebarNavItem.vue'
+
+// --- S1: 配乐组件库 (Music Component Library) ---
+export * from './music'

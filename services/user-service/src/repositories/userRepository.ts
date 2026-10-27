@@ -4,7 +4,7 @@ import { User, Role, UserStatus, PublicUser, toPublicUser } from '../models/user
 export interface CreateUserInput {
   email?: string | null;
   phone?: string | null;
-  password_hash: string;
+  password_hash?: string | null;
   display_name?: string | null;
   role?: number;
 }
@@ -49,7 +49,7 @@ export async function createUser(input: CreateUserInput): Promise<User> {
     [
       input.email ?? null,
       input.phone ?? null,
-      input.password_hash,
+      input.password_hash ?? null,
       input.display_name ?? null,
       input.role ?? Role.Reader,
       UserStatus.Active,

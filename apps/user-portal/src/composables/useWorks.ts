@@ -1,6 +1,6 @@
 /**
  * useWorks — 我的作品状态管理
- * ManhuaWorks · W4 用户后台
+ * 千机工坊 · W4 用户后台
  */
 
 import { ref, computed, watch, type Ref } from 'vue'

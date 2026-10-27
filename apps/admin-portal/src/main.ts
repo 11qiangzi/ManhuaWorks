@@ -1,5 +1,5 @@
 /**
- * ManhuaWorks · Admin Portal · main entry
+ * 千机工坊 · Admin Portal · main entry
  * L2 task 8 接通真后端
  */
 import { createApp } from 'vue'
@@ -9,13 +9,11 @@ import router from './router'
 import './styles/tailwind.css'
 import './styles/responsive.css'
 
-import { useTheme } from '../../../packages/ui/src/composables/useTheme'
-import { themes } from '../../../packages/ui/src/themes'
+import { useTheme } from '@manhuaworks/ui'
+import { themes } from '@manhuaworks/ui'
 
 import { getApi, installGlobalErrorHook } from './api-bridge'
 import { ApiError } from '@manhuaworks/api-client'
-
-useTheme().init()
 
 const app = createApp(App)
 app.use(createPinia())
@@ -30,7 +28,7 @@ function showToast(kind: 'info' | 'error' | 'warning', text: string): void {
   try {
     window.dispatchEvent(new CustomEvent('mhw:toast', { detail: { kind, text } }))
   } catch {
-    console.warn(`[${kind}] ${text}`)
+    // toast dispatch failed silently
   }
 }
 
@@ -65,3 +63,6 @@ window.addEventListener('mhw:auth-lost', () => {
 })()
 
 app.mount('#app')
+
+// 主题初始化必须在 mount 之后（useTheme 内部用了 onMounted）
+useTheme().init()

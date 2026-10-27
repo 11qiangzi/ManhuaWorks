@@ -1,9 +1,9 @@
 /**
  * @manhuaworks/studio — 浏览器端 OpenTelemetry RUM
  *
- * ManhuaWorks L2 task 14
+ * 千机工坊 L2 task 14
  */
-import { diag, DiagConsoleLogger, DiagLogLevel, trace, SpanStatusCode } from '@opentelemetry/api';
+import { diag, DiagConsoleLogger, DiagLogLevel, propagation, trace, SpanStatusCode } from '@opentelemetry/api';
 import { W3CTraceContextPropagator } from '@opentelemetry/core';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import {
@@ -52,7 +52,7 @@ let provider: WebTracerProvider | null = null;
 export async function initBrowserTelemetry(): Promise<void> {
   if (provider) return;
   if (!cfg.enabled) {
-    trace.setGlobalPropagator(new W3CTraceContextPropagator());
+    propagation.setGlobalPropagator(new W3CTraceContextPropagator());
     return;
   }
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * AssetLibraryView ·素材库
- * ManhuaWorks · W4 用户后台
+ * 千机工坊 · W4 用户后台
  *
  * 功能：
  *1.5 类素材（图片/视频/音频/角色/场景）
@@ -24,7 +24,7 @@ const {
  items, total, loading, error,
  categoryFilter, tagFilter, favoriteOnly, searchKeyword,
  selected, counts, allTags,
- load, upload, remove, removeSelected,
+ load, upload, remove, removeSelected, rename,
  toggleFavorite, toggleSelect, clearSelection,
  refresh
 } = useAssetLibrary({ autoLoad: false })
@@ -250,7 +250,7 @@ const studioHref = `http://${window.location.hostname}:5175`
 
  <!--加载骨架 -->
  <div v-if="loading && items.length ===0" class="al__skeleton-grid">
- <div v-for="i in12" :key="i" class="al__skeleton-card"></div>
+ <div v-for="i in 12" :key="i" class="al__skeleton-card"></div>
  </div>
 
  <!-- 空状态 -->
@@ -351,8 +351,8 @@ const studioHref = `http://${window.location.hostname}:5175`
  ============================================================ */
 .al {
  min-height:100vh;
- background: var(--mw-bg);
- color: var(--mw-text);
+ background: var(--bg-primary);
+ color: var(--text-primary);
  font-family: var(--mw-font, system-ui, -apple-system, "Segoe UI", sans-serif);
  transition: background0.3s, color0.3s;
 }
@@ -364,8 +364,8 @@ const studioHref = `http://${window.location.hostname}:5175`
  justify-content: space-between;
  gap:1rem;
  padding:0.75rem1.5rem;
- background: var(--mw-surface);
- border-bottom:1px solid var(--mw-border);
+ background: var(--bg-secondary);
+ border-bottom:1px solid var(--border);
  position: sticky;
  top:0;
  z-index:50;
@@ -374,16 +374,16 @@ const studioHref = `http://${window.location.hostname}:5175`
 .al__logo {
  width:32px; height:32px;
  border-radius:8px;
- background: var(--mw-primary);
- color: var(--mw-primary-contrast, #fff);
+ background: var(--accent);
+ color: #fff;
  display: grid; place-items: center;
  font-weight:700; font-size:1.1rem;
 }
 .al__brand-name { font-size:1.05rem; font-weight:600; }
 .al__count {
  font-size:0.8rem;
- color: var(--mw-text-muted);
- background: var(--mw-bg-soft);
+ color: var(--text-muted);
+ background: var(--bg-tertiary);
  padding:0.15rem0.5rem;
  border-radius:999px;
 }
@@ -392,14 +392,14 @@ const studioHref = `http://${window.location.hostname}:5175`
  padding:0.5rem0.85rem;
  border-radius:8px;
  font-size:0.92rem;
- color: var(--mw-text-muted);
+ color: var(--text-muted);
  text-decoration: none;
  transition: background0.2s, color0.2s;
 }
-.al__nav-link:hover { background: var(--mw-bg-soft); color: var(--mw-text); }
+.al__nav-link:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .al__nav-link--active {
- background: var(--mw-primary-soft);
- color: var(--mw-primary);
+ background: color-mix(in srgb, var(--accent) 12%, transparent);
+ color: var(--accent);
  font-weight:600;
 }
 .al__nav-right { display: flex; align-items: center; gap:0.75rem; }
@@ -423,8 +423,8 @@ const studioHref = `http://${window.location.hostname}:5175`
  flex-wrap: wrap;
 }
 .al__title-block h1 { font-size:1.6rem; font-weight:700; margin:000.25rem; }
-.al__title-block p { margin:0; color: var(--mw-text-muted); font-size:0.9rem; }
-.al__title-block a { color: var(--mw-primary); text-decoration: none; font-weight:500; }
+.al__title-block p { margin:0; color: var(--text-muted); font-size:0.9rem; }
+.al__title-block a { color: var(--accent); text-decoration: none; font-weight:500; }
 .al__title-block a:hover { text-decoration: underline; }
 .al__toolbar-right { display: flex; gap:0.5rem; align-items: center; }
 .al__btn {
@@ -433,26 +433,26 @@ const studioHref = `http://${window.location.hostname}:5175`
  gap:0.35rem;
  padding:0.55rem1rem;
  border-radius:8px;
- background: var(--mw-surface);
- border:1px solid var(--mw-border);
- color: var(--mw-text);
+ background: var(--bg-secondary);
+ border:1px solid var(--border);
+ color: var(--text-primary);
  font-size:0.9rem;
  cursor: pointer;
  transition: background0.2s, transform0.1s;
 }
-.al__btn:hover { background: var(--mw-bg-soft); }
+.al__btn:hover { background: var(--bg-tertiary); }
 .al__btn:active { transform: scale(0.98); }
 .al__btn--primary {
- background: var(--mw-primary);
- color: var(--mw-primary-contrast, #fff);
- border-color: var(--mw-primary);
+ background: var(--accent);
+ color: #fff;
+ border-color: var(--accent);
 }
-.al__btn--primary:hover { background: var(--mw-primary-hover, var(--mw-primary)); filter: brightness(1.08); }
+.al__btn--primary:hover { background: var(--accent-deep); filter: brightness(1.08); }
 .al__btn--ghost { background: transparent; }
 .al__btn--danger {
- background: var(--mw-danger, #ef4444);
+ background: var(--danger, #ef4444);
  color: #fff;
- border-color: var(--mw-danger, #ef4444);
+ border-color: var(--danger, #ef4444);
 }
 .al__hidden-input { display: none; }
 
@@ -462,7 +462,7 @@ const studioHref = `http://${window.location.hostname}:5175`
  gap:0.5rem;
  overflow-x: auto;
  padding:0.25rem0;
- border-bottom:1px solid var(--mw-border);
+ border-bottom:1px solid var(--border);
 }
 .al__tab {
  display: inline-flex;
@@ -473,17 +473,17 @@ const studioHref = `http://${window.location.hostname}:5175`
  background: transparent;
  border:1px solid transparent;
  border-bottom: none;
- color: var(--mw-text-muted);
+ color: var(--text-muted);
  font-size:0.92rem;
  cursor: pointer;
  white-space: nowrap;
  transition: background0.2s, color0.2s;
 }
-.al__tab:hover { background: var(--mw-bg-soft); color: var(--mw-text); }
+.al__tab:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .al__tab--active {
- background: var(--mw-surface);
- border-color: var(--mw-border);
- color: var(--mw-primary);
+ background: var(--bg-secondary);
+ border-color: var(--border);
+ color: var(--accent);
  font-weight:600;
  position: relative;
 }
@@ -492,15 +492,15 @@ const studioHref = `http://${window.location.hostname}:5175`
  position: absolute;
  left:0; right:0; bottom: -1px;
  height:2px;
- background: var(--mw-primary);
+ background: var(--accent);
 }
 .al__tab-icon { font-size:1.05rem; }
 .al__tab-count {
  font-size:0.75rem;
  padding:0.05rem0.4rem;
  border-radius:999px;
- background: var(--mw-bg-soft);
- color: var(--mw-text-muted);
+ background: var(--bg-tertiary);
+ color: var(--text-muted);
 }
 
 /* =====筛选条 ===== */
@@ -514,33 +514,33 @@ const studioHref = `http://${window.location.hostname}:5175`
 .al__search-input {
  width:100%;
  padding:0.55rem0.85rem;
- background: var(--mw-surface);
- border:1px solid var(--mw-border);
+ background: var(--bg-secondary);
+ border:1px solid var(--border);
  border-radius:8px;
- color: var(--mw-text);
+ color: var(--text-primary);
  font-size:0.9rem;
  outline: none;
  transition: border0.2s;
 }
-.al__search-input:focus { border-color: var(--mw-primary); }
+.al__search-input:focus { border-color: var(--accent); }
 .al__check {
  display: inline-flex;
  align-items: center;
  gap:0.4rem;
  font-size:0.9rem;
- color: var(--mw-text-muted);
+ color: var(--text-muted);
  cursor: pointer;
 }
-.al__check input { accent-color: var(--mw-primary); }
+.al__check input { accent-color: var(--accent); }
 .al__bulk {
  display: inline-flex;
  align-items: center;
  gap:0.5rem;
  padding:0.4rem0.75rem;
- background: var(--mw-primary-soft);
+ background: color-mix(in srgb, var(--accent) 12%, transparent);
  border-radius:8px;
 }
-.al__bulk-info { font-size:0.85rem; color: var(--mw-primary); font-weight:600; }
+.al__bulk-info { font-size:0.85rem; color: var(--accent); font-weight:600; }
 
 /* =====标签云 ===== */
 .al__tagcloud {
@@ -549,30 +549,30 @@ const studioHref = `http://${window.location.hostname}:5175`
  align-items: center;
  gap:0.4rem;
  padding:0.75rem1rem;
- background: var(--mw-surface);
- border:1px solid var(--mw-border);
+ background: var(--bg-secondary);
+ border:1px solid var(--border);
  border-radius:8px;
 }
 .al__tagcloud-label {
  font-size:0.85rem;
- color: var(--mw-text-muted);
+ color: var(--text-muted);
  font-weight:600;
 }
 .al__tag {
  padding:0.25rem0.6rem;
  font-size:0.82rem;
  border-radius:999px;
- background: var(--mw-bg-soft);
+ background: var(--bg-tertiary);
  border:1px solid transparent;
- color: var(--mw-text-muted);
+ color: var(--text-muted);
  cursor: pointer;
  transition: background0.2s, color0.2s, border0.2s;
 }
-.al__tag:hover { color: var(--mw-text); border-color: var(--mw-border); }
+.al__tag:hover { color: var(--text-primary); border-color: var(--border); }
 .al__tag--active {
- background: var(--mw-primary-soft);
- color: var(--mw-primary);
- border-color: var(--mw-primary);
+ background: color-mix(in srgb, var(--accent) 12%, transparent);
+ color: var(--accent);
+ border-color: var(--accent);
  font-weight:500;
 }
 .al__tag-clear {
@@ -580,17 +580,17 @@ const studioHref = `http://${window.location.hostname}:5175`
  font-size:0.82rem;
  background: transparent;
  border: none;
- color: var(--mw-danger, #ef4444);
+ color: var(--danger, #ef4444);
  cursor: pointer;
 }
 
 /* =====错误 ===== */
 .al__error {
  padding:0.75rem1rem;
- background: color-mix(in srgb, var(--mw-danger, #ef4444)12%, transparent);
- border:1px solid var(--mw-danger, #ef4444);
+ background: color-mix(in srgb, var(--danger, #ef4444)12%, transparent);
+ border:1px solid var(--danger, #ef4444);
  border-radius:8px;
- color: var(--mw-danger, #ef4444);
+ color: var(--danger, #ef4444);
  font-size:0.9rem;
 }
 
@@ -606,9 +606,9 @@ const studioHref = `http://${window.location.hostname}:5175`
  content: '';
  position: absolute;
  inset:0;
- border:2px dashed var(--mw-primary);
+ border:2px dashed var(--accent);
  border-radius:12px;
- background: var(--mw-primary-soft);
+ background: color-mix(in srgb, var(--accent) 12%, transparent);
  pointer-events: none;
  z-index:5;
 }
@@ -620,18 +620,18 @@ const studioHref = `http://${window.location.hostname}:5175`
  z-index:10;
  pointer-events: none;
 }
-.al__drop-icon { font-size:3rem; color: var(--mw-primary); }
+.al__drop-icon { font-size:3rem; color: var(--accent); }
 .al__drop-text {
  font-size:1.1rem;
  font-weight:600;
- color: var(--mw-primary);
+ color: var(--accent);
  margin-top:0.5rem;
 }
 
 /* =====卡片 ===== */
 .al__card {
- background: var(--mw-surface);
- border:1px solid var(--mw-border);
+ background: var(--bg-secondary);
+ border:1px solid var(--border);
  border-radius:10px;
  overflow: hidden;
  display: flex;
@@ -640,28 +640,28 @@ const studioHref = `http://${window.location.hostname}:5175`
 }
 .al__card:hover {
  transform: translateY(-2px);
- border-color: var(--mw-primary);
- box-shadow:06px16px color-mix(in srgb, var(--mw-primary)18%, transparent);
+ border-color: var(--accent);
+ box-shadow:06px16px color-mix(in srgb, var(--accent)18%, transparent);
 }
 .al__card--selected {
- border-color: var(--mw-primary);
- background: var(--mw-primary-soft);
+ border-color: var(--accent);
+ background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 /*缩略图 */
 .al__thumb {
  position: relative;
  aspect-ratio:1 /1;
- background: var(--mw-bg-soft);
+ background: var(--bg-tertiary);
  display: grid;
  place-items: center;
- border-bottom:1px solid var(--mw-border);
+ border-bottom:1px solid var(--border);
 }
-.al__thumb--image { background: linear-gradient(135deg, color-mix(in srgb, #f59e0b22%, var(--mw-bg-soft)), var(--mw-bg-soft)); }
-.al__thumb--video { background: linear-gradient(135deg, color-mix(in srgb, #8b5cf622%, var(--mw-bg-soft)), var(--mw-bg-soft)); }
-.al__thumb--audio { background: linear-gradient(135deg, color-mix(in srgb, #06b6d422%, var(--mw-bg-soft)), var(--mw-bg-soft)); }
-.al__thumb--character { background: linear-gradient(135deg, color-mix(in srgb, #ec489922%, var(--mw-bg-soft)), var(--mw-bg-soft)); }
-.al__thumb--scene { background: linear-gradient(135deg, color-mix(in srgb, #10b98122%, var(--mw-bg-soft)), var(--mw-bg-soft)); }
+.al__thumb--image { background: linear-gradient(135deg, color-mix(in srgb, #f59e0b22%, var(--bg-tertiary)), var(--bg-tertiary)); }
+.al__thumb--video { background: linear-gradient(135deg, color-mix(in srgb, #8b5cf622%, var(--bg-tertiary)), var(--bg-tertiary)); }
+.al__thumb--audio { background: linear-gradient(135deg, color-mix(in srgb, #06b6d422%, var(--bg-tertiary)), var(--bg-tertiary)); }
+.al__thumb--character { background: linear-gradient(135deg, color-mix(in srgb, #ec489922%, var(--bg-tertiary)), var(--bg-tertiary)); }
+.al__thumb--scene { background: linear-gradient(135deg, color-mix(in srgb, #10b98122%, var(--bg-tertiary)), var(--bg-tertiary)); }
 .al__thumb-icon { font-size:2.8rem; opacity:0.85; }
 .al__thumb-format {
  position: absolute;
@@ -669,9 +669,9 @@ const studioHref = `http://${window.location.hostname}:5175`
  right:0.5rem;
  font-size:0.7rem;
  padding:0.1rem0.35rem;
- background: color-mix(in srgb, var(--mw-bg)65%, transparent);
+ background: color-mix(in srgb, var(--bg-primary)65%, transparent);
  border-radius:4px;
- color: var(--mw-text-muted);
+ color: var(--text-muted);
  text-transform: uppercase;
  letter-spacing:0.5px;
 }
@@ -681,9 +681,9 @@ const studioHref = `http://${window.location.hostname}:5175`
  right:0.5rem;
  width:28px; height:28px;
  border: none;
- background: color-mix(in srgb, var(--mw-bg)70%, transparent);
+ background: color-mix(in srgb, var(--bg-primary)70%, transparent);
  border-radius:999px;
- color: var(--mw-text-muted);
+ color: var(--text-muted);
  font-size:1rem;
  cursor: pointer;
  transition: color0.15s, transform0.15s;
@@ -691,19 +691,19 @@ const studioHref = `http://${window.location.hostname}:5175`
  place-items: center;
 }
 .al__fav:hover { transform: scale(1.1); }
-.al__fav--on { color: var(--mw-warning, #f59e0b); }
+.al__fav--on { color: var(--warning, #f59e0b); }
 .al__select {
  position: absolute;
  top:0.4rem;
  left:0.5rem;
  width:22px; height:22px;
- background: color-mix(in srgb, var(--mw-bg)70%, transparent);
+ background: color-mix(in srgb, var(--bg-primary)70%, transparent);
  border-radius:4px;
  display: grid;
  place-items: center;
  cursor: pointer;
 }
-.al__select input { accent-color: var(--mw-primary); cursor: pointer; }
+.al__select input { accent-color: var(--accent); cursor: pointer; }
 
 /* 信息 */
 .al__info {
@@ -726,18 +726,18 @@ const studioHref = `http://${window.location.hostname}:5175`
  display: flex;
  justify-content: space-between;
  font-size:0.75rem;
- color: var(--mw-text-muted);
+ color: var(--text-muted);
 }
 .al__meta-cat { text-transform: capitalize; }
 .al__tags { display: flex; flex-wrap: wrap; gap:0.25rem; }
 .al__mini-tag {
  font-size:0.7rem;
  padding:0.05rem0.35rem;
- background: var(--mw-bg-soft);
+ background: var(--bg-tertiary);
  border-radius:999px;
- color: var(--mw-text-muted);
+ color: var(--text-muted);
 }
-.al__mini-tag-more { font-size:0.7rem; color: var(--mw-text-muted); }
+.al__mini-tag-more { font-size:0.7rem; color: var(--text-muted); }
 .al__rename {
  display: flex;
  gap:0.25rem;
@@ -747,31 +747,31 @@ const studioHref = `http://${window.location.hostname}:5175`
  flex:1;
  padding:0.25rem0.4rem;
  font-size:0.85rem;
- background: var(--mw-bg);
- border:1px solid var(--mw-primary);
+ background: var(--bg-primary);
+ border:1px solid var(--accent);
  border-radius:4px;
- color: var(--mw-text);
+ color: var(--text-primary);
  outline: none;
 }
 
 /* 操作 */
 .al__actions {
  display: flex;
- border-top:1px solid var(--mw-border);
+ border-top:1px solid var(--border);
 }
 .al__act {
  flex:1;
  padding:0.45rem;
  background: transparent;
  border: none;
- color: var(--mw-text-muted);
+ color: var(--text-muted);
  cursor: pointer;
  font-size:0.9rem;
  transition: background0.15s, color0.15s;
 }
-.al__act:hover { background: var(--mw-bg-soft); color: var(--mw-text); }
-.al__act--danger { color: var(--mw-danger, #ef4444); font-weight:700; }
-.al__act--danger:hover { background: color-mix(in srgb, var(--mw-danger, #ef4444)12%, transparent); }
+.al__act:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.al__act--danger { color: var(--danger, #ef4444); font-weight:700; }
+.al__act--danger:hover { background: color-mix(in srgb, var(--danger, #ef4444)12%, transparent); }
 
 /* =====骨架 ===== */
 .al__skeleton-grid {
@@ -779,7 +779,7 @@ const studioHref = `http://${window.location.hostname}:5175`
 }
 .al__skeleton-card {
  aspect-ratio:1 /1.4;
- background: linear-gradient(90deg, var(--mw-bg-soft), var(--mw-surface), var(--mw-bg-soft));
+ background: linear-gradient(90deg, var(--bg-tertiary), var(--bg-secondary), var(--bg-tertiary));
  background-size:200%100%;
  border-radius:10px;
  animation: al-shimmer1.5s infinite;
@@ -798,12 +798,12 @@ const studioHref = `http://${window.location.hostname}:5175`
  justify-content: center;
  gap:1rem;
  padding:3rem1rem;
- background: var(--mw-surface);
- border:2px dashed var(--mw-border);
+ background: var(--bg-secondary);
+ border:2px dashed var(--border);
  border-radius:12px;
 }
 .al__empty-icon { font-size:3rem; opacity:0.55; }
-.al__empty-text { color: var(--mw-text-muted); font-size:0.95rem; text-align: center; }
+.al__empty-text { color: var(--text-muted); font-size:0.95rem; text-align: center; }
 
 /* =====响应式 ===== */
 @media (max-width:768px) {

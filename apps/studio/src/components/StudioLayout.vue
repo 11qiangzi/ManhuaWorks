@@ -4,39 +4,42 @@
  * 给所有 view 提供统一导航入口
  */
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { computed, ref, onMounted } from 'vue'
+import { computed } from 'vue'
+import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
 const router = useRouter()
-const userEmail = ref<string>('')
+const auth = useAuthStore()
 
-onMounted(() => {
-  try {
-    const u = localStorage.getItem('mhw.user')
-    if (u) userEmail.value = JSON.parse(u)?.email || ''
-  } catch {}
+const userEmail = computed(() => auth.user?.email ?? '')
+
+/** Dynamic storyboard path — uses current project ID from route, falls back to /projects */
+const storyboardPath = computed(() => {
+  const id = route.params.id
+  return id ? `/project/${id}/storyboard` : '/project'
 })
 
-const menus = [
+const menus = computed(() => [
   { name: 'home', title: '首页', icon: '🏠', to: '/' },
   { name: 'project', title: '项目编辑器', icon: '📖', to: '/project' },
+  { name: 'storyboard', title: '配乐编辑', icon: '🎼', to: storyboardPath.value },
   { name: 'materials', title: '素材库', icon: '🎭', to: '/materials' },
   { name: 'workflow', title: '工作流', icon: '🔀', to: '/workflow' },
   { name: 'tools', title: '工具箱', icon: '🧰', to: '/tools' },
   { name: 'export', title: '导出', icon: '📤', to: '/export' }
-]
+])
 
 const isActive = (to: string) => {
   if (to === '/') return route.path === '/'
-  if (to === '/project') return route.path.startsWith('/project')
+  if (to === '/project') return route.path.startsWith('/project') && !route.path.includes('/storyboard')
+  if (to === storyboardPath.value && to.includes('/storyboard')) return route.path.includes('/storyboard')
   if (to === '/materials') return route.path.startsWith('/materials') || route.path === '/characters' || route.path === '/scenes'
   return route.path === to
 }
 
-function logout() {
+async function logout() {
   try {
-    localStorage.removeItem('mhw.access_token')
-    localStorage.removeItem('mhw.user')
+    await auth.logout()
   } catch {}
   window.location.href = `http://${window.location.hostname}:3000/login`
 }
@@ -46,8 +49,8 @@ function logout() {
   <div class="studio-layout">
     <aside class="studio-sidebar">
       <div class="studio-brand">
-        <span class="studio-logo">漫</span>
-        <span class="studio-brand-text">漫工场</span>
+        <span class="studio-logo">千机</span>
+        <span class="studio-brand-text">千机工坊</span>
       </div>
 
       <div class="studio-section-label">创作工作台</div>

@@ -7,6 +7,7 @@
     "dev": "pnpm -r --parallel run dev",
     "build": "pnpm -r run build",
     "lint": "pnpm -r run lint",
+    "lint:tokens": "node --experimental-strip-types scripts/check-design-tokens.ts",
     "test": "pnpm -r run test",
     "docker:build": "docker compose -f infrastructure/docker-compose.yml build",
     "docker:up": "docker compose -f infrastructure/docker-compose.yml up -d"

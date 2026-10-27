@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * PlanBadge.vue · 订阅等级徽章
- * ManhuaWorks · W4 用户后台
+ * 千机工坊 · W4 用户后台
  */
 
 import { computed } from 'vue'

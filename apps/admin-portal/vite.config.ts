@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import viteCompression from 'vite-plugin-compression'
 import { viteWebpPlugin } from '../../scripts/build/vite-plugin-webp'
 import path from 'node:path'
+import { BRAND } from './src/config/branding'
 
 const isProd = process.env.NODE_ENV === 'production'
 const cdnBase = isProd ? (process.env.VITE_CDN_BASE || '/') : '/'
@@ -13,6 +14,18 @@ export default defineConfig({
     viteCompression({ algorithm: 'gzip', ext: '.gz', threshold: 1024, deleteOriginFile: false }),
     viteCompression({ algorithm: 'brotliCompress', ext: '.br', threshold: 1024, deleteOriginFile: false }),
     viteWebpPlugin({ quality: 80, silent: false }),
+    {
+      // 派单 21B · 林染: Vite transformIndexHtml 注入动态 title + meta
+      name: 'qianji-html-inject',
+      transformIndexHtml(html) {
+        return html
+          .replace(/<title>.*?<\/title>/, `<title>${BRAND.nameCn} - 管理后台</title>`)
+          .replace(
+            '</head>',
+            `<meta name="description" content="${BRAND.nameCn} - ${BRAND.tagline}">\n</head>`
+          )
+      },
+    },
   ],
   base: cdnBase,
   resolve: {
@@ -43,6 +56,18 @@ export default defineConfig({
         target: 'http://localhost:8088',
         changeOrigin: true
       },
+      '/api/v1/admin': {
+        target: 'http://localhost:8088',
+        changeOrigin: true
+      },
+      '/api/v1/ops': {
+        target: 'http://localhost:8088',
+        changeOrigin: true
+      },
+      '/api/v1/teams': {
+        target: 'http://localhost:8091',
+        changeOrigin: true
+      },
       '/v1/auth': {
         target: 'http://localhost:8088',
         changeOrigin: true,
@@ -64,6 +89,18 @@ export default defineConfig({
         rewrite: (path) => '/api' + path
       },
       '/api/v1/billing': {
+        target: 'http://localhost:8090',
+        changeOrigin: true
+      },
+      '/api/v1/subscriptions': {
+        target: 'http://localhost:8088',
+        changeOrigin: true
+      },
+      '/api/v1/quotas': {
+        target: 'http://localhost:8088',
+        changeOrigin: true
+      },
+      '/api/v1/orders': {
         target: 'http://localhost:8090',
         changeOrigin: true
       },

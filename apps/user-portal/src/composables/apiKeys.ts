@@ -1,6 +1,6 @@
 /**
  * useApiKeys — BYOK 页面状态管理
- * ManhuaWorks · W6 用户后台 · L4-A BYOK UI
+ * 千机工坊 · W6 用户后台 · L4-A BYOK UI
  *
  * 单一数据源：
  * - keys: ApiKeyRow[]

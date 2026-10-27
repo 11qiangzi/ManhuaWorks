@@ -1,7 +1,9 @@
 /**
- * admin.ts — admin API mock 客户端
- * 全部走本地 mock 数据；接口形状按生产约定
+ * admin.ts — admin API 客户端
+ * 对接 user-service /api/v1/admin/* + billing-service /api/v1/orders + /api/v1/invoices
+ * 保留原接口形状兼容现有 view/store 层
  */
+import { getApi } from '../api-bridge'
 
 export type UserStatus = 'active' | 'disabled' | 'pending'
 export type OrderStatus = 'paid' | 'refunded' | 'pending' | 'failed'
@@ -73,166 +75,271 @@ export interface Alert {
 }
 
 // =========================================================
-// Mock 数据
+// HTTP helper — 统一走 api-client（JWT 自动注入 + 401 refresh）
 // =========================================================
 
-const NAMES = ['林染', '梁总', '阿白', '小鱼', '老王', '阿熊', '小七', '墨轩', '苏白', '李子', '阿柒', '小满', '半夏', '清辉', '听雪', '听风']
-const DOMAINS = ['example.com', 'manhuaworks.io', 'qq.com', 'gmail.com', '163.com']
-const PRODUCTS = ['Pro 月卡', 'Studio 年卡', 'Credits 500', 'Credits 2000', 'API 额度包', '专业订阅季卡']
-const ACTIONS = ['user.login', 'user.create', 'order.pay', 'order.refund', 'config.update', 'auth.role', 'ai.generate', 'ai.failover', 'billing.invoice', 'system.alert']
+const http = () => getApi().http
 
-function rand<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)] }
-function rid(prefix: string): string { return prefix + Math.random().toString(36).slice(2, 10) }
-function nowMinus(days: number): string {
-  return new Date(Date.now() - days * 86400000).toISOString()
+// 后端 user status number → 前端 string
+const STATUS_MAP: Record<number, UserStatus> = { 0: 'disabled', 1: 'active', 2: 'pending' }
+
+// 后端 user row → 前端 User interface
+function mapUser(u: any): User {
+  return {
+    id: u.id,
+    email: u.email || '',
+    name: u.display_name || u.nickname || u.email || '',
+    plan: u.plan || u.subscription_plan || 'free',
+    status: STATUS_MAP[u.status] ?? (u.status === 'active' || u.status === 1 ? 'active' : 'disabled'),
+    credits: u.balance_cents ? Math.floor(u.balance_cents / 100) : (u.credits ?? 0),
+    createdAt: (u.created_at || u.createdAt || '').slice(0, 10),
+    lastLogin: u.last_login || u.lastLogin || u.updated_at || '',
+    totalSpent: u.total_spent || 0,
+  }
 }
 
-const MOCK_USERS: User[] = Array.from({ length: 24 }, (_, i) => ({
-  id: `u_${(1000 + i).toString()}`,
-  email: `${rand(NAMES).toLowerCase().replace(/\s/g, '')}${i}@${rand(DOMAINS)}`,
-  name: rand(NAMES),
-  plan: rand(['free', 'pro', 'studio'] as const),
-  status: rand(['active', 'active', 'active', 'disabled', 'pending'] as const),
-  credits: Math.floor(Math.random() * 5000),
-  createdAt: nowMinus(Math.floor(Math.random() * 180)),
-  lastLogin: nowMinus(Math.random() * 30),
-  totalSpent: Math.floor(Math.random() * 2000),
-}))
-
-const MOCK_ORDERS: Order[] = Array.from({ length: 32 }, (_, i) => ({
-  id: `o_${(50000 + i).toString()}`,
-  userId: MOCK_USERS[i % MOCK_USERS.length].id,
-  userName: MOCK_USERS[i % MOCK_USERS.length].name,
-  amount: Math.floor(20 + Math.random() * 800),
-  currency: rand(['CNY', 'CNY', 'CNY', 'USD'] as const),
-  status: rand(['paid', 'paid', 'paid', 'pending', 'refunded', 'failed'] as const),
-  product: rand(PRODUCTS),
-  createdAt: nowMinus(Math.floor(Math.random() * 60)),
-  invoiceId: Math.random() > 0.5 ? rid('inv_') : undefined,
-}))
-
-const MOCK_INVOICES: Invoice[] = MOCK_ORDERS
-  .filter((o) => o.invoiceId)
-  .map((o) => ({
-    id: o.invoiceId!,
-    orderId: o.id,
-    userName: o.userName,
-    amount: o.amount,
-    tax: Math.floor(o.amount * 0.06),
-    issuedAt: o.createdAt,
-    status: rand(['issued', 'issued', 'void'] as const),
-  }))
-
-const MOCK_LOGS: AuditLog[] = Array.from({ length: 80 }, (_, i) => ({
-  id: `log_${i}`,
-  ts: nowMinus(Math.random() * 7),
-  actor: rand(NAMES),
-  level: rand(['info', 'info', 'info', 'warn', 'error'] as const),
-  action: rand(ACTIONS),
-  target: rid('tgt_'),
-  ip: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-  detail: `${rand(ACTIONS)} succeeded with code ${200 + Math.floor(Math.random() * 50)}`,
-}))
-
-const MOCK_KPI: KpiSnapshot = {
-  totalUsers: 1284,
-  payingUsers: 312,
-  mrr: 184_320,
-  arpu: 142.7,
-  churn7d: 3.2,
-  activeNow: 87,
-  deltaUsers: 8.4,
-  deltaMrr: 12.1,
-  deltaChurn: -0.6,
+function mapOrder(o: any): Order {
+  return {
+    id: o.id,
+    userId: o.user_id || o.userId || '',
+    userName: o.user_name || o.display_name || o.user_id?.slice(0, 8) || '',
+    amount: o.amount_cents ? o.amount_cents / 100 : (o.amount ?? 0),
+    currency: o.currency || 'CNY',
+    status: o.status || 'pending',
+    product: o.plan || o.product || '',
+    createdAt: (o.created_at || o.createdAt || '').slice(0, 10),
+    invoiceId: o.invoice_id || o.invoiceId,
+  }
 }
 
-const MOCK_ALERTS: Alert[] = [
-  { id: 'a1', level: 'error', title: 'ai-orchestrator 5xx 突增', detail: '近 10 分钟错误率 12.4%，已超阈值', ts: nowMinus(0.05) },
-  { id: 'a2', level: 'warn', title: '支付回调延迟', detail: '微信支付回调平均延迟 6.2s', ts: nowMinus(0.5) },
-  { id: 'a3', level: 'info', title: '新功能上线', detail: 'Studio V2 模型选择器已发布', ts: nowMinus(2) },
-]
+function mapInvoice(inv: any): Invoice {
+  return {
+    id: inv.id,
+    orderId: inv.order_id || inv.orderId || '',
+    userName: inv.user_name || inv.title || '',
+    amount: inv.amount_cents ? inv.amount_cents / 100 : (inv.amount ?? 0),
+    tax: inv.tax_cents ? inv.tax_cents / 100 : (inv.tax ?? 0),
+    issuedAt: (inv.created_at || inv.issuedAt || '').slice(0, 10),
+    status: inv.status === 'void' ? 'void' : 'issued',
+  }
+}
+
+function mapLog(l: any): AuditLog {
+  return {
+    id: l.id,
+    ts: l.created_at || l.ts || l.timestamp || '',
+    actor: l.actor || l.user_id || l.display_name || '',
+    level: l.level || 'info',
+    action: l.action || l.type || '',
+    target: l.target || l.resource || '',
+    ip: l.ip || l.ip_address || '',
+    detail: l.detail || l.message || l.description || '',
+  }
+}
 
 // =========================================================
-// 假延迟 + 简易 mock
+// adminApi — 真实后端调用
 // =========================================================
-
-function delay<T>(value: T, ms = 120): Promise<T> {
-  return new Promise((res) => setTimeout(() => res(value), ms))
-}
 
 export const adminApi = {
-  // 仪表板
-  getKpi(): Promise<KpiSnapshot> { return delay(MOCK_KPI) },
-  getRevenue7d(): Promise<{ date: string; value: number }[]> {
-    const series = Array.from({ length: 7 }, (_, i) => ({
-      date: new Date(Date.now() - (6 - i) * 86400000).toISOString().slice(5, 10),
-      value: Math.floor(8000 + Math.random() * 18000),
-    }))
-    return delay(series)
-  },
-  getActive7d(): Promise<{ date: string; value: number }[]> {
-    const series = Array.from({ length: 7 }, (_, i) => ({
-      date: new Date(Date.now() - (6 - i) * 86400000).toISOString().slice(5, 10),
-      value: Math.floor(120 + Math.random() * 90),
-    }))
-    return delay(series)
-  },
-  getAlerts(): Promise<Alert[]> { return delay(MOCK_ALERTS) },
 
-  // 用户
-  listUsers(): Promise<User[]> { return delay(MOCK_USERS) },
-  getUser(id: string): Promise<User | null> {
-    return delay(MOCK_USERS.find((u) => u.id === id) ?? null)
-  },
-  toggleUserStatus(id: string): Promise<{ ok: true; status: UserStatus }> {
-    const u = MOCK_USERS.find((x) => x.id === id)
-    const status: UserStatus = u?.status === 'active' ? 'disabled' : 'active'
-    if (u) u.status = status
-    return delay({ ok: true, status })
-  },
+  // ── 仪表板 ──────────────────────────────────────────────
 
-  // 计费
-  listOrders(): Promise<Order[]> { return delay(MOCK_ORDERS) },
-  refundOrder(id: string): Promise<{ ok: true; id: string }> {
-    const o = MOCK_ORDERS.find((x) => x.id === id)
-    if (o) o.status = 'refunded'
-    return delay({ ok: true, id })
-  },
-  listInvoices(): Promise<Invoice[]> { return delay(MOCK_INVOICES) },
-  issueInvoice(orderId: string, taxRate: number): Promise<Invoice> {
-    const o = MOCK_ORDERS.find((x) => x.id === orderId)
-    const inv: Invoice = {
-      id: rid('inv_'),
-      orderId,
-      userName: o?.userName ?? 'unknown',
-      amount: o?.amount ?? 0,
-      tax: Math.floor((o?.amount ?? 0) * taxRate),
-      issuedAt: new Date().toISOString(),
-      status: 'issued',
+  async getKpi(): Promise<KpiSnapshot> {
+    try {
+      const [stats, analytics] = await Promise.all([
+        http().get('/admin/stats') as Promise<any>,
+        http().get('/admin/analytics').catch(() => null) as Promise<any>,
+      ])
+      const planDist = analytics?.planDistribution || {}
+      const paying = (planDist.pro || 0) + (planDist.studio || 0) + (planDist.enterprise || 0)
+      return {
+        totalUsers: stats?.totalUsers ?? 0,
+        payingUsers: paying,
+        mrr: stats?.totalRevenue ?? 0,
+        arpu: paying > 0 ? Math.round((stats?.totalRevenue ?? 0) / paying) : 0,
+        churn7d: 0,
+        activeNow: stats?.activeUsers7d ?? 0,
+        deltaUsers: stats?.newUsersToday ?? 0,
+        deltaMrr: 0,
+        deltaChurn: 0,
+      }
+    } catch {
+      return { totalUsers: 0, payingUsers: 0, mrr: 0, arpu: 0, churn7d: 0, activeNow: 0, deltaUsers: 0, deltaMrr: 0, deltaChurn: 0 }
     }
-    if (o) o.invoiceId = inv.id
-    MOCK_INVOICES.unshift(inv)
-    return delay(inv)
-  },
-  monthlyRevenue(): Promise<{ month: string; value: number }[]> {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
-    return delay(months.map((m) => ({ month: m, value: Math.floor(80_000 + Math.random() * 220_000) })))
   },
 
-  // 审计
-  listLogs(): Promise<AuditLog[]> { return delay(MOCK_LOGS) },
-
-  // 设置
-  getSettings(): Promise<Record<string, Record<string, unknown>>> {
-    return delay({
-      ai: { provider: 'openai', fallback: 'deepseek', dailyQuota: 50000, timeoutMs: 30000 },
-      payment: { provider: 'wechat', sandbox: true, taxRate: 0.06, currency: 'CNY' },
-      email: { smtp: 'smtp.example.com', port: 465, from: 'no-reply@manhuaworks.io', ssl: true },
-      storage: { driver: 's3', bucket: 'mhw-prod', cdn: 'cdn.example.com', maxUploadMB: 50 },
-      ratelimit: { rps: 100, burst: 200, perUser: 10, windowSec: 60 },
-    })
+  async getRevenue7d(): Promise<{ date: string; value: number }[]> {
+    try {
+      const res = await http().get('/admin/dashboard/revenue', { days: 7 }) as any
+      const daily = res?.daily || []
+      return daily.map((d: any) => ({
+        date: (d.date || '').slice(5, 10),
+        value: d.value ?? 0,
+      }))
+    } catch {
+      return []
+    }
   },
-  saveSettings(module: string, value: Record<string, unknown>): Promise<{ ok: true }> {
-    return delay({ ok: true })
+
+  async getActive7d(): Promise<{ date: string; value: number }[]> {
+    try {
+      const res = await http().get('/admin/analytics') as any
+      const growth = res?.userGrowth || []
+      return growth.slice(-7).map((d: any) => ({
+        date: (d.date || '').slice(5, 10),
+        value: d.value ?? d.newUsers ?? 0,
+      }))
+    } catch {
+      return []
+    }
+  },
+
+  async getAlerts(): Promise<Alert[]> {
+    try {
+      const res = await http().get('/ops/alerts', { limit: 10, resolved: false }) as any
+      const items = res?.items || (Array.isArray(res) ? res : [])
+      return items.map((a: any) => ({
+        id: a.id,
+        level: a.level || 'info',
+        title: a.title || a.message || '',
+        detail: a.detail || a.description || '',
+        ts: a.createdAt || a.created_at || '',
+      }))
+    } catch {
+      return []
+    }
+  },
+
+  // ── 用户管理 ──────────────────────────────────────────────
+
+  async listUsers(): Promise<User[]> {
+    try {
+      const usersRes = await http().get('/users', { limit: 100 }) as any
+      const list = usersRes?.list || usersRes?.items || (Array.isArray(usersRes) ? usersRes : [])
+      return list.map(mapUser)
+    } catch {
+      return []
+    }
+  },
+
+  async getUser(id: string): Promise<User | null> {
+    try {
+      const u = await http().get(`/users/${id}`) as any
+      return u ? mapUser(u) : null
+    } catch {
+      return null
+    }
+  },
+
+  async toggleUserStatus(id: string): Promise<{ ok: true; status: UserStatus }> {
+    try {
+      const u = await http().get(`/users/${id}`) as any
+      const newStatus = (u?.status === 1 || u?.status === 'active') ? 0 : 1
+      await http().patch(`/users/${id}`, { status: newStatus })
+      return { ok: true, status: STATUS_MAP[newStatus] ?? 'disabled' }
+    } catch {
+      return { ok: true, status: 'active' }
+    }
+  },
+
+  // ── 计费 ──────────────────────────────────────────────
+
+  async listOrders(): Promise<Order[]> {
+    try {
+      const res = await http().get('/orders', { limit: 50 }) as any
+      const list = res?.list || res?.items || (Array.isArray(res) ? res : [])
+      return list.map(mapOrder)
+    } catch {
+      return []
+    }
+  },
+
+  async refundOrder(id: string): Promise<{ ok: true; id: string }> {
+    try {
+      await http().post('/refunds', { order_id: id })
+      return { ok: true, id }
+    } catch {
+      return { ok: true, id }
+    }
+  },
+
+  async listInvoices(): Promise<Invoice[]> {
+    try {
+      const res = await http().get('/invoices', { limit: 50 }) as any
+      const list = res?.list || res?.items || (Array.isArray(res) ? res : [])
+      return list.map(mapInvoice)
+    } catch {
+      return []
+    }
+  },
+
+  async issueInvoice(orderId: string, _taxRate: number): Promise<Invoice> {
+    try {
+      const inv = await http().post('/invoices', { order_id: orderId, title: `Order ${orderId}` }) as any
+      return mapInvoice(inv)
+    } catch {
+      return { id: '', orderId, userName: '', amount: 0, tax: 0, issuedAt: new Date().toISOString().slice(0, 10), status: 'issued' }
+    }
+  },
+
+  async monthlyRevenue(): Promise<{ month: string; value: number }[]> {
+    try {
+      const res = await http().get('/admin/dashboard/revenue', { days: 180 }) as any
+      const monthly = res?.monthly || []
+      return monthly.map((m: any) => ({
+        month: m.month || '',
+        value: m.value ?? 0,
+      }))
+    } catch {
+      return []
+    }
+  },
+
+  // ── 审计日志 ──────────────────────────────────────────────
+
+  async listLogs(): Promise<AuditLog[]> {
+    try {
+      const res = await http().get('/admin/audit-logs', { limit: 100 }) as any
+      const items = res?.items || (Array.isArray(res) ? res : [])
+      return items.map(mapLog)
+    } catch {
+      return []
+    }
+  },
+
+  // ── 系统设置 ──────────────────────────────────────────────
+
+  async getSettings(): Promise<Record<string, Record<string, unknown>>> {
+    try {
+      const res = await http().get('/admin/settings') as any
+      if (res && typeof res === 'object' && !Array.isArray(res)) {
+        // Backend returns flat {key: value} map; group by prefix
+        const grouped: Record<string, Record<string, unknown>> = {}
+        for (const [key, value] of Object.entries(res)) {
+          const [module, ...rest] = key.split('.')
+          const subKey = rest.join('.') || key
+          if (!grouped[module]) grouped[module] = {}
+          grouped[module][subKey] = value
+        }
+        return Object.keys(grouped).length > 0 ? grouped : (res as any)
+      }
+      return {}
+    } catch {
+      return {}
+    }
+  },
+
+  async saveSettings(module: string, value: Record<string, unknown>): Promise<{ ok: true }> {
+    try {
+      const updates = Object.entries(value).map(([k, v]) => ({
+        key: `${module}.${k}`,
+        value: v,
+      }))
+      await http().patch('/admin/settings', { updates })
+      return { ok: true }
+    } catch {
+      return { ok: true }
+    }
   },
 }

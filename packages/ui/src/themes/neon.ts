@@ -5,6 +5,14 @@
 export const neonTheme = {
   name: 'neon',
   tokens: {
+    /* brand palette (v2.0) */
+    'brand-cyan': '#00BFA5',
+    'brand-cyan-dark': '#0D9488',
+    'brand-cyan-light': '#5EEAD4',
+    'brand-purple': '#7C3AED',
+    'brand-purple-dark': '#5B21B6',
+    'brand-purple-light': '#A78BFA',
+
     primary: '#ff00aa',
     'primary-hover': '#ff33bb',
     'primary-active': '#cc0088',

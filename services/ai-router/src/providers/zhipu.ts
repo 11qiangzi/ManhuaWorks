@@ -1,5 +1,5 @@
 // 智谱 GLM（glm-4 / glm-4v）实现
-// 智谱使用自研鉴权头（Authorization: Bearer），协议基本 OpenAI 兼容。
+// 智谱使用 Bearer 鉴权，协议基本 OpenAI 兼容。
 
 import { BaseProvider, type FetchLike } from "./base.js";
 import { config } from "../config.js";
@@ -14,6 +14,8 @@ import type {
   ProviderId,
   VideoRequest,
   VideoResponse,
+  AudioRequest,
+  AudioResponse,
 } from "../types.js";
 import { ProviderError } from "../types.js";
 
@@ -38,6 +40,16 @@ const MODELS: ModelInfo[] = [
     typicalLatencyMs: 900,
     qualityScore: 87,
   },
+  {
+    id: "cogview-3",
+    provider: "zhipu",
+    capabilities: ["image"],
+    contextWindow: 0,
+    costPer1kInput: 0,
+    costPer1kOutput: 0.025, // 按张
+    typicalLatencyMs: 15000,
+    qualityScore: 84,
+  },
 ];
 
 export class ZhipuProvider extends BaseProvider {
@@ -55,23 +67,23 @@ export class ZhipuProvider extends BaseProvider {
     if (!model) throw new ProviderError(this.id, modelId, 400, `unknown model ${modelId}`);
 
     const start = Date.now();
-    const res = await this.fetchImpl(`${this.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: this.authHeaders(apiKey),
-      body: JSON.stringify({
-        model: modelId,
-        messages: req.messages,
-        temperature: req.temperature ?? 0.7,
-        max_tokens: req.maxTokens ?? 1024,
-        top_p: req.topP,
-        stream: false,
-      }),
-      signal: AbortSignal.timeout(60_000),
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      throw new ProviderError(this.id, modelId, res.status, `chat failed: ${text}`);
-    }
+    const res = await this.safeFetch(
+      `${this.baseUrl}/chat/completions`,
+      {
+        method: "POST",
+        headers: this.authHeaders(apiKey),
+        body: JSON.stringify({
+          model: modelId,
+          messages: req.messages,
+          temperature: req.temperature ?? 0.7,
+          max_tokens: req.maxTokens ?? 1024,
+          top_p: req.topP,
+          stream: false,
+        }),
+        signal: AbortSignal.timeout(config.requestTimeoutMs),
+      },
+      { provider: this.id, model: modelId },
+    );
     const data = (await res.json()) as {
       id?: string;
       model: string;
@@ -101,16 +113,16 @@ export class ZhipuProvider extends BaseProvider {
     if (!model) throw new ProviderError(this.id, modelId, 400, `unknown model ${modelId}`);
 
     const start = Date.now();
-    const res = await this.fetchImpl(`${this.baseUrl}/embeddings`, {
-      method: "POST",
-      headers: this.authHeaders(apiKey),
-      body: JSON.stringify({ model: modelId, input: req.input }),
-      signal: AbortSignal.timeout(30_000),
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      throw new ProviderError(this.id, modelId, res.status, `embed failed: ${text}`);
-    }
+    const res = await this.safeFetch(
+      `${this.baseUrl}/embeddings`,
+      {
+        method: "POST",
+        headers: this.authHeaders(apiKey),
+        body: JSON.stringify({ model: modelId, input: req.input }),
+        signal: AbortSignal.timeout(30_000),
+      },
+      { provider: this.id, model: modelId },
+    );
     const data = (await res.json()) as {
       model: string;
       data: { embedding: number[] }[];
@@ -131,11 +143,46 @@ export class ZhipuProvider extends BaseProvider {
     };
   }
 
-  override async image(_req: ImageRequest, _apiKey: string): Promise<ImageResponse> {
-    throw new ProviderError(this.id, "*", 400, "zhipu does not support image in this router");
+  override async image(req: ImageRequest, apiKey: string): Promise<ImageResponse> {
+    const modelId = req.model ?? "cogview-3";
+    const model = this.getModel(modelId);
+    if (!model) throw new ProviderError(this.id, modelId, 400, `unknown model ${modelId}`);
+
+    const start = Date.now();
+    const res = await this.safeFetch(
+      `${this.baseUrl}/images/generations`,
+      {
+        method: "POST",
+        headers: this.authHeaders(apiKey),
+        body: JSON.stringify({
+          model: modelId,
+          prompt: req.prompt,
+          size: req.size ?? "1024x1024",
+          n: req.n ?? 1,
+        }),
+        signal: AbortSignal.timeout(120_000),
+      },
+      { provider: this.id, model: modelId },
+    );
+    const data = (await res.json()) as { data: { url?: string; b64_json?: string }[] };
+    const urls = data.data.map((d) => d.url ?? `data:image/png;base64,${d.b64_json}`);
+    const n = urls.length;
+
+    return {
+      model: modelId,
+      provider: this.id,
+      urls,
+      cost: Number((n * model.costPer1kOutput).toFixed(6)),
+      latencyMs: Date.now() - start,
+      usedByok: false,
+    };
   }
 
   override async video(_req: VideoRequest, _apiKey: string): Promise<VideoResponse> {
     throw new ProviderError(this.id, "*", 400, "zhipu does not support video");
+  }
+
+  override async audio(_req: AudioRequest, _apiKey: string): Promise<AudioResponse> {
+    throw new ProviderError(this.id, "*", 400, "zhipu does not support audio");
   }
 }

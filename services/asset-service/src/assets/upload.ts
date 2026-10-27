@@ -202,3 +202,4 @@ uploadRoute.delete('/:id', async (c) => {
   await db.delete(assets).where(eq(assets.id, id));
   return c.json({ deleted: true, id });
 });
+

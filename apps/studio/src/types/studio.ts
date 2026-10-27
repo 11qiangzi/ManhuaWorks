@@ -38,12 +38,12 @@ export const STUDIO_THEMES: StudioThemeMeta[] = [
   { id: 'national-ink', label: '国风水墨', icon: '🖌️', primary: '#fdf6e3', accent: '#1c1917', dark: false },
 ]
 
-/** 分镜（shot）—— 项目编辑器的核心单元 */
+/** 镜头（shot）—— 项目编辑器的核心单元 */
 export interface Shot {
   id: string
   /** 序号（1-based 显示） */
   index: number
-  /** 分镜标题 */
+  /** 镜头标题 */
   title: string
   /** 场景描述（用于 AI 提示词） */
   description: string
@@ -144,7 +144,7 @@ export interface Project {
   themeId: StudioThemeId
   /** 总目标时长（秒） */
   targetDuration: number
-  /** 分镜列表 */
+  /** 镜头列表 */
   shots: Shot[]
   /** 标签 */
   tags: string[]

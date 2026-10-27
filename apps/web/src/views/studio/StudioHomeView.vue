@@ -15,6 +15,7 @@ import { useRouter } from 'vue-router'
 import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
 import FailoverIndicator from '@/components/studio/FailoverIndicator.vue'
 import { useTheme } from '@/composables/useTheme'
+import { getToken } from '@/utils/auth'
 
 const router = useRouter()
 const { currentMeta } = useTheme()
@@ -41,6 +42,7 @@ interface ProjectListResp {
 const user = ref<UserInfo | null>(null)
 const projects = ref<Project[]>([])
 const loading = ref(true)
+const usingMockData = ref(false)
 const filter = ref<'all' | '0' | '1' | '2' | '3'>('all')
 
 /** 创建项目弹窗 */
@@ -85,7 +87,7 @@ const stats = computed(() => {
 async function loadProjects() {
   loading.value = true
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     if (token) {
       const res = await fetch('/v1/projects?page=1&page_size=50', {
         headers: { Authorization: `Bearer ${token}` }
@@ -98,8 +100,10 @@ async function loadProjects() {
     }
     // 未登录 / 接口不通 → 占位数据
     projects.value = MOCK_PROJECTS
+    usingMockData.value = true
   } catch {
     projects.value = MOCK_PROJECTS
+    usingMockData.value = true
   } finally {
     loading.value = false
   }
@@ -120,7 +124,7 @@ async function onCreate() {
   if (!form.title.trim()) return
   submitting.value = true
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     if (token) {
       const res = await fetch('/v1/projects', {
         method: 'POST',
@@ -303,6 +307,11 @@ const ART_STYLES = [
         <div v-if="loading" class="studio-home__loading">
           <div class="studio-home__spinner" />
           <span>加载项目中...</span>
+        </div>
+
+        <!-- Mock 数据警告 -->
+        <div v-if="!loading && usingMockData" class="studio-home__mock-warn">
+          ⚠️ 当前显示演示数据。请登录后查看真实项目，或<a href="/login" class="studio-home__mock-link">立即登录</a>。
         </div>
 
         <!-- 空 -->
@@ -700,6 +709,22 @@ const ART_STYLES = [
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.studio-home__mock-warn {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 12px 24px;
+  font-size: 13px;
+  color: #f59e0b;
+}
+
+.studio-home__mock-link {
+  color: var(--accent);
+  text-decoration: underline;
+  font-weight: 600;
+}
 
 .studio-home__empty {
   display: flex;

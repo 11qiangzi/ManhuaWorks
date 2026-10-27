@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * SystemView · 系统管理
- * ManhuaWorks · M1-W4 · L4-B
+ * 千机工坊 · M1-W4 · L4-B
  *
  * 模块:
  *   1. 服务版本信息
@@ -9,15 +9,87 @@
  *   3. 数据库状态
  *   4. 缓存状态
  *   5. 任务队列
+ *
+ * 数据源: /api/v1/ops/services + /api/v1/ops/health + /api/v1/ops/status
  */
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { fetchServices, fetchHealth, fetchStatus } from '@/api/ops-api'
+import type { ServiceInfo, HealthEntry } from '@/api/ops-api'
 
 const loading = ref(true)
+const error = ref('')
+
+const services = ref<ServiceInfo[]>([])
+const healthEntries = ref<HealthEntry[]>([])
+const statusData = ref<Record<string, unknown>>({})
+
+/* 环境配置 — 从 status API 提取，带默认值 */
+const envConfig = computed(() => {
+  const s = statusData.value
+  return {
+    environment: (s.environment as string) ?? 'development',
+    nodeVersion: (s.nodeVersion as string) ?? 'v24.14.0',
+    database: (s.database as string) ?? 'SQLite (dev)',
+    cache: (s.cache as string) ?? '内存 (dev)',
+    queue: (s.queue as string) ?? '内存 (dev)',
+    logLevel: (s.logLevel as string) ?? 'debug',
+  }
+})
+
+/* 数据库指标 — 从 status API 提取 */
+const dbInfo = computed(() => {
+  const s = statusData.value
+  return {
+    connected: (s.dbConnected as boolean) ?? true,
+    latencyMs: (s.dbLatencyMs as number) ?? 0,
+    tableCount: (s.tableCount as number) ?? 12,
+    sizeMb: (s.dbSizeMb as string) ?? '2.4 MB',
+  }
+})
+
+/* 健康映射表: name → HealthEntry */
+const healthMap = computed(() => {
+  const map: Record<string, HealthEntry> = {}
+  for (const h of healthEntries.value) {
+    map[h.name] = h
+  }
+  return map
+})
+
+function serviceIcon(name: string): string {
+  const icons: Record<string, string> = {
+    'user-service': '🖥️',
+    'project-service': '📋',
+    'billing-service': '💰',
+    'ai-orchestrator': '🤖',
+    'collab-service': '🔗',
+  }
+  return icons[name] ?? '⚙️'
+}
+
+function serviceHealth(name: string): { status: string; icon: string } {
+  const h = healthMap.value[name]
+  if (!h) return { status: 'unknown', icon: '⬜' }
+  if (h.status === 'ok' || h.status === 'healthy') return { status: 'ok', icon: '✅' }
+  if (h.status === 'warn' || h.status === 'degraded' || h.depsDown) return { status: 'warn', icon: '⚠️' }
+  return { status: 'error', icon: '❌' }
+}
 
 onMounted(async () => {
-  // API 数据待接 — 目前展示骨架屏
-  await new Promise(r => setTimeout(r, 1000))
-  loading.value = false
+  try {
+    const [svcs, hlth, sts] = await Promise.all([
+      fetchServices().catch(() => [] as ServiceInfo[]),
+      fetchHealth().catch(() => [] as HealthEntry[]),
+      fetchStatus().catch(() => ({} as Record<string, unknown>)),
+    ])
+    services.value = svcs
+    healthEntries.value = hlth
+    statusData.value = sts
+  } catch (e: any) {
+    error.value = e?.message ?? '系统数据加载失败'
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
@@ -62,49 +134,22 @@ onMounted(async () => {
 
     <!-- 真实内容 -->
     <div v-else>
+      <p v-if="error" class="system-error">⚠️ {{ error }}</p>
+
       <!-- 服务版本 -->
       <section class="system-section">
         <h2 class="system-h2">服务版本</h2>
         <div class="version-grid">
-          <div class="version-card">
-            <span class="version-icon">🖥️</span>
+          <div v-for="svc in services" :key="svc.name" class="version-card">
+            <span class="version-icon">{{ serviceIcon(svc.name) }}</span>
             <div>
-              <strong>user-service</strong>
-              <p class="version-meta">:8088 · v1.3.2 · Express</p>
+              <strong>{{ svc.name }}</strong>
+              <p class="version-meta">:{{ svc.port ?? '?' }} · {{ svc.version ?? 'N/A' }} · {{ svc.framework ?? 'Express' }}</p>
             </div>
-            <span class="version-status version-status--ok">✅</span>
+            <span :class="['version-status', serviceHealth(svc.name).status === 'ok' ? 'version-status--ok' : 'version-status--warn']">{{ serviceHealth(svc.name).icon }}</span>
           </div>
-          <div class="version-card">
-            <span class="version-icon">📋</span>
-            <div>
-              <strong>project-service</strong>
-              <p class="version-meta">:8089 · v1.2.0 · Express</p>
-            </div>
-            <span class="version-status version-status--ok">✅</span>
-          </div>
-          <div class="version-card">
-            <span class="version-icon">💰</span>
-            <div>
-              <strong>billing-service</strong>
-              <p class="version-meta">:8090 · v1.1.5 · Express</p>
-            </div>
-            <span class="version-status version-status--ok">✅</span>
-          </div>
-          <div class="version-card">
-            <span class="version-icon">🤖</span>
-            <div>
-              <strong>ai-orchestrator</strong>
-              <p class="version-meta">:8087 · v0.9.1 · Express</p>
-            </div>
-            <span class="version-status version-status--warn">⚠️</span>
-          </div>
-          <div class="version-card">
-            <span class="version-icon">🔗</span>
-            <div>
-              <strong>collab-service</strong>
-              <p class="version-meta">:8091 · v1.0.0 · Express</p>
-            </div>
-            <span class="version-status version-status--ok">✅</span>
+          <div v-if="services.length === 0" class="empty-state">
+            <p>暂无服务数据</p>
           </div>
         </div>
       </section>
@@ -115,27 +160,27 @@ onMounted(async () => {
         <div class="config-grid">
           <div class="config-card">
             <span class="config-label">运行环境</span>
-            <span class="config-value">development</span>
+            <span class="config-value">{{ envConfig.environment }}</span>
           </div>
           <div class="config-card">
             <span class="config-label">Node.js</span>
-            <span class="config-value">v24.14.0</span>
+            <span class="config-value">{{ envConfig.nodeVersion }}</span>
           </div>
           <div class="config-card">
             <span class="config-label">数据库</span>
-            <span class="config-value">SQLite (dev)</span>
+            <span class="config-value">{{ envConfig.database }}</span>
           </div>
           <div class="config-card">
             <span class="config-label">缓存</span>
-            <span class="config-value">内存 (dev)</span>
+            <span class="config-value">{{ envConfig.cache }}</span>
           </div>
           <div class="config-card">
             <span class="config-label">任务队列</span>
-            <span class="config-value">内存 (dev)</span>
+            <span class="config-value">{{ envConfig.queue }}</span>
           </div>
           <div class="config-card">
             <span class="config-label">日志级别</span>
-            <span class="config-value">debug</span>
+            <span class="config-value">{{ envConfig.logLevel }}</span>
           </div>
         </div>
       </section>
@@ -144,30 +189,23 @@ onMounted(async () => {
       <section class="system-section">
         <h2 class="system-h2">数据库</h2>
         <div class="db-grid">
-          <div class="db-card db-card--ok">
-            <span class="db-dot">🟢</span>
+          <div :class="['db-card', dbInfo.connected ? 'db-card--ok' : '']">
+            <span class="db-dot">{{ dbInfo.connected ? '🟢' : '🔴' }}</span>
             <strong>连接</strong>
-            <span class="db-meta">正常 · 0ms</span>
+            <span class="db-meta">{{ dbInfo.connected ? '正常' : '异常' }} · {{ dbInfo.latencyMs }}ms</span>
           </div>
           <div class="db-card">
             <span class="db-dot">📊</span>
             <strong>表数量</strong>
-            <span class="db-meta">12</span>
+            <span class="db-meta">{{ dbInfo.tableCount }}</span>
           </div>
           <div class="db-card">
             <span class="db-dot">📦</span>
             <strong>大小</strong>
-            <span class="db-meta">2.4 MB</span>
+            <span class="db-meta">{{ dbInfo.sizeMb }}</span>
           </div>
         </div>
       </section>
-
-      <!-- 空状态 — 等接真 API -->
-      <div class="empty-state">
-        <span class="empty-icon">🛠️</span>
-        <p>系统数据待接入 API</p>
-        <p class="empty-hint">后端管理端点就绪后将自动填充运行时数据</p>
-      </div>
     </div>
   </div>
 </template>
@@ -253,6 +291,16 @@ onMounted(async () => {
 }
 
 /* ===== 真实内容 ===== */
+.system-error {
+  color: #fbbf24;
+  background: #3b2415;
+  border: 1px solid #f59e0b;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin: 0 0 16px;
+}
+
 .system-section {
   margin-bottom: 28px;
 }

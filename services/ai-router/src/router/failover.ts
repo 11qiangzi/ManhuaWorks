@@ -1,7 +1,7 @@
 // 故障转移：连续失败 N 次自动切备用 Provider。
 // 复用 selector 的 ranked 列表，跳过失败项。
 
-import { registry } from "./registry.js";
+import { registry, ProviderRegistry } from "./registry.js";
 import { select, type SelectOptions, type Selection } from "./selector.js";
 import type { ProviderId, TaskType } from "../types.js";
 import { ProviderError } from "../types.js";
@@ -20,7 +20,8 @@ export interface FailoverResult<T> {
 }
 
 /** 用 tryFn 依次尝试 ranked 列表，跳过连续失败 >= 阈值的 provider。
- *  注意：selector 已经过滤了不健康的 provider；这里再做动态跳过。
+ *  半开路由：熔断超过 HALF_OPEN_AFTER_MS 的 provider 会被 candidatesFor 加入候选末尾。
+ *  这里允许这些半开路 provider 各做一次真实请求来尝试恢复。
  */
 export async function withFailover<T>(
   options: SelectOptions,
@@ -43,13 +44,21 @@ export async function withFailover<T>(
       const latency = Date.now() - start;
       const message = err instanceof Error ? err.message : String(err);
       attempts.push({ provider, modelId, ok: false, error: message, latencyMs: latency });
-      registry.recordFailure(provider, message);
+      // Only count 5xx/network errors toward circuit breaker, not 4xx client errors
+      const errStatus = (err as any)?.status ?? (err as any)?.statusCode ?? 500;
+      if (errStatus >= 500) {
+        registry.recordFailure(provider, message);
+      }
       lastErr = err;
 
-      // 触发熔断阈值后，下一轮 select 会自动跳过
       const health = registry.getHealth(provider);
-      if (health && health.consecutiveFailures >= 3) {
-        // 已熔断，继续下一个候选
+      const now = Date.now();
+      const isHalfOpen =
+        health && !health.healthy &&
+        now - health.lastCheckedAt > ProviderRegistry.HALF_OPEN_AFTER_MS;
+
+      // 已熔断且还未到半开窗口：跳过此候选
+      if (health && health.consecutiveFailures >= 3 && !isHalfOpen) {
         continue;
       }
     }

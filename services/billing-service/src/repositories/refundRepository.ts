@@ -59,6 +59,21 @@ export const refundRepository = {
     return rows.map(rowToRefund);
   },
 
+  async countByUser(userId: string): Promise<number> {
+    const { rows } = await query<{ count: string }>(
+      `SELECT COUNT(*) FROM refunds WHERE user_id = $1`,
+      [userId]
+    );
+    return Number(rows[0]!.count);
+  },
+
+  async countAll(): Promise<number> {
+    const { rows } = await query<{ count: string }>(
+      `SELECT COUNT(*) FROM refunds`
+    );
+    return Number(rows[0]!.count);
+  },
+
   async approve(
     id: string,
     approverId: string,

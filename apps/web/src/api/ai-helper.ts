@@ -1,9 +1,9 @@
 /**
  * ai-helper — AI 辅助 API 客户端
- * ManhuaWorks · W3 工坊流程精修
+ * 千机工坊 · W3 工坊流程精修
  *
  * 6 大功能：
- * 1. auto_storyboard   — 自动分镜
+ * 1. auto_storyboard   — 自动镜头
  * 2. suggest_shot      — 推荐镜头
  * 3. dialogue_polish   — 对白润色
  * 4. expression_gen    — 表情生成
@@ -28,7 +28,7 @@ export type AIHelperType =
   | 'scene_lighting'
   | 'consistency_check'
 
-/** 自动分镜结果 */
+/** 自动镜头结果 */
 export interface AutoStoryboardResult {
   shots: Array<{
     id: string

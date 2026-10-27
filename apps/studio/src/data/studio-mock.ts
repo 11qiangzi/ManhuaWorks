@@ -36,7 +36,7 @@ function id(prefix: string, n: number | string): string {
   return `${prefix}_${n}_${hashStr(String(n)).toString(36).slice(0, 4)}`
 }
 
-/** 8 个分镜 mock */
+/** 8 个镜头 mock */
 function makeShots(projectSeed: number): Shot[] {
   const titles = [
     '雨夜开场 · 少年初登场',
@@ -131,8 +131,8 @@ function makeShots(projectSeed: number): Shot[] {
     duration: durations[i] ?? 4.0,
     status: statuses[i] ?? 'draft',
     imageUrl: i < 4 ? `https://placehold.co/320x180/0e0f12/f59e0b?text=Shot+${i + 1}` : null,
-    tags: ['mock', `分镜-${i + 1}`],
-    note: i === 2 ? '高潮分镜，注意光影' : '',
+    tags: ['mock', `镜头-${i + 1}`],
+    note: i === 2 ? '高潮镜头，注意光影' : '',
     weight: 1.0,
     locked: i === 0,
     createdAt: now - (8 - i) * 60000,
@@ -240,15 +240,15 @@ export { SCENE_TEMPLATES_V2 }
 export const MOCK_TOOLS: StudioTool[] = [
   {
     id: 'tpl-script',
-    name: '分镜脚本生成',
+    name: '镜头脚本生成',
     category: 'text',
-    description: '根据剧情大纲，调用 LLM 生成分镜描述、对白、旁白',
+    description: '根据剧情大纲，调用 LLM 生成镜头描述、对白、旁白',
     icon: '📝',
     color: 'blue',
     promptTemplate:
-      '你是一位资深漫画编剧。请为以下剧情生成 {{count}} 个分镜：\n\n剧情：{{plot}}\n风格：{{style}}\n要求：{{requirements}}',
+      '你是一位资深动画编剧。请为以下剧情生成 {{count}} 个镜头：\n\n剧情：{{plot}}\n风格：{{style}}\n要求：{{requirements}}',
     promptVars: [
-      { name: 'count', label: '分镜数', type: 'number', default: '5', required: true },
+      { name: 'count', label: '镜头数', type: 'number', default: '5', required: true },
       { name: 'plot', label: '剧情描述', type: 'textarea', default: '少年在雨夜觉醒', required: true, help: '一段话描述核心剧情' },
       { name: 'style', label: '风格', type: 'select', default: '赛博朋克', options: ['赛博朋克', '古风仙侠', '现代校园', '民国', '末日', '海洋', '森林'], required: false },
       { name: 'requirements', label: '额外要求', type: 'textarea', default: '突出少年成长', required: false },

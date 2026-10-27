@@ -75,23 +75,23 @@ export const DEMO_USERS: DemoUser[] = [
   },
 ];
 
-/** 3 个订阅档（按 plan 维度 upsert；每用户 1 条订阅） */
+/** 4 个订阅档（按 plan 维度 upsert；每用户 1 条订阅） */
 export interface DemoPlan {
-  plan: "free" | "pro" | "team";
+  plan: "free" | "basic" | "pro" | "enterprise";
   userId: string;
-  monthlyPriceCents: number; // 月费
+  monthlyPriceCents: number; // 月费（分）
   currency: string;
 }
 
 export const DEMO_PLANS: DemoPlan[] = [
-  { plan: "free", userId: DEMO_USER_IDS.free, monthlyPriceCents: 0, currency: "USD" },
-  { plan: "pro", userId: DEMO_USER_IDS.creator, monthlyPriceCents: 2900, currency: "USD" },
-  { plan: "team", userId: DEMO_USER_IDS.business, monthlyPriceCents: 9900, currency: "USD" },
+  { plan: "free", userId: DEMO_USER_IDS.free, monthlyPriceCents: 0, currency: "CNY" },
+  { plan: "basic", userId: DEMO_USER_IDS.creator, monthlyPriceCents: 3900, currency: "CNY" },
+  { plan: "pro", userId: DEMO_USER_IDS.business, monthlyPriceCents: 14900, currency: "CNY" },
 ];
 
-/** admin 的订阅也写一份（team，但角色是 admin） */
+/** admin 的订阅也写一份（enterprise，但角色是 admin） */
 export const DEMO_PLANS_ADMIN: DemoPlan[] = [
-  { plan: "team", userId: DEMO_USER_IDS.admin, monthlyPriceCents: 9900, currency: "USD" },
+  { plan: "enterprise", userId: DEMO_USER_IDS.admin, monthlyPriceCents: 0, currency: "CNY" },
 ];
 
 /** 2 根测试 api-key（admin + creator） */

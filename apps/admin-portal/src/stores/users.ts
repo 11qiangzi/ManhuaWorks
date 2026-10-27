@@ -1,6 +1,6 @@
 /**
  * admin-portal · users Pinia store — 接 user-service
- * ManhuaWorks · L2 task 8
+ * 千机工坊 · L2 task 8
  *
  * 列表 / 搜索 / 详情 / 改密 / 改 role / 禁用（封禁）
  */

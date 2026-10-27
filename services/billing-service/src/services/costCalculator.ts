@@ -13,6 +13,15 @@
  *  - DeepSeek   deepseek-coder      ¥0.001 / 1K input,  ¥0.002 / 1K output
  *  - MiniMax   MiniMax-Text-01     ¥0.001 / 1K input,  ¥0.008 / 1K output
  *  - MiniMax   MiniMax-Text-01-v2  ¥0.0008/ 1K input,  ¥0.0064/ 1K output
+ *  - Volcano   doubao-pro           ¥0.002 / 1K input,  ¥0.002 / 1K output  (image ¥0.04/张, video ¥0.3/s)
+ *  - Volcano   doubao-lite          ¥0.0008 / 1K input, ¥0.001 / 1K output
+ *  - Volcano   Seedance-video       video ¥0.3/s
+ *  - Alibaba   qwen-plus            ¥0.001 / 1K input,  ¥0.002 / 1K output  (image ¥0.03/张, video ¥0.2/s)
+ *  - Alibaba   qwen-turbo           ¥0.0004 / 1K input, ¥0.0008 / 1K output
+ *  - Alibaba   wanx-v2              image ¥0.03/张
+ *  - Zhipu     glm-4-plus           ¥0.003 / 1K input,  ¥0.003 / 1K output  (image ¥0.05/张)
+ *  - Zhipu     glm-4-flash          ¥0.0005 / 1K input, ¥0.0005 / 1K output
+ *  - Zhipu     cogview-4            image ¥0.05/张
  *
  * 说明：
  *  - 价格表为人民币（CNY）口径，按"分"计算避免浮点；
@@ -35,6 +44,10 @@ export interface PriceEntry {
   promptPer1kCents: number;       // 入 token 单价（分/1K）
   completionPer1kCents: number;   // 出 token 单价（分/1K）
   currency: string;
+  /** 图片生成单价（分/张），仅部分 provider 有 */
+  imagePerUnitCents?: number;
+  /** 视频生成单价（分/秒），仅部分 provider 有 */
+  videoPerSecCents?: number;
 }
 
 /** provider → model → price */
@@ -43,7 +56,7 @@ export type PriceTable = Record<AiProvider, Record<string, PriceEntry>>;
 /** provider → 默认价（model 未命中时使用） */
 export type ProviderDefault = Record<AiProvider, PriceEntry>;
 
-/** 5 个 provider 的价目表 */
+/** 8 个 provider 的价目表 */
 export const PRICE_TABLE: PriceTable = {
   openai: {
     "gpt-4o":           { promptPer1kCents: 1.8,    completionPer1kCents: 5.4,    currency: "CNY" },
@@ -66,6 +79,21 @@ export const PRICE_TABLE: PriceTable = {
     "MiniMax-Text-01":    { promptPer1kCents: 0.1,  completionPer1kCents: 0.8,    currency: "CNY" },
     "MiniMax-Text-01-v2": { promptPer1kCents: 0.08, completionPer1kCents: 0.64,   currency: "CNY" },
   },
+  volcano: {
+    "doubao-pro":       { promptPer1kCents: 0.2,   completionPer1kCents: 0.2,   currency: "CNY", imagePerUnitCents: 4,  videoPerSecCents: 30 },
+    "doubao-lite":      { promptPer1kCents: 0.08,  completionPer1kCents: 0.1,   currency: "CNY", imagePerUnitCents: 4,  videoPerSecCents: 30 },
+    "Seedance-video":   { promptPer1kCents: 0,     completionPer1kCents: 0,     currency: "CNY", videoPerSecCents: 30 },
+  },
+  alibaba: {
+    "qwen-plus":        { promptPer1kCents: 0.1,   completionPer1kCents: 0.2,   currency: "CNY", imagePerUnitCents: 3,  videoPerSecCents: 20 },
+    "qwen-turbo":       { promptPer1kCents: 0.04,  completionPer1kCents: 0.08,  currency: "CNY", imagePerUnitCents: 3,  videoPerSecCents: 20 },
+    "wanx-v2":          { promptPer1kCents: 0,     completionPer1kCents: 0,     currency: "CNY", imagePerUnitCents: 3 },
+  },
+  zhipu: {
+    "glm-4-plus":       { promptPer1kCents: 0.3,   completionPer1kCents: 0.3,   currency: "CNY", imagePerUnitCents: 5 },
+    "glm-4-flash":      { promptPer1kCents: 0.05,  completionPer1kCents: 0.05,  currency: "CNY", imagePerUnitCents: 5 },
+    "cogview-4":        { promptPer1kCents: 0,     completionPer1kCents: 0,     currency: "CNY", imagePerUnitCents: 5 },
+  },
 };
 
 /** 未命中具体 model 时，按 provider 给一个保守默认价（取该 provider 已知 model 的中位） */
@@ -74,7 +102,10 @@ export const PROVIDER_DEFAULT: ProviderDefault = {
   anthropic: { promptPer1kCents: 2.4,   completionPer1kCents: 9.6,   currency: "CNY" },
   google:    { promptPer1kCents: 0.7,   completionPer1kCents: 2.1,   currency: "CNY" },
   deepseek:  { promptPer1kCents: 0.1,   completionPer1kCents: 0.2,   currency: "CNY" },
-  minimax: { promptPer1kCents: 0.1,   completionPer1kCents: 0.8,   currency: "CNY" },
+  minimax:   { promptPer1kCents: 0.1,   completionPer1kCents: 0.8,   currency: "CNY" },
+  volcano:   { promptPer1kCents: 0.2,   completionPer1kCents: 0.2,   currency: "CNY", imagePerUnitCents: 4,  videoPerSecCents: 30 },
+  alibaba:   { promptPer1kCents: 0.1,   completionPer1kCents: 0.2,   currency: "CNY", imagePerUnitCents: 3,  videoPerSecCents: 20 },
+  zhipu:     { promptPer1kCents: 0.3,   completionPer1kCents: 0.3,   currency: "CNY", imagePerUnitCents: 5 },
 };
 
 export interface CalculateCostInput {
@@ -269,4 +300,7 @@ export const ALL_PROVIDERS: AiProvider[] = [
   "google",
   "deepseek",
   "minimax",
+  "volcano",
+  "alibaba",
+  "zhipu",
 ];

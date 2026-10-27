@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * HomeView · 用户后台首页
- * ManhuaWorks · W4 用户后台
+ * 千机工坊 · W4 用户后台
  *
  * 区块：
  * 1. 顶部欢迎条 + 主题切换 + 用户卡片
@@ -22,16 +22,104 @@ import { useProjects } from '@/composables/useProjects'
 import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
+const { profile, creditsUsed, creditsTotal, creditsPercent, logout, load: loadUser } = useUser()
+const { projects, total, counts, archive, remove, load: loadProjects } = useProjects()
 const { currentMeta } = useTheme()
-const { profile, creditsUsed, creditsTotal, creditsPercent, load: loadUser, logout } = useUser()
-const { projects, total, counts, load: loadProjects, remove, archive } = useProjects({ autoLoad: false })
+
+/* ===== 16-tag mood system for BGM ===== */
+const MOOD_TAGS = [
+  { id: 'suspense',  label: '悬疑', color: '#6366f1' },
+  { id: 'battle',    label: '战斗', color: '#ef4444' },
+  { id: 'warm',      label: '温情', color: '#f59e0b' },
+  { id: 'scifi',     label: '科幻', color: '#06b6d4' },
+  { id: 'epic',      label: '史诗', color: '#8b5cf6' },
+  { id: 'daily',     label: '日常', color: '#10b981' },
+  { id: 'dark',      label: '黑暗', color: '#374151' },
+  { id: 'healing',   label: '治愈', color: '#34d399' },
+  { id: 'romantic',  label: '浪漫', color: '#ec4899' },
+  { id: 'tense',     label: '紧张', color: '#f97316' },
+  { id: 'mystery',   label: '神秘', color: '#7c3aed' },
+  { id: 'comedy',    label: '搞笑', color: '#fbbf24' },
+  { id: 'sadness',   label: '悲伤', color: '#3b82f6' },
+  { id: 'adventure', label: '冒险', color: '#14b8a6' },
+  { id: 'horror',    label: '恐怖', color: '#991b1b' },
+  { id: 'fantasy',   label: '奇幻', color: '#a855f7' }
+] as const
+
+function moodLabel(id: string) {
+  return MOOD_TAGS.find(t => t.id === id)
+}
+
+/* ===== Mock BGM data ===== */
+const hotBgmList = ref([
+  {
+    id: 'bgm-001',
+    title: '暗夜追踪',
+    moods: ['suspense', 'tense', 'dark'],
+    duration: '02:34',
+    plays: 12580,
+    collects: 3420,
+    playing: false,
+    collected: false
+  },
+  {
+    id: 'bgm-002',
+    title: '星际远征',
+    moods: ['scifi', 'epic', 'adventure'],
+    duration: '03:12',
+    plays: 9843,
+    collects: 2891,
+    playing: false,
+    collected: false
+  },
+  {
+    id: 'bgm-003',
+    title: '樱花午后',
+    moods: ['warm', 'daily', 'healing'],
+    duration: '01:58',
+    plays: 15672,
+    collects: 5104,
+    playing: false,
+    collected: false
+  },
+  {
+    id: 'bgm-004',
+    title: '破晓之战',
+    moods: ['battle', 'epic', 'fantasy'],
+    duration: '04:05',
+    plays: 8217,
+    collects: 2456,
+    playing: false,
+    collected: false
+  }
+])
+
+const bgmLoading = ref(true)
 
 const loading = ref(true)
 
 onMounted(async () => {
   await Promise.all([loadUser(), loadProjects()])
   loading.value = false
+  // BGM mock data finishes loading alongside main data
+  setTimeout(() => { bgmLoading.value = false }, 400)
 })
+
+function toggleBgmPlay(bgm: typeof hotBgmList.value[0]) {
+  hotBgmList.value.forEach(b => { if (b.id !== bgm.id) b.playing = false })
+  bgm.playing = !bgm.playing
+}
+
+function toggleBgmCollect(bgm: typeof hotBgmList.value[0]) {
+  bgm.collected = !bgm.collected
+  bgm.collects += bgm.collected ? 1 : -1
+}
+
+function formatPlays(n: number): string {
+  if (n >= 10000) return `${(n / 10000).toFixed(1)}万`
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
+  return String(n)
+}
 
 /** 最近 6 个项目（按 updatedAt 倒序） */
 const recentProjects = computed(() => projects.value.slice(0, 6))
@@ -187,7 +275,69 @@ function onLogout() {
         </div>
       </section>
 
-      <!-- ===== 5. 平台动态 ===== -->
+      <!-- ===== 5. 热门配乐推荐 ===== -->
+      <section class="home__section">
+        <div class="home__section-header">
+          <h2>🎵 热门配乐推荐</h2>
+          <a href="#" class="home__more">浏览全部配乐 →</a>
+        </div>
+
+        <div v-if="bgmLoading" class="home__loading">
+          <div class="home__spinner"></div>
+          <span>加载配乐中...</span>
+        </div>
+        <div v-else class="bgm-grid">
+          <div v-for="bgm in hotBgmList" :key="bgm.id" class="bgm-card">
+            <!-- Waveform placeholder -->
+            <div class="bgm-card__wave">
+              <div class="bgm-card__wave-bars">
+                <span v-for="i in 24" :key="i" class="bgm-card__wave-bar"
+                  :class="{ 'bgm-card__wave-bar--active': bgm.playing }"
+                  :style="{ height: (20 + Math.sin(i * 0.7) * 18 + Math.random() * 12) + '%', animationDelay: (i * 60) + 'ms' }"
+                ></span>
+              </div>
+              <button type="button" class="bgm-card__play-btn" @click="toggleBgmPlay(bgm)">
+                {{ bgm.playing ? '⏸' : '▶' }}
+              </button>
+            </div>
+
+            <div class="bgm-card__body">
+              <div class="bgm-card__head">
+                <h3 class="bgm-card__title">{{ bgm.title }}</h3>
+                <span class="bgm-card__duration">{{ bgm.duration }}</span>
+              </div>
+
+              <div class="bgm-card__moods">
+                <span v-for="mid in bgm.moods" :key="mid" class="bgm-card__mood">
+                  <span class="bgm-card__mood-dot" :style="{ background: moodLabel(mid)?.color ?? '#888' }"></span>
+                  {{ moodLabel(mid)?.label ?? mid }}
+                </span>
+              </div>
+
+              <div class="bgm-card__meta">
+                <span class="bgm-card__stat">▶ {{ formatPlays(bgm.plays) }}</span>
+                <span class="bgm-card__stat">❤ {{ formatPlays(bgm.collects) }}</span>
+              </div>
+
+              <div class="bgm-card__actions">
+                <button type="button" class="bgm-card__btn" @click="toggleBgmPlay(bgm)">
+                  {{ bgm.playing ? '⏸ 暂停' : '▶ 播放' }}
+                </button>
+                <button
+                  type="button"
+                  class="bgm-card__btn"
+                  :class="{ 'bgm-card__btn--collected': bgm.collected }"
+                  @click="toggleBgmCollect(bgm)"
+                >
+                  {{ bgm.collected ? '★ 已收藏' : '☆ 收藏' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 6. 平台动态 ===== -->
       <section class="home__section">
         <div class="home__section-header">
           <h2>📣 平台动态</h2>
@@ -203,7 +353,7 @@ function onLogout() {
     </div>
 
     <footer class="home__footer">
-      <p>© 2026 ManhuaWorks · 用户后台 v0.1 · 端口 5180</p>
+      <p>&copy; 2026 千机工坊 Qianji Workshop</p>
     </footer>
   </main>
 </template>
@@ -654,6 +804,188 @@ function onLogout() {
 .home__footer p {
   margin: 0;
 }
+
+/* ===== 5. 热门配乐推荐 ===== */
+.bgm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.bgm-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 250ms;
+}
+
+.bgm-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.bgm-card__wave {
+  position: relative;
+  height: 72px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, var(--bg-primary)), var(--bg-tertiary, var(--bg-primary)));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.bgm-card__wave-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 100%;
+  padding: 8px 12px;
+  width: 100%;
+}
+
+.bgm-card__wave-bar {
+  flex: 1;
+  min-height: 3px;
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 2px 2px 0 0;
+  transition: background 200ms;
+}
+
+.bgm-card__wave-bar--active {
+  background: var(--accent);
+  animation: wave-bounce 600ms ease-in-out infinite alternate;
+}
+
+@keyframes wave-bounce {
+  0% { transform: scaleY(0.5); }
+  100% { transform: scaleY(1); }
+}
+
+.bgm-card__play-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 85%, transparent);
+  color: white;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.85);
+  transition: all 200ms;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.bgm-card:hover .bgm-card__play-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.bgm-card__play-btn:hover {
+  background: var(--accent);
+  transform: scale(1.1) !important;
+}
+
+.bgm-card__body {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bgm-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bgm-card__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.bgm-card__duration {
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--text-secondary);
+  padding: 1px 6px;
+  background: var(--bg-primary);
+  border-radius: 4px;
+}
+
+.bgm-card__moods {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.bgm-card__mood {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  background: var(--bg-primary);
+  border-radius: 999px;
+}
+
+.bgm-card__mood-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.bgm-card__meta {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: monospace;
+}
+
+.bgm-card__actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.bgm-card__btn {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 11px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 180ms;
+}
+
+.bgm-card__btn:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.bgm-card__btn--collected {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+/* ===== 6. 平台动态 ===== */
 
 /* ===== 响应式 ===== */
 @media (max-width: 768px) {

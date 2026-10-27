@@ -38,12 +38,32 @@ export const config = {
   cacheTtlSeconds: readInt("CACHE_TTL_SECONDS", 1800), // 30 分钟
   rateLimitPerMin: readInt("RATE_LIMIT_PER_MIN", 60),
   failoverThreshold: readInt("FAILOVER_THRESHOLD", 3),
+  /** 派单 16: provider 调用默认超时 (ms) — 视频/音频异步任务会更长。
+   *  默认 180s：DeepSeek v4-pro 分镜生成（带长篇小说上下文）实测 >60s，原 60s 阈值会触发 aborted-timeout，故上调。 */
+  requestTimeoutMs: readInt("REQUEST_TIMEOUT_MS", 180_000),
+  /** 派单 16: 长任务超时 (视频/音频)，单次最多等这么久 */
+  longTaskTimeoutMs: readInt("LONG_TASK_TIMEOUT_MS", 300_000),
 
   // Provider 默认 base URL（可被环境变量覆盖）
-  minimaxBaseUrl: readString("MINIMAX_BASE_URL", "https://api.minimax.chat/v1"),
+  minimaxBaseUrl: readString("MINIMAX_BASE_URL", "https://api.minimaxi.com/v1"),
   deepseekBaseUrl: readString("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"),
   zhipuBaseUrl: readString("ZHIPU_BASE_URL", "https://open.bigmodel.cn/api/paas/v4"),
   volcengineBaseUrl: readString("VOLCENGINE_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3"),
+  // 派单 16 新增: 通义千问 (DashScope OpenAI 兼容模式)
+  qwenBaseUrl: readString("QWEN_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
+  // 派单 16 新增: OpenAI
+  openaiBaseUrl: readString("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+  // 派单 16 新增: Replicate (图像/视频/音频 HTTP)
+  replicateBaseUrl: readString("REPLICATE_BASE_URL", "https://api.replicate.com/v1"),
+  // 派单 16 新增: fal.ai (Wan2.1 视频 HTTP)
+  falBaseUrl: readString("FAL_BASE_URL", "https://fal.run"),
+  // Agnes AI (图片 + 视频生成，OpenAI 兼容)
+  agnesBaseUrl: readString("AGNES_BASE_URL", "https://apihub.agnes-ai.com/v1"),
+
+  // URL 持久化（火山引擎 TOS URL 24h 过期 → 下载到本地存储）
+  persistenceEnabled: readString("PERSISTENCE_ENABLED", "true") === "true",
+  persistenceStorageDir: readString("PERSISTENCE_STORAGE_DIR", "./data/persisted"),
+  persistenceBaseUrl: readString("PERSISTENCE_BASE_URL", "/persisted"),
 } as const;
 
 export type AppConfig = typeof config;

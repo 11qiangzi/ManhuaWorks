@@ -7,6 +7,8 @@ export * from './errors.js'
 export * from './types.js'
 export { tokenStore } from './token-store.js'
 export type { TokenStore } from './token-store.js'
+export { getToken, isAuthenticated, redirectToLogin, createAuthGuard } from './auth-guard.js'
+export type { AuthGuardOptions } from './auth-guard.js'
 export { useApi, getClient } from './use-api.js'
 
 import { createHttp } from './http.js'
@@ -14,7 +16,9 @@ import { createAuth } from './auth.js'
 import { createProjects } from './projects.js'
 import { createBilling } from './billing.js'
 import { createCollabRest, createCollabSocket } from './collab.js'
-import type { ApiBundle, CreateApiClientOptions, AuthModule, ProjectsModule, BillingModule, CollabModule, HttpModule, UsersModule } from './types.js'
+import { createReferenceImages } from './reference-images.js'
+import { createGeneration } from './generation.js'
+import type { ApiBundle, CreateApiClientOptions, AuthModule, ProjectsModule, BillingModule, CollabModule, HttpModule, UsersModule, ReferenceImagesModule, GenerationModule } from './types.js'
 
 export function createApiClient(opts: CreateApiClientOptions = {}): ApiBundle {
   const runtime = createHttp(opts)
@@ -28,5 +32,8 @@ export function createApiClient(opts: CreateApiClientOptions = {}): ApiBundle {
 
   const users: UsersModule = auth
 
-  return { http, auth, users, projects, billing, collab }
+  const referenceImages: ReferenceImagesModule = createReferenceImages(http)
+  const generation: GenerationModule = createGeneration(http)
+
+  return { http, auth, users, projects, billing, collab, referenceImages, generation }
 }

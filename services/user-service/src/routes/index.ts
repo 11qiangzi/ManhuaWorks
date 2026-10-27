@@ -5,13 +5,16 @@ import { requireAuth, requireRole } from '@manhuaworks/shared';
 import { health } from '../controllers/healthController';
 import * as auth from '../controllers/authController';
 import * as user from '../controllers/userController';
+import * as notification from '../controllers/notificationController';
 import { Role } from '../models/user';
 import { router as apiKeyRouter } from './api-key.routes';
+import { router as userApiKeysRouter } from './user-api-keys.routes';
 import { adminRouter } from './admin';
 import { opsRouter } from './ops';
 import { projectsRouter } from './projects-express';
 import { quotasRouter } from './quotas-express';
 import { subscriptionsRouter } from './subscriptions-express';
+import { preferencesRouter } from './preferences';
 
 export const router = Router();
 
@@ -26,6 +29,12 @@ router.post('/auth/verify-email',      validate(auth.Validators.VerifyTokenBody)
 router.post('/auth/forgot-password',   validate(auth.Validators.ForgotBody),      auth.forgot);
 router.post('/auth/reset-password',    validate(auth.Validators.ResetBody),       auth.reset);
 router.post('/auth/verify-2fa',        validate(auth.Validators.Verify2faBody),   auth.verify2fa);
+// 邮箱验证码 (派单 14: 阿里云 DirectMail)
+router.post('/auth/send-email-code',   validate(auth.SendEmailCodeBody),           auth.sendEmailCodeHandler);
+router.post('/auth/register-by-email', validate(auth.RegisterByEmailBody),         auth.registerByEmailHandler);
+// 手机验证码 (SMS)
+router.post('/auth/send-code',         validate(auth.SendSmsCodeBody),             auth.sendSmsCodeHandler);
+router.post('/auth/login-with-code',   validate(auth.LoginWithCodeBody),           auth.loginWithCodeHandler);
 
 // 需登录
 const authMw = requireAuth();
@@ -61,6 +70,9 @@ router.use('/ops', opsRouter);
 router.use('/user/api-keys', apiKeyRouter);
 router.use('/api-keys', apiKeyRouter);
 
+/* user byok-keys (派单 17: BYOK user_api_keys 表, 6 provider) */
+router.use('/user/byok-keys', userApiKeysRouter);
+
 /* projects — 派单 32B (原 Hono projects.ts 未挂载) */
 router.use('/projects', projectsRouter);
 
@@ -69,3 +81,11 @@ router.use('/quotas', quotasRouter);
 
 /* subscriptions — 派单 32B (原 Hono subscriptions.ts 未挂载) */
 router.use('/subscriptions', subscriptionsRouter);
+
+/* preferences — P2 A4: 用户编辑器模式偏好 */
+router.use('/users/me/preferences', preferencesRouter);
+
+/* notifications — 前端 NotificationBell 组件 */
+router.get('/notifications',            authMw, notification.listNotifications);
+router.patch('/notifications/:id/read', authMw, notification.markRead);
+router.post('/notifications/read-all',  authMw, notification.markAllRead);

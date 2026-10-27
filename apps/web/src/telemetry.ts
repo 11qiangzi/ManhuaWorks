@@ -1,7 +1,7 @@
 /**
  * @manhuaworks/web — 浏览器端 OpenTelemetry RUM
  *
- * ManhuaWorks L2 task 14
+ * 千机工坊 L2 task 14
  *
  * 目标：
  *  - 浏览器侧自动上报 fetch / XHR / 页面加载 / 路由切换
@@ -44,7 +44,6 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { FetchInstrumentation } from '@opentelemetry/instrumentation-fetch';
 import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xml-http-request';
 import { DocumentLoadInstrumentation } from '@opentelemetry/instrumentation-document-load';
-import { UserInteractionInstrumentation } from '@opentelemetry/instrumentation-user-interaction';
 
 // 只在开发期打印，避免生产刷屏
 if (import.meta.env?.DEV) {
@@ -86,7 +85,13 @@ export async function initBrowserTelemetry(): Promise<void> {
   if (provider) return;
   if (!cfg.enabled) {
     // 仍然注册 propagator（让 fetch 自动带 traceparent）
-    trace.setGlobalPropagator(new W3CTraceContextPropagator());
+    const dummyResource = resourceFromAttributes({
+      [ATTR_SERVICE_NAME]: cfg.service,
+    });
+    provider = new WebTracerProvider({ resource: dummyResource });
+    provider.register({
+      propagator: new W3CTraceContextPropagator(),
+    });
     return;
   }
 

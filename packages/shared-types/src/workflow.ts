@@ -18,9 +18,11 @@ export type NodeType =
   | "episode-batch"
   | "style-transfer"
   | "novel-to-drama"
-  | "multi-character";
+  | "multi-character"
+  | "decompose"
+  | "compose-video";
 
-/** 6 个 NodeType 列表（用于 UI 调色板/校验） */
+/** 8 个 NodeType 列表（用于 UI 调色板/校验） */
 export const NODE_TYPES: ReadonlyArray<NodeType> = [
   "translate",
   "character-replace",
@@ -28,6 +30,8 @@ export const NODE_TYPES: ReadonlyArray<NodeType> = [
   "style-transfer",
   "novel-to-drama",
   "multi-character",
+  "decompose",
+  "compose-video",
 ] as const;
 
 /** NodeType → 友好 label（中文） */
@@ -38,6 +42,8 @@ export const NODE_TYPE_LABELS: Record<NodeType, string> = {
   "style-transfer": "风格迁移",
   "novel-to-drama": "小说转漫剧",
   "multi-character": "多角色替换",
+  decompose: "小说拆解",
+  "compose-video": "视频合成",
 };
 
 /** NodeType → 主题色 token */
@@ -48,6 +54,8 @@ export const NODE_TYPE_COLORS: Record<NodeType, string> = {
   "style-transfer": "pink",
   "novel-to-drama": "amber",
   "multi-character": "violet",
+  decompose: "emerald",
+  "compose-video": "rose",
 };
 
 /** NodeType → SVG 图标名（studio UI 查找） */
@@ -58,6 +66,8 @@ export const NODE_TYPE_ICONS: Record<NodeType, string> = {
   "style-transfer": "palette",
   "novel-to-drama": "drama",
   "multi-character": "multi",
+  decompose: "scissors",
+  "compose-video": "film",
 };
 
 // =============================================================================

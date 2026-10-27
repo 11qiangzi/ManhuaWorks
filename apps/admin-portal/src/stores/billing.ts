@@ -1,6 +1,6 @@
 /**
  * admin-portal · billing Pinia store — 接 billing-service
- * ManhuaWorks · L2 task 8
+ * 千机工坊 · L2 task 8
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'

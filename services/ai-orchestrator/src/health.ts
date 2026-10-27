@@ -12,6 +12,8 @@
  */
 
 import { config } from "./config.js";
+import { db } from "./db/client.js";
+import { sql as drizzleSql } from "drizzle-orm";
 
 export type DepStatus = "up" | "down" | "skipped";
 
@@ -83,6 +85,16 @@ export function buildHealthChecker(opts: HealthCheckerOptions = {}) {
       aiSdk: "skipped",
     };
 
+    // Check postgres connectivity
+    if (!skip) {
+      try {
+        await db.execute(drizzleSql`SELECT 1`);
+        deps.postgres = "up";
+      } catch {
+        deps.postgres = "down";
+      }
+    }
+
     if (!skip) {
       // 跑 4 个下游；并行抢时间
       const [aiRouter, workflow, asset, aiHelper] = await Promise.all([
@@ -97,7 +109,7 @@ export function buildHealthChecker(opts: HealthCheckerOptions = {}) {
       deps.aiHelper = aiHelper;
     }
 
-    // 真正关键依赖（这服务纯编排，没有 redis/postgres/aiSdk pool）始终 skipped
+    // redis/aiSdk 仍 skipped（目前不依赖）；postgres 已在上方检查
     // 任何一个非 skipped 的 dep 是 down → ok=false
     const allDeps = Object.values(deps).filter((v): v is DepStatus => v !== undefined);
     const allUp = allDeps.every((d) => d === "up" || d === "skipped");

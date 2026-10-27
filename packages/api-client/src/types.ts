@@ -490,6 +490,152 @@ export interface JoinPayload {
 export type CollabHandler<T = unknown> = (env: CollabEnvelope<T>) => void
 
 /* ============================================================== *
+ *  Reference Images · 参考图档案
+ * ============================================================== */
+export type RefEntityType = 'character' | 'scene' | 'product' | 'style'
+export type RefImageType =
+  | 'front' | 'side_left' | 'side_right' | 'three_quarter' | 'back'
+  | 'full_body' | 'close_up' | 'detail' | 'full_scene' | 'atmosphere' | 'style_ref'
+
+export interface ReferenceImageDTO {
+  id: ID
+  project_id: ID
+  entity_type: RefEntityType
+  entity_id: string
+  image_url: string
+  image_type: RefImageType
+  description?: string | null
+  sort_order: number
+  created_by?: string | null
+  created_at: ISODate
+  updated_at: ISODate
+}
+
+export interface CreateReferenceImageReq {
+  projectId: ID
+  entityType: RefEntityType
+  entityId: string
+  imageUrl: string
+  imageType?: RefImageType
+  description?: string
+  sortOrder?: number
+}
+
+export interface UpdateReferenceImageReq {
+  imageUrl?: string
+  imageType?: RefImageType
+  description?: string | null
+  sortOrder?: number
+}
+
+export interface BatchCreateReferenceImageReq {
+  projectId: ID
+  entityType: RefEntityType
+  entityId: string
+  images: Array<{
+    imageUrl: string
+    imageType?: RefImageType
+    description?: string
+  }>
+}
+
+export interface ReferenceImageListOpts {
+  projectId: ID
+  entityType?: RefEntityType
+  entityId?: string
+}
+
+export interface ProjectRefSummary {
+  characters: Array<{ name: string; count: number }>
+  scenes: Array<{ name: string; count: number }>
+  products: Array<{ name: string; count: number }>
+  styles: Array<{ name: string; count: number }>
+  total: number
+}
+
+export interface ReferenceImagesModule {
+  list: (opts: ReferenceImageListOpts) => Promise<{ items: ReferenceImageDTO[]; total: number }>
+  create: (data: CreateReferenceImageReq) => Promise<ReferenceImageDTO>
+  update: (id: ID, data: UpdateReferenceImageReq) => Promise<ReferenceImageDTO>
+  remove: (id: ID) => Promise<void>
+  batchCreate: (data: BatchCreateReferenceImageReq) => Promise<{ created: number; items: ReferenceImageDTO[] }>
+  getProjectSummary: (projectId: ID) => Promise<ProjectRefSummary>
+}
+
+/* ============================================================== *
+ *  Generation Tasks (AI image/video/audio/tts)
+ * ============================================================== */
+export type GenerationTaskType = 'image' | 'video' | 'audio' | 'tts'
+export type GenerationProvider = 'seedream' | 'seedance' | 'minimax' | 'volcengine' | 'suno' | 'openai'
+export type GenerationStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'expired' | 'cancelled'
+
+export interface GenerationCraftPrompt {
+  context?: string
+  reference?: string
+  action?: string
+  framing?: string
+  timing?: string
+}
+
+export interface GenerationReferenceImage {
+  url: string
+  role: string
+}
+
+export interface GenerationTask {
+  id: ID
+  userId: ID
+  projectId?: ID
+  taskType: GenerationTaskType
+  provider: GenerationProvider
+  model?: string
+  prompt: string
+  craftPrompt?: GenerationCraftPrompt
+  referenceImages?: GenerationReferenceImage[]
+  parameters: Record<string, unknown>
+  requestHash: string
+  providerTaskId?: string
+  status: GenerationStatus
+  progress: number
+  errorMessage?: string
+  errorCode?: string
+  resultUrl?: string
+  resultStoredUrl?: string
+  resultMetadata?: Record<string, unknown>
+  lastFrameUrl?: string
+  createdAt: ISODate
+  startedAt?: ISODate
+  completedAt?: ISODate
+  expiresAt?: ISODate
+  updatedAt: ISODate
+}
+
+export interface GenerationSubmitRequest {
+  taskType: GenerationTaskType
+  provider: GenerationProvider
+  model?: string
+  prompt: string
+  craftPrompt?: GenerationCraftPrompt
+  referenceImages?: GenerationReferenceImage[]
+  parameters?: Record<string, unknown>
+  projectId?: string
+}
+
+export interface GenerationListOptions {
+  projectId?: string
+  status?: GenerationStatus
+  page?: number
+  pageSize?: number
+}
+
+export interface GenerationModule {
+  submit: (request: GenerationSubmitRequest) => Promise<{ taskId: string; status: string; requestHash: string }>
+  get: (taskId: ID) => Promise<GenerationTask>
+  list: (opts?: GenerationListOptions) => Promise<{ items: GenerationTask[]; total: number }>
+  cancel: (taskId: ID) => Promise<void>
+}
+
+/* ============================================================== *
  *  ApiBundle · createApiClient 返回值
  * ============================================================== */
 export interface AuthModule {
@@ -594,6 +740,8 @@ export interface ApiBundle {
   projects: ProjectsModule
   billing: BillingModule
   collab: CollabModule
+  referenceImages: ReferenceImagesModule
+  generation: GenerationModule
 }
 
 export interface CreateApiClientOptions {

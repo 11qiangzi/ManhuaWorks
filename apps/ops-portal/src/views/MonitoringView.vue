@@ -1,22 +1,94 @@
 <script setup lang="ts">
 /**
  * MonitoringView · 监控大屏
- * ManhuaWorks · M1-W4 · L4-B
+ * 千机工坊 · M1-W4 · L4-B
  *
  * 模块:
  *   1. 服务健康状态 (5 服务)
  *   2. CPU/内存/磁盘 资源占用
  *   3. 请求 QPS / 延迟
  *   4. 告警列表
+ *
+ * 数据源: /api/v1/ops/health + /api/v1/ops/metrics/live + /api/v1/ops/alerts
  */
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { fetchHealth, fetchLiveMetrics, fetchAlerts } from '@/api/ops-api'
+import type { HealthEntry, SystemMetrics, Alert } from '@/api/ops-api'
 
 const loading = ref(true)
+const error = ref('')
+
+const healthEntries = ref<HealthEntry[]>([])
+const metrics = ref<SystemMetrics>({})
+const alerts = ref<Alert[]>([])
+
+/* 资源卡片计算 */
+const resources = computed(() => {
+  const m = metrics.value
+  return [
+    {
+      label: 'CPU',
+      percent: m.cpu?.percent ?? 0,
+      detail: `${m.cpu?.used ?? 0}/${m.cpu?.total ?? 0} ${m.cpu?.unit ?? '核'}`,
+      cssClass: 'resource-fill--cpu',
+    },
+    {
+      label: '内存',
+      percent: m.memory?.percent ?? 0,
+      detail: `${m.memory?.used ?? 0}/${m.memory?.total ?? 0} ${m.memory?.unit ?? 'GB'}`,
+      cssClass: 'resource-fill--mem',
+    },
+    {
+      label: '磁盘',
+      percent: m.disk?.percent ?? 0,
+      detail: `${m.disk?.used ?? 0}/${m.disk?.total ?? 0} ${m.disk?.unit ?? 'GB'}`,
+      cssClass: 'resource-fill--disk',
+    },
+  ]
+})
+
+function healthCardClass(h: HealthEntry): string {
+  if (h.status === 'ok' || h.status === 'healthy') return 'health-card health-card--ok'
+  if (h.status === 'warn' || h.status === 'degraded' || h.depsDown) return 'health-card health-card--warn'
+  return 'health-card health-card--error'
+}
+
+function healthDot(h: HealthEntry): string {
+  if (h.status === 'ok' || h.status === 'healthy') return '🟢'
+  if (h.status === 'warn' || h.status === 'degraded' || h.depsDown) return '🟡'
+  return '🔴'
+}
+
+function healthMeta(h: HealthEntry): string {
+  const parts: string[] = []
+  if (h.port) parts.push(`:${h.port}`)
+  if (h.latencyMs !== undefined) parts.push(`${h.latencyMs}ms`)
+  if (h.depsDown) parts.push('deps down')
+  if (h.message) parts.push(h.message)
+  return parts.join(' · ') || 'unknown'
+}
+
+function fmtChange(val: number | undefined): string {
+  if (val === undefined || val === null) return ''
+  const arrow = val >= 0 ? '↑' : '↓'
+  return `${arrow} ${Math.abs(val)}% vs 1h ago`
+}
 
 onMounted(async () => {
-  // API 数据待接 — 目前展示骨架屏
-  await new Promise(r => setTimeout(r, 1200))
-  loading.value = false
+  try {
+    const [hlth, mtrcs, alrts] = await Promise.all([
+      fetchHealth().catch(() => [] as HealthEntry[]),
+      fetchLiveMetrics().catch(() => ({} as SystemMetrics)),
+      fetchAlerts(10).catch(() => [] as Alert[]),
+    ])
+    healthEntries.value = hlth
+    metrics.value = mtrcs
+    alerts.value = alrts
+  } catch (e: any) {
+    error.value = e?.message ?? '监控数据加载失败'
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
@@ -66,34 +138,19 @@ onMounted(async () => {
 
     <!-- 真实内容 -->
     <div v-else>
+      <p v-if="error" class="monitoring-error">⚠️ {{ error }}</p>
+
       <!-- 服务健康 -->
       <section class="monitoring-section">
         <h2 class="monitoring-h2">服务健康</h2>
         <div class="health-grid">
-          <div class="health-card health-card--ok">
-            <span class="health-dot">🟢</span>
-            <strong>user-service</strong>
-            <span class="health-meta">:8088 · 45ms</span>
+          <div v-for="h in healthEntries" :key="h.name" :class="healthCardClass(h)">
+            <span class="health-dot">{{ healthDot(h) }}</span>
+            <strong>{{ h.name }}</strong>
+            <span class="health-meta">{{ healthMeta(h) }}</span>
           </div>
-          <div class="health-card health-card--ok">
-            <span class="health-dot">🟢</span>
-            <strong>project-service</strong>
-            <span class="health-meta">:8089 · 32ms</span>
-          </div>
-          <div class="health-card health-card--ok">
-            <span class="health-dot">🟢</span>
-            <strong>billing-service</strong>
-            <span class="health-meta">:8090 · 28ms</span>
-          </div>
-          <div class="health-card health-card--warn">
-            <span class="health-dot">🟡</span>
-            <strong>ai-orchestrator</strong>
-            <span class="health-meta">:8087 · deps down</span>
-          </div>
-          <div class="health-card health-card--ok">
-            <span class="health-dot">🟢</span>
-            <strong>collab-service</strong>
-            <span class="health-meta">:8091 · 18ms</span>
+          <div v-if="healthEntries.length === 0" class="empty-state">
+            <p>暂无健康检查数据</p>
           </div>
         </div>
       </section>
@@ -102,35 +159,15 @@ onMounted(async () => {
       <section class="monitoring-section">
         <h2 class="monitoring-h2">资源占用</h2>
         <div class="resource-grid">
-          <div class="resource-card">
+          <div v-for="r in resources" :key="r.label" class="resource-card">
             <div class="resource-head">
-              <span>CPU</span>
-              <span class="resource-value">34%</span>
+              <span>{{ r.label }}</span>
+              <span class="resource-value">{{ r.percent }}%</span>
             </div>
             <div class="resource-bar">
-              <div class="resource-fill resource-fill--cpu" :style="{ width: '34%' }" />
+              <div :class="['resource-fill', r.cssClass]" :style="{ width: r.percent + '%' }" />
             </div>
-            <span class="resource-meta">4/12 核</span>
-          </div>
-          <div class="resource-card">
-            <div class="resource-head">
-              <span>内存</span>
-              <span class="resource-value">62%</span>
-            </div>
-            <div class="resource-bar">
-              <div class="resource-fill resource-fill--mem" :style="{ width: '62%' }" />
-            </div>
-            <span class="resource-meta">9.9/16 GB</span>
-          </div>
-          <div class="resource-card">
-            <div class="resource-head">
-              <span>磁盘</span>
-              <span class="resource-value">45%</span>
-            </div>
-            <div class="resource-bar">
-              <div class="resource-fill resource-fill--disk" :style="{ width: '45%' }" />
-            </div>
-            <span class="resource-meta">112/250 GB</span>
+            <span class="resource-meta">{{ r.detail }}</span>
           </div>
         </div>
       </section>
@@ -141,28 +178,33 @@ onMounted(async () => {
         <div class="metrics-grid">
           <div class="metric-card">
             <strong>QPS</strong>
-            <span class="metric-value">847</span>
-            <span class="metric-meta">↑ 12% vs 1h ago</span>
+            <span class="metric-value">{{ metrics.qps ?? 0 }}</span>
+            <span class="metric-meta">{{ fmtChange(metrics.qpsChange) }}</span>
           </div>
           <div class="metric-card">
             <strong>P50 延迟</strong>
-            <span class="metric-value">42ms</span>
-            <span class="metric-meta">↓ 5% vs 1h ago</span>
+            <span class="metric-value">{{ metrics.p50Latency ?? 0 }}ms</span>
+            <span class="metric-meta">{{ fmtChange(metrics.p50Change) }}</span>
           </div>
           <div class="metric-card">
             <strong>P99 延迟</strong>
-            <span class="metric-value">230ms</span>
-            <span class="metric-meta">↓ 8% vs 1h ago</span>
+            <span class="metric-value">{{ metrics.p99Latency ?? 0 }}ms</span>
+            <span class="metric-meta">{{ fmtChange(metrics.p99Change) }}</span>
           </div>
         </div>
       </section>
 
-      <!-- 空状态 — 等接真 API -->
-      <div class="empty-state">
-        <span class="empty-icon">📊</span>
-        <p>监控数据待接入 API</p>
-        <p class="empty-hint">监控端点就绪后自动填充实时数据</p>
-      </div>
+      <!-- 告警列表 -->
+      <section v-if="alerts.length > 0" class="monitoring-section">
+        <h2 class="monitoring-h2">最近告警</h2>
+        <div class="alerts-list">
+          <div v-for="a in alerts" :key="a.id" class="alert-card" :class="`alert-card--${a.severity ?? 'info'}`">
+            <span class="alert-severity">{{ a.severity ?? 'INFO' }}</span>
+            <span class="alert-msg">{{ a.message }}</span>
+            <span class="alert-time">{{ a.createdAt ? new Date(a.createdAt).toLocaleString('zh-CN') : '' }}</span>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 </template>
@@ -253,6 +295,16 @@ onMounted(async () => {
 }
 
 /* ===== 真实内容 ===== */
+.monitoring-error {
+  color: #fbbf24;
+  background: #3b2415;
+  border: 1px solid #f59e0b;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin: 0 0 16px;
+}
+
 .monitoring-section {
   margin-bottom: 28px;
 }
@@ -292,6 +344,57 @@ onMounted(async () => {
   color: var(--text-secondary);
   font-size: 12px;
   margin-left: auto;
+}
+
+.health-card--ok { border-color: color-mix(in srgb, #10b981 40%, transparent); }
+.health-card--warn { border-color: color-mix(in srgb, #f59e0b 40%, transparent); }
+.health-card--error { border-color: color-mix(in srgb, #ef4444 40%, transparent); }
+
+/* 告警 */
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alert-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.alert-severity {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.alert-card--critical .alert-severity,
+.alert-card--error .alert-severity {
+  background: color-mix(in srgb, #ef4444 15%, transparent);
+  color: #ef4444;
+}
+
+.alert-card--warn .alert-severity {
+  background: color-mix(in srgb, #f59e0b 15%, transparent);
+  color: #f59e0b;
+}
+
+.alert-msg { flex: 1; }
+
+.alert-time {
+  color: var(--text-secondary);
+  font-size: 11px;
+  flex-shrink: 0;
 }
 
 /* 资源 */

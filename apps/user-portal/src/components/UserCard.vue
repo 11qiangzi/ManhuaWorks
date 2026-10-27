@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * UserCard.vue · 用户卡片（用于侧栏/顶栏）
- * ManhuaWorks · W4 用户后台
+ * 千机工坊 · W4 用户后台
  */
 
 import { computed } from 'vue'

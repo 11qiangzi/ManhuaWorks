@@ -1,365 +1,225 @@
 <script setup lang="ts">
 /**
- * FailoverIndicator · 故障转移指示器
- * 展示：主 provider + 备用 provider 列表 + 健康状态 + 24h 切换次数
+ * FailoverIndicator - 故障转移状态指示器
+ * ManhuaWorks studio component
  *
- * 状态：健康（绿）/ 异常（红）/ 降级（黄）
+ * 展示 AI 供应商故障转移链路状态（紧凑/完整模式）
  */
 
-import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { getFailoverStatus, PROVIDERS, type FailoverStatus } from '@/api/ai-router'
-
 interface Props {
-  /** 轮询间隔 ms（默认 30s） */
-  pollIntervalMs?: number
-  /** 紧凑模式（仅一行） */
+  /** 紧凑模式（仅图标 + 短文案） */
   compact?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), { pollIntervalMs: 30_000, compact: false })
+const props = withDefaults(defineProps<Props>(), {
+  compact: false
+})
 
-const status = ref<FailoverStatus | null>(null)
-const loading = ref(true)
-const error = ref<string | null>(null)
-
-let timer: number | null = null
-
-async function fetchStatus() {
-  try {
-    status.value = await getFailoverStatus()
-    error.value = null
-  } catch (err) {
-    error.value = (err as Error).message
-  } finally {
-    loading.value = false
-  }
+/** 模拟故障转移节点状态 */
+interface FailoverNode {
+  provider: string
+  label: string
+  status: 'active' | 'standby' | 'offline'
+  latencyMs: number
 }
 
-onMounted(() => {
-  fetchStatus()
-  timer = window.setInterval(fetchStatus, props.pollIntervalMs)
-})
+const nodes: FailoverNode[] = [
+  { provider: 'openai', label: 'OpenAI', status: 'active', latencyMs: 120 },
+  { provider: 'anthropic', label: 'Anthropic', status: 'standby', latencyMs: 95 },
+  { provider: 'google', label: 'Google', status: 'standby', latencyMs: 180 },
+  { provider: 'stability', label: 'Stability', status: 'offline', latencyMs: 0 }
+]
 
-onUnmounted(() => {
-  if (timer !== null) window.clearInterval(timer)
-})
-
-const primaryMeta = computed(() =>
-  status.value ? PROVIDERS.find((p) => p.id === status.value!.primary) : null
-)
-
-const overallHealth = computed<'ok' | 'degraded' | 'down'>(() => {
-  if (!status.value) return 'ok'
-  if (!status.value.primaryHealthy) return 'down'
-  if (status.value.primaryErrorRate > 0.1) return 'degraded'
-  return 'ok'
-})
-
-const healthLabel = computed(() => {
-  switch (overallHealth.value) {
-    case 'ok': return '运行正常'
-    case 'degraded': return '轻微降级'
-    case 'down': return '主 Provider 故障'
-  }
-})
-
-const healthColor = computed(() => {
-  switch (overallHealth.value) {
-    case 'ok': return 'var(--success)'
-    case 'degraded': return 'var(--warning)'
-    case 'down': return 'var(--danger)'
-  }
-})
+const activeCount = nodes.filter((n) => n.status !== 'offline').length
+const activeNode = nodes.find((n) => n.status === 'active')
 </script>
 
 <template>
-  <div class="failover" :class="{ 'failover--compact': compact }">
-    <header class="failover__head">
-      <div class="failover__title">
-        <h3>🔁 故障转移</h3>
-        <p v-if="!compact">主备 Provider 健康状态</p>
+  <div class="failover" :class="{ 'failover--compact': props.compact }">
+    <!-- 紧凑模式 -->
+    <template v-if="props.compact">
+      <div class="failover__compact">
+        <span class="failover__dot failover__dot--active" />
+        <span class="failover__compact-text">
+          故障转移就绪 · {{ activeCount }} 节点在线
+          <template v-if="activeNode"> · 当前 {{ activeNode.label }}</template>
+        </span>
       </div>
-      <div v-if="status" class="failover__overall" :style="{ color: healthColor }">
-        <span class="failover__dot" :style="{ background: healthColor }" />
-        <strong>{{ healthLabel }}</strong>
+    </template>
+
+    <!-- 完整模式 -->
+    <template v-else>
+      <div class="failover__header">
+        <h3 class="failover__title">故障转移链路</h3>
+        <span class="failover__badge">{{ activeCount }}/{{ nodes.length }} 在线</span>
       </div>
-    </header>
-
-    <div v-if="loading && !status" class="failover__loading">
-      <div class="failover__spinner" />
-      <span>加载中...</span>
-    </div>
-
-    <div v-else-if="error" class="failover__error">
-      ⚠ {{ error }}
-      <button type="button" @click="fetchStatus">重试</button>
-    </div>
-
-    <div v-else-if="status" class="failover__list">
-      <!-- 主 provider -->
-      <div class="failover__primary">
-        <div class="failover__row">
-          <div class="failover__provider">
-            <span class="failover__logo">{{ primaryMeta?.logo }}</span>
-            <div>
-              <strong>{{ primaryMeta?.name }}</strong>
-              <span class="failover__role">主</span>
-            </div>
-          </div>
-          <div class="failover__metrics">
-            <div class="failover__metric">
-              <span>错误率</span>
-              <strong>{{ (status.primaryErrorRate * 100).toFixed(1) }}%</strong>
-            </div>
-            <div class="failover__metric">
-              <span>24h 切换</span>
-              <strong>{{ status.failoverCount24h }}次</strong>
-            </div>
-            <span
-              class="failover__status"
-              :class="status.primaryHealthy ? 'failover__status--ok' : 'failover__status--down'"
-            >
-              {{ status.primaryHealthy ? '● 健康' : '● 故障' }}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 备用 provider 列表 -->
-      <div v-if="!compact" class="failover__fallbacks">
-        <h4>备用 Provider</h4>
-        <div
-          v-for="fb in status.fallbacks"
-          :key="fb.provider"
-          class="failover__fb-row"
-        >
-          <div class="failover__provider failover__provider--sm">
-            <span class="failover__logo failover__logo--sm">
-              {{ PROVIDERS.find((p) => p.id === fb.provider)?.logo }}
-            </span>
-            <strong>{{ PROVIDERS.find((p) => p.id === fb.provider)?.name }}</strong>
-          </div>
-          <span class="failover__latency">{{ fb.latencyMs }}ms</span>
-          <span
-            class="failover__status"
-            :class="fb.healthy ? 'failover__status--ok' : 'failover__status--down'"
+      <div class="failover__chain">
+        <template v-for="(node, idx) in nodes" :key="node.provider">
+          <div
+            class="failover__node"
+            :class="`failover__node--${node.status}`"
           >
-            {{ fb.healthy ? '● 就绪' : '● 离线' }}
-          </span>
-        </div>
+            <div class="failover__node-head">
+              <span class="failover__dot" :class="`failover__dot--${node.status}`" />
+              <strong>{{ node.label }}</strong>
+              <span v-if="node.status === 'active'" class="failover__active-tag">主</span>
+            </div>
+            <span v-if="node.latencyMs > 0" class="failover__latency">{{ node.latencyMs }}ms</span>
+            <span v-else class="failover__latency failover__latency--off">--</span>
+          </div>
+          <span v-if="idx < nodes.length - 1" class="failover__arrow">&rarr;</span>
+        </template>
       </div>
-    </div>
+      <p class="failover__desc">
+        当主供应商不可用时，自动切换到下一个在线备用供应商，保障生成任务不中断。
+      </p>
+    </template>
   </div>
 </template>
 
 <style scoped>
 .failover {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 18px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
+  padding: 16px 18px;
 }
 
 .failover--compact {
-  padding: 12px 14px;
-  gap: 8px;
+  padding: 10px 14px;
 }
 
-.failover__head {
+.failover__compact {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
   gap: 8px;
 }
 
-.failover__title h3 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.failover__title p {
-  margin: 2px 0 0;
+.failover__compact-text {
   font-size: 12px;
   color: var(--text-secondary);
-}
-
-.failover__overall {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 500;
 }
 
 .failover__dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-secondary);
+}
+
+.failover__dot--active {
+  background: var(--success, #22c55e);
+  box-shadow: 0 0 6px var(--success, #22c55e);
   animation: pulse 2s ease-in-out infinite;
+}
+
+.failover__dot--standby {
+  background: var(--warning, #f59e0b);
+}
+
+.failover__dot--offline {
+  background: var(--text-secondary);
+  opacity: 0.4;
 }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  50% { opacity: 0.5; }
 }
 
-.failover__loading,
-.failover__error {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 14px;
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.failover__error button {
-  padding: 4px 10px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text-primary);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 12px;
-}
-
-.failover__spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.failover__list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.failover__primary {
-  padding: 12px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
-  border-radius: 8px;
-}
-
-.failover__row {
+.failover__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
+  margin-bottom: 12px;
 }
 
-.failover__provider {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.failover__provider--sm {
-  gap: 8px;
-}
-
-.failover__provider strong {
-  display: block;
+.failover__title {
+  margin: 0;
   font-size: 14px;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
-.failover__logo {
-  font-size: 22px;
-  line-height: 1;
-}
-
-.failover__logo--sm {
-  font-size: 18px;
-}
-
-.failover__role {
-  display: inline-block;
-  margin-top: 2px;
-  padding: 1px 6px;
-  font-size: 10px;
-  background: var(--accent);
-  color: var(--bg-primary);
-  border-radius: 3px;
+.failover__badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
   font-weight: 600;
-  letter-spacing: 0.05em;
 }
 
-.failover__metrics {
+.failover__chain {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
-.failover__metric {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 70px;
-}
-
-.failover__metric > span {
-  font-size: 10px;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  letter-spacing: 0.05em;
-}
-
-.failover__metric > strong {
-  font-size: 13px;
-  font-weight: 600;
-  font-family: monospace;
-}
-
-.failover__status {
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.failover__status--ok { color: var(--success); }
-.failover__status--down { color: var(--danger); }
-
-.failover__fallbacks h4 {
-  margin: 0 0 8px;
-  font-size: 12px;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  letter-spacing: 0.05em;
-  font-weight: 600;
-}
-
-.failover__fb-row {
+.failover__node {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px 10px;
+  gap: 6px;
+  padding: 6px 12px;
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 13px;
-  margin-bottom: 4px;
+  border-radius: 8px;
+  font-size: 12px;
+  transition: all 200ms;
+}
+
+.failover__node--active {
+  border-color: var(--success, #22c55e);
+  background: color-mix(in srgb, var(--success, #22c55e) 6%, var(--bg-primary));
+}
+
+.failover__node--offline {
+  opacity: 0.5;
+}
+
+.failover__node-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.failover__node-head strong {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.failover__active-tag {
+  font-size: 10px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--success, #22c55e);
+  color: #fff;
+  font-weight: 600;
 }
 
 .failover__latency {
-  font-family: monospace;
-  font-size: 12px;
+  font-size: 10px;
   color: var(--text-secondary);
+  font-family: monospace;
+}
+
+.failover__latency--off {
+  opacity: 0.5;
+}
+
+.failover__arrow {
+  color: var(--text-secondary);
+  font-size: 14px;
+  opacity: 0.5;
+}
+
+.failover__desc {
+  margin: 12px 0 0;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 </style>

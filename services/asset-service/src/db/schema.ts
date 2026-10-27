@@ -239,6 +239,54 @@ export const assetLocks = pgTable(
 );
 
 /* ------------------------------------------------------------------ */
+/*  13. reference_images — 统一多视角参考图档案                           */
+/* ------------------------------------------------------------------ */
+export const refEntityTypes = ['character', 'scene', 'product', 'style'] as const;
+export type RefEntityType = (typeof refEntityTypes)[number];
+
+export const refImageTypes = [
+  'front', 'side_left', 'side_right', 'three_quarter', 'back',
+  'full_body', 'close_up', 'detail', 'full_scene', 'atmosphere', 'style_ref',
+] as const;
+export type RefImageType = (typeof refImageTypes)[number];
+
+export const referenceImages = pgTable(
+  'reference_images',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    /** 归属项目 */
+    projectId: uuid('project_id').notNull(),
+    /** 实体类型：character / scene / product / style */
+    entityType: varchar('entity_type', { length: 20 }).notNull().$type<RefEntityType>(),
+    /** 实体标识（角色名 / 场景名 / 产品名） */
+    entityId: varchar('entity_id', { length: 200 }).notNull(),
+    /** 图片 URL */
+    imageUrl: text('image_url').notNull(),
+    /** 图片类型：front / side_left / side_right / three_quarter / back / full_body / close_up / detail / full_scene / atmosphere / style_ref */
+    imageType: varchar('image_type', { length: 30 }).notNull().default('front').$type<RefImageType>(),
+    /** 描述说明 */
+    description: text('description'),
+    /** 排序权重 */
+    sortOrder: integer('sort_order').notNull().default(0),
+    /** 创建者 */
+    createdBy: uuid('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    projectIdx: index('idx_ref_images_project').on(t.projectId),
+    entityIdx: index('idx_ref_images_entity').on(t.projectId, t.entityType, t.entityId),
+    typeIdx: index('idx_ref_images_type').on(t.entityType),
+  })
+);
+
+/* ------------------------------------------------------------------ */
 /*  类型导出                                                            */
 /* ------------------------------------------------------------------ */
 export type ProjectsExt = typeof projectsExt.$inferSelect;
@@ -251,3 +299,5 @@ export type ProjectMember = typeof projectMembers.$inferSelect;
 export type NewProjectMember = typeof projectMembers.$inferInsert;
 export type AssetLock = typeof assetLocks.$inferSelect;
 export type NewAssetLock = typeof assetLocks.$inferInsert;
+export type ReferenceImage = typeof referenceImages.$inferSelect;
+export type NewReferenceImage = typeof referenceImages.$inferInsert;

@@ -87,17 +87,21 @@ if (-not $SkipPostgres -and -not $CheckOnly) {
 #  log:      日志文件
 # ============================================================
 $Services = @(
-    [pscustomobject]@{ Name = 'user-service';    Port = 8088; Cmd = 'pnpm dev'; Cwd = 'services\user-service'    }
-    [pscustomobject]@{ Name = 'project-service'; Port = 8089; Cmd = 'pnpm dev'; Cwd = 'services\project-service' }
-    [pscustomobject]@{ Name = 'billing-service'; Port = 8090; Cmd = 'pnpm dev'; Cwd = 'services\billing-service' }
-    [pscustomobject]@{ Name = 'collab-service';  Port = 8091; Cmd = 'pnpm dev'; Cwd = 'services\collab-service'  }
+    [pscustomobject]@{ Name = 'user-service';     Port = 8088; Cmd = 'pnpm dev'; Cwd = 'services\user-service'     }
+    [pscustomobject]@{ Name = 'project-service';  Port = 8089; Cmd = 'pnpm dev'; Cwd = 'services\project-service'  }
+    [pscustomobject]@{ Name = 'billing-service';  Port = 8090; Cmd = 'pnpm dev'; Cwd = 'services\billing-service'  }
+    [pscustomobject]@{ Name = 'collab-service';   Port = 8091; Cmd = 'pnpm dev'; Cwd = 'services\collab-service'   }
+    # ai-orchestrator 路径修正: 之前脚本没拉, 卫峥派单30 报告 'services/ai-service 路径不存在', 实际目录叫 ai-orchestrator
+    [pscustomobject]@{ Name = 'ai-orchestrator';  Port = 8087; Cmd = 'pnpm dev'; Cwd = 'services\ai-orchestrator'  }
 )
 
 $Portals = @(
-    [pscustomobject]@{ Name = 'web';         Port = 3000; Cmd = 'pnpm dev'; Cwd = 'apps\web'         }
+    [pscustomobject]@{ Name = 'web';          Port = 3000; Cmd = 'pnpm dev'; Cwd = 'apps\web'          }
     [pscustomobject]@{ Name = 'admin-portal'; Port = 5174; Cmd = 'pnpm dev'; Cwd = 'apps\admin-portal' }
-    [pscustomobject]@{ Name = 'studio';      Port = 5175; Cmd = 'pnpm dev'; Cwd = 'apps\studio'      }
-    [pscustomobject]@{ Name = 'user-portal'; Port = 5180; Cmd = 'pnpm dev'; Cwd = 'apps\user-portal' }
+    [pscustomobject]@{ Name = 'studio';       Port = 5175; Cmd = 'pnpm dev'; Cwd = 'apps\studio'       }
+    # ops-portal 之前漏拉, 卫峥派单30 手动补才起来, 这次写进脚本固化
+    [pscustomobject]@{ Name = 'ops-portal';   Port = 5176; Cmd = 'pnpm dev'; Cwd = 'apps\ops-portal'   }
+    [pscustomobject]@{ Name = 'user-portal';  Port = 5180; Cmd = 'pnpm dev'; Cwd = 'apps\user-portal'  }
 )
 
 # ============================================================
@@ -125,7 +129,7 @@ function Start-Backend {
         return
     }
 
-    $proc = Start-Process -FilePath 'pnpm' -ArgumentList 'dev' `
+    $proc = Start-Process -FilePath 'pnpm.CMD' -ArgumentList 'dev' `
         -WorkingDirectory $Proc.Cwd `
         -RedirectStandardOutput $logFile `
         -RedirectStandardError "$logFile.err" `
@@ -140,7 +144,7 @@ function Start-Backend {
 #  4. 启动 service (后台)
 # ============================================================
 if (-not $SkipService) {
-    Write-Step "===== 启动 4 service ====="
+    Write-Step "===== 启动 5 service (后端先起) ====="
     foreach ($s in $Services) { Start-Backend $s }
 }
 
@@ -148,7 +152,7 @@ if (-not $SkipService) {
 #  5. 启动 portal (后台)
 # ============================================================
 if (-not $SkipPortal) {
-    Write-Step "===== 启动 4 portal (vite dev) ====="
+    Write-Step "===== 启动 5 portal (vite dev) ====="
     foreach ($p in $Portals) { Start-Backend $p }
 }
 
@@ -174,8 +178,8 @@ if ($CheckOnly) {
 #  vite dev 冷启动 5-10s, service 起来快, 给 8s
 # ============================================================
 if (-not $WhatIfPref) {
-    Write-Step "等 8s 让服务就绪..."
-    Start-Sleep -Seconds 8
+    Write-Step "等 12s 让 11 个进程就绪..."
+    Start-Sleep -Seconds 12
     Write-Step "===== 启动后自检 ====="
     $all = $Services + $Portals
     $failed = 0
@@ -189,6 +193,11 @@ if (-not $WhatIfPref) {
             $failed++
         }
     }
+    if ($failed -gt 0) {
+        Write-Fail "$failed / 11 个进程没起来, 上面有日志路径, 自己看"
+    } else {
+        Write-OK "11 / 11 进程全 UP"
+    }
 }
 
 # ============================================================
@@ -199,12 +208,14 @@ Write-Step "===== 访问入口 ====="
 Write-Host "  Web 主站        : http://localhost:3000"
 Write-Host "  Admin 后台      : http://localhost:5174"
 Write-Host "  Studio 工作台   : http://localhost:5175"
+Write-Host "  Ops Portal      : http://localhost:5176  (卫峥派单30补)"
 Write-Host "  User Portal     : http://localhost:5180"
 Write-Host ""
-Write-Host "  user-service    : http://localhost:8088  (auth/users/audit)"
-Write-Host "  project-service : http://localhost:8089"
-Write-Host "  billing-service : http://localhost:8090"
-Write-Host "  collab-service  : http://localhost:8089  (ws /ws)"
+Write-Host "  user-service     : http://localhost:8088  (auth/users/audit)"
+Write-Host "  project-service  : http://localhost:8089"
+Write-Host "  billing-service  : http://localhost:8090"
+Write-Host "  collab-service   : http://localhost:8091  (ws /ws)"
+Write-Host "  ai-orchestrator  : http://localhost:8087  (卫峥派单30补)"
 Write-Host ""
 Write-OK "全部就绪, 常用命令:"
 Write-Host "  Get-Process -Name node | Format-Table Id, StartTime        # 看进程"

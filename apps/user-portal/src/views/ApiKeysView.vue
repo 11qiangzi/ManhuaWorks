@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * ApiKeysView · BYOK API Key 管理页
- * ManhuaWorks · W6 用户后台 · L4-A BYOK UI
+ * 千机工坊 · W6 用户后台 · L4-A BYOK UI
  *
  * 4 大模块：
  * 1. 顶部 KPI（已用/总额积分 + 已配置/未配置 provider + Key 总数）

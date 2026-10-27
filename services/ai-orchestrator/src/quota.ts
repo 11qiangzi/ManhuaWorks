@@ -43,21 +43,21 @@ export const QUOTA_POLICIES: Record<UserTier, QuotaPolicy> = {
     perRunMaxUsd: 10,
     monthlyRunLimit: 200,
     maxConcurrent: 3,
-    pipelineAllowList: ["novel-to-drama", "episode-batch", "style-transfer", "character-replace", "auto-translate"],
+    pipelineAllowList: ["novel-to-drama", "episode-batch", "style-transfer", "character-replace", "auto-translate", "one-click-manga", "auto-music"],
   },
   business: {
     monthlyBudgetUsd: 500,
     perRunMaxUsd: 80,
     monthlyRunLimit: 5000,
     maxConcurrent: 10,
-    pipelineAllowList: ["novel-to-drama", "episode-batch", "style-transfer", "character-replace", "auto-translate"],
+    pipelineAllowList: ["novel-to-drama", "episode-batch", "style-transfer", "character-replace", "auto-translate", "one-click-manga", "auto-music"],
   },
   enterprise: {
     monthlyBudgetUsd: -1,
     perRunMaxUsd: -1,
     monthlyRunLimit: -1,
     maxConcurrent: 50,
-    pipelineAllowList: ["novel-to-drama", "episode-batch", "style-transfer", "character-replace", "auto-translate"],
+    pipelineAllowList: ["novel-to-drama", "episode-batch", "style-transfer", "character-replace", "auto-translate", "one-click-manga", "auto-music"],
   },
 } as const;
 
@@ -141,6 +141,8 @@ export const COST_ESTIMATES = {
   "style-transfer": 0.4, // 1 段视频换皮
   "character-replace": 0.6, // 跨集角色替换
   "auto-translate": 0.25, // 单语种翻译 + 烧字幕
+  "one-click-manga": 5.0, // P2: 一键创作 7 步全流程
+  "auto-music": 0.3, // P2: 配乐生成
 } as const;
 
 export function estimateCost(pipeline: keyof typeof COST_ESTIMATES): number {

@@ -1,5 +1,5 @@
 /* =========================================================
- * ManhuaWorks · Web · Responsive + Theme
+ * 千机工坊 · Web · Responsive
  * Mobile-first; mobile = 1 col, tablet = 2, desktop = 3, 4k = 5
  * ========================================================= */
 
@@ -14,17 +14,18 @@
 .app-container {
   width: 100%;
   margin: 0 auto;
-  padding: var(--space-4);
+  padding: 16px;
   max-width: 100%;
+  box-sizing: border-box;
 }
-@media (min-width: 768px) { .app-container { padding: var(--space-5); max-width: 720px; } }
-@media (min-width: 1024px) { .app-container { padding: var(--space-6); max-width: 1200px; } }
-@media (min-width: 2560px) { .app-container { max-width: 2400px; padding: var(--space-7); } }
+@media (min-width: 768px) { .app-container { padding: 24px; max-width: 720px; } }
+@media (min-width: 1024px) { .app-container { padding: 32px; max-width: 1200px; } }
+@media (min-width: 2560px) { .app-container { max-width: 2400px; padding: 48px; } }
 
 /* ---- 网格 ---- */
 .rg-app {
   display: grid;
-  gap: var(--space-4);
+  gap: 16px;
   grid-template-columns: 1fr;
 }
 @media (min-width: 768px)  { .rg-app { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -44,47 +45,46 @@
 
 /* ---- 全局基础 ---- */
 body {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: var(--font-display, system-ui, sans-serif);
+  background: var(--bg-primary, #0E0F12);
+  color: var(--text-primary, #E8EAED);
+  font-family: var(--font-display, 'PingFang SC', system-ui, sans-serif);
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-a { color: var(--text-link); text-decoration: none; }
+a { color: var(--accent, #00BFA5); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 /* ---- 卡片 ---- */
 .card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-4);
-  padding: var(--space-4);
-  box-shadow: var(--shadow-2);
-  transition: box-shadow var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  background: var(--bg-elevated, #23262E);
+  border: 1px solid var(--border-default, #2E3139);
+  border-radius: 12px;
+  padding: 16px;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 .card.mi-hover-lift:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-4);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
 }
 
 /* ---- 按钮 ---- */
 .btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  background: var(--primary); color: white;
-  border: none; border-radius: var(--radius-3);
-  cursor: pointer; font-size: var(--text-sm);
-  transition: background-color var(--dur-fast) var(--ease-out);
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 8px 16px;
+  background: var(--accent, #00BFA5); color: white;
+  border: none; border-radius: 8px;
+  cursor: pointer; font-size: 14px;
+  transition: background-color 0.2s ease;
 }
-.btn:hover { background: var(--primary-hover); }
-.btn:active { background: var(--primary-active); transform: scale(0.98); }
-.btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.btn:hover { background: var(--accent-hover, #0D9488); }
+.btn:active { transform: scale(0.98); }
+.btn:focus-visible { outline: 2px solid var(--accent, #00BFA5); outline-offset: 2px; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-secondary { background: var(--secondary); }
-.btn-secondary:hover { background: var(--secondary-hover); }
-.btn-ghost { background: transparent; color: var(--text-primary); border: 1px solid var(--border-default); }
-.btn-ghost:hover { background: var(--bg-tertiary); }
+.btn-secondary { background: var(--bg-surface, #1A1C21); color: var(--text-primary, #E8EAED); border: 1px solid var(--border-default, #2E3139); }
+.btn-secondary:hover { background: var(--bg-elevated, #23262E); }
+.btn-ghost { background: transparent; color: var(--text-primary, #E8EAED); border: 1px solid var(--border-default, #2E3139); }
+.btn-ghost:hover { background: var(--bg-elevated, #23262E); }
 
 /* ---- prefers-reduced-motion ---- */
 @media (prefers-reduced-motion: reduce) {

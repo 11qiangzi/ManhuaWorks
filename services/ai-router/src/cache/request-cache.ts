@@ -101,7 +101,17 @@ class RequestCache {
 
   /** 计算稳定的缓存 key */
   static keyFor(scope: string, payload: unknown): string {
-    const json = JSON.stringify(payload, Object.keys(payload as object).sort());
+    const json = JSON.stringify(payload, (_key, value) => {
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        return Object.keys(value)
+          .sort()
+          .reduce<Record<string, unknown>>((sorted, k) => {
+            sorted[k] = (value as Record<string, unknown>)[k];
+            return sorted;
+          }, {});
+      }
+      return value;
+    });
     const hash = createHash("sha256").update(`${scope}:${json}`).digest("hex");
     return `ai-router:cache:${scope}:${hash}`;
   }

@@ -22,14 +22,14 @@ function pickTheme(name: ThemeName) {
 
 <template>
   <AppShell
-    brand-name="漫工场"
-    brand-short="漫"
+    brand-name="千机工坊"
+    brand-short="千机"
     sidebar-title="管理后台"
   >
     <!-- 品牌副标题 -->
     <template #brand>
       <div>
-        <div class="admin-brand-title">漫工场</div>
+        <div class="admin-brand-title">千机工坊</div>
         <div class="admin-brand-sub">管理后台</div>
       </div>
     </template>
@@ -43,8 +43,17 @@ function pickTheme(name: ThemeName) {
       <SidebarNavItem to="/settings" icon="⚙️" title="系统设置" />
       <SidebarNavItem to="/ops" icon="📈" title="业务运营" />
       <SidebarNavItem to="/compliance" icon="🛡️" title="合规审计" />
+      <SidebarNavItem to="/music-management" icon="🎵" title="配乐管理" />
       <SidebarNavItem to="/projects" icon="📁" title="项目审核" />
       <SidebarNavItem to="/logs" icon="📋" title="系统日志" />
+
+      <!-- 运维分区 -->
+      <div class="sidebar-divider" />
+      <div class="sidebar-section-label">运维</div>
+      <SidebarNavItem to="/monitoring" icon="📊" title="系统监控" />
+      <SidebarNavItem to="/system" icon="⚙️" title="系统管理" />
+      <SidebarNavItem to="/ops-logs" icon="📋" title="运维日志" />
+      <SidebarNavItem to="/services" icon="🔧" title="服务管理" />
     </template>
 
     <!-- 顶栏 -->
@@ -110,5 +119,22 @@ function pickTheme(name: ThemeName) {
   color: white;
   font-size: 12px;
   text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+
+/* 运维分区 */
+.sidebar-divider {
+  height: 1px;
+  margin: 12px 16px;
+  background: var(--border, #1f2937);
+  opacity: 0.6;
+}
+.sidebar-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary, #94a3b8);
+  opacity: 0.6;
+  padding: 0 12px 6px;
 }
 </style>

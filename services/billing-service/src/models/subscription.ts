@@ -3,12 +3,12 @@
  * 数据库表：subscriptions（按 docs/database/migrations/001_init.sql）
  */
 
-import type { PlanIdDb } from "../config/plans";
+import type { PlanId } from "../config/plans";
 
 export interface SubscriptionRow {
   id: string;
   user_id: string;
-  plan: PlanIdDb;
+  plan: PlanId;
   started_at: Date;
   expires_at: Date | null;
   auto_renew: boolean;
@@ -18,7 +18,7 @@ export interface SubscriptionRow {
 export interface Subscription {
   id: string;
   userId: string;
-  plan: PlanIdDb;
+  plan: PlanId;
   startedAt: Date;
   expiresAt: Date | null;
   autoRenew: boolean;

@@ -82,6 +82,29 @@ projectsRoute.post("/", async (c) => {
   if (!parsed.success) {
     return c.json({ code: 400, message: "invalid params", issues: parsed.error.flatten() }, 400);
   }
+
+  // 配额检查：调用 billing-service 确认是否允许创建
+  try {
+    const billingUrl = process.env.BILLING_SERVICE_URL ?? 'http://localhost:8083';
+    const checkResp = await fetch(`${billingUrl}/api/v1/subscriptions/can-create-project`, {
+      headers: { 'Authorization': c.req.header('authorization') ?? '' },
+    });
+    if (checkResp.ok) {
+      const checkData = await checkResp.json() as any;
+      const result = checkData.data;
+      if (result && result.allowed === false) {
+        return c.json({
+          code: 403,
+          message: result.reason ?? '项目数量已达上限',
+          data: { plan: result.plan, limit: result.limit, used: result.used },
+        }, 403);
+      }
+    }
+    // If billing-service is unreachable, fail-open (allow creation) for resilience
+  } catch {
+    // fail-open: billing-service unavailable, don't block creation
+  }
+
   const inserted = await db
     .insert(projects)
     .values({

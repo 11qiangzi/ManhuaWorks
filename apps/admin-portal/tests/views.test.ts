@@ -75,7 +75,7 @@ describe('AdminLayout', () => {
       global: { plugins: [router] },
     })
     await flushPromises()
-    expect(wrapper.text()).toContain('ManhuaWorks')
+    expect(wrapper.text()).toContain('千机工坊')
     const links = wrapper.findAll('.admin-nav-item')
     expect(links.length).toBe(5)
   })

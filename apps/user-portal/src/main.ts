@@ -1,5 +1,5 @@
 /**
- * ManhuaWorks · 用户后台入口
+ * 千机工坊 · 用户后台入口
  * W4 + L2 task 8 接通真后端
  * L2 task 9: 主题 + 响应式
  */
@@ -48,7 +48,7 @@ function showToast(kind: 'info' | 'error' | 'warning', text: string): void {
   try {
     window.dispatchEvent(new CustomEvent('mhw:toast', { detail: { kind, text } }))
   } catch {
-    console.warn(`[${kind}] ${text}`)
+    // toast dispatch failed silently
   }
 }
 

@@ -1,204 +1,138 @@
 <script setup lang="ts">
 /**
- * DragDropList · 拖拽列表
- * ManhuaWorks · W3 工坊流程精修
+ * DragDropList - 拖拽排序列表
+ * ManhuaWorks studio component
  *
- * 通用 HTML5 拖拽排序组件，用于：
- * 1. 分镜排序（StoryboardEditor）
- * 2. 镜头重排
- * 3. 任意 list 排序
- *
- * 特性：
- * - 原生 HTML5 拖拽（无第三方依赖）
- * - 键盘可达（上下箭头移动）
- * - 拖拽手柄 + 视觉反馈
- * - 5 主题适配
+ * 简单的拖拽排序列表组件（上下移动）
  */
-import { ref, computed } from 'vue'
 
 export interface DragItem {
   id: string
-  /** 列表中显示的标题 */
   title: string
-  /** 副标题（可选） */
   subtitle?: string
-  /** 拖拽前禁用 */
-  dragDisabled?: boolean
-  /** 任意附加数据 */
   data?: Record<string, unknown>
 }
 
-const props = withDefaults(defineProps<{
+interface Props {
   items: DragItem[]
-  selectedId?: string | null
-  /** 拖拽手柄图标 */
-  handleIcon?: string
-  /** 是否显示序号 */
   showOrder?: boolean
-  /** 列表为空时的占位文本 */
   emptyText?: string
-  /** 自定义槽位（slot="item" 替代默认渲染） */
-}>(), {
-  handleIcon: '⋮⋮',
-  showOrder: true,
-  emptyText: '暂无项目',
-  selectedId: null
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  showOrder: false,
+  emptyText: '暂无数据'
 })
 
 const emit = defineEmits<{
-  (e: 'reorder', fromIndex: number, toIndex: number, newList: DragItem[]): void
-  (e: 'select', id: string): void
-  (e: 'remove', id: string): void
-  (e: 'edit', id: string): void
+  reorder: [fromIndex: number, toIndex: number, newList: DragItem[]]
+  select: [id: string]
+  remove: [id: string]
 }>()
 
-// 拖拽状态
-const draggedIndex = ref<number | null>(null)
-const dragOverIndex = ref<number | null>(null)
-const isDraggingAny = computed(() => draggedIndex.value !== null)
+/** 拖拽状态 */
+const dragIdx = defineModel<number | null>({ default: null })
 
-function onDragStart(e: DragEvent, index: number) {
-  if (props.items[index]?.dragDisabled) {
-    e.preventDefault()
+function onDragStart(idx: number) {
+  dragIdx.value = idx
+}
+
+function onDragOver(e: DragEvent, idx: number) {
+  e.preventDefault()
+}
+
+function onDrop(fromIdx: number, toIdx: number) {
+  if (fromIdx === toIdx) {
+    dragIdx.value = null
     return
   }
-  draggedIndex.value = index
-  if (e.dataTransfer) {
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', props.items[index]?.id ?? '')
-  }
-}
-
-function onDragOver(e: DragEvent, index: number) {
-  e.preventDefault()
-  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
-  if (draggedIndex.value !== null) {
-    dragOverIndex.value = index
-  }
-}
-
-function onDragLeave(_e: DragEvent, _index: number) {
-  // 不在这里清，避免快速穿过时闪烁
-}
-
-function onDrop(e: DragEvent, index: number) {
-  e.preventDefault()
-  if (draggedIndex.value === null) return
-  const from = draggedIndex.value
-  const to = index
-  draggedIndex.value = null
-  dragOverIndex.value = null
-  if (from === to) return
-
-  // 计算新列表
-  const next = [...props.items]
-  const [moved] = next.splice(from, 1)
+  const newList = [...props.items]
+  const [moved] = newList.splice(fromIdx, 1)
   if (moved) {
-    next.splice(to, 0, moved)
+    newList.splice(toIdx, 0, moved)
   }
-  emit('reorder', from, to, next)
+  emit('reorder', fromIdx, toIdx, newList)
+  dragIdx.value = null
 }
 
 function onDragEnd() {
-  draggedIndex.value = null
-  dragOverIndex.value = null
+  dragIdx.value = null
 }
 
-// 键盘排序（↑↓）
-function onKeydown(e: KeyboardEvent, index: number) {
-  if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
-  e.preventDefault()
-  const dir = e.key === 'ArrowUp' ? -1 : 1
-  const to = index + dir
-  if (to < 0 || to >= props.items.length) return
-  const next = [...props.items]
-  const [moved] = next.splice(index, 1)
-  if (moved) {
-    next.splice(to, 0, moved)
-  }
-  emit('reorder', index, to, next)
+function onMoveUp(idx: number) {
+  if (idx <= 0) return
+  onDrop(idx, idx - 1)
 }
 
-function onClick(id: string) {
-  emit('select', id)
-}
-function onRemove(id: string, e: Event) {
-  e.stopPropagation()
-  if (confirm('确认删除？')) emit('remove', id)
-}
-function onEdit(id: string, e: Event) {
-  e.stopPropagation()
-  emit('edit', id)
+function onMoveDown(idx: number) {
+  if (idx >= props.items.length - 1) return
+  onDrop(idx, idx + 1)
 }
 </script>
 
 <template>
-  <ol
-    class="dd-list"
-    :class="{ 'dd-list--dragging': isDraggingAny }"
-    role="list"
-  >
-    <li
-      v-if="items.length === 0"
-      class="dd-list__empty"
-    >
-      <span class="dd-list__empty-icon">📋</span>
-      <p>{{ emptyText }}</p>
-    </li>
+  <div class="ddl">
+    <div v-if="props.items.length === 0" class="ddl__empty">
+      {{ props.emptyText }}
+    </div>
 
-    <li
-      v-for="(item, index) in items"
-      :key="item.id"
-      class="dd-item"
-      :class="{
-        'dd-item--dragging': draggedIndex === index,
-        'dd-item--over-top': dragOverIndex === index && draggedIndex !== null && draggedIndex > index,
-        'dd-item--over-bottom': dragOverIndex === index && draggedIndex !== null && draggedIndex < index,
-        'dd-item--selected': selectedId === item.id,
-        'dd-item--disabled': item.dragDisabled
-      }"
-      :draggable="!item.dragDisabled"
-      :tabindex="0"
-      @dragstart="onDragStart($event, index)"
-      @dragover="onDragOver($event, index)"
-      @dragleave="onDragLeave($event, index)"
-      @drop="onDrop($event, index)"
-      @dragend="onDragEnd"
-      @keydown="onKeydown($event, index)"
-      @click="onClick(item.id)"
-    >
-      <!-- 拖拽手柄 -->
-      <span
-        class="dd-item__handle"
-        :class="{ 'dd-item__handle--disabled': item.dragDisabled }"
-        :title="item.dragDisabled ? '该条目不可拖拽' : '拖动排序（也可点击 ↑↓ 键）'"
-        aria-hidden="true"
-      >{{ handleIcon }}</span>
+    <TransitionGroup v-else name="ddl-list" tag="ul" class="ddl__list">
+      <li
+        v-for="(item, idx) in props.items"
+        :key="item.id"
+        class="ddl__item"
+        :class="{ 'ddl__item--dragging': dragIdx === idx }"
+        draggable="true"
+        @dragstart="onDragStart(idx)"
+        @dragover="onDragOver($event, idx)"
+        @drop="onDrop(dragIdx ?? idx, idx)"
+        @dragend="onDragEnd"
+        @click="emit('select', item.id)"
+      >
+        <!-- 拖拽把手 -->
+        <span class="ddl__handle" title="拖拽排序">&#9776;</span>
 
-      <!-- 序号 -->
-      <span v-if="showOrder" class="dd-item__order">{{ index + 1 }}</span>
+        <!-- 序号 -->
+        <span v-if="props.showOrder" class="ddl__order">{{ idx + 1 }}</span>
 
-      <!-- 主体 -->
-      <div class="dd-item__body">
-        <slot name="item" :item="item" :index="index">
-          <div class="dd-item__default">
-            <strong class="dd-item__title">{{ item.title }}</strong>
-            <span v-if="item.subtitle" class="dd-item__subtitle">{{ item.subtitle }}</span>
-          </div>
-        </slot>
-      </div>
+        <!-- 内容 -->
+        <div class="ddl__content">
+          <strong class="ddl__title">{{ item.title }}</strong>
+          <span v-if="item.subtitle" class="ddl__subtitle">{{ item.subtitle }}</span>
+        </div>
 
-      <!-- 操作 -->
-      <div class="dd-item__actions" @click.stop>
-        <button type="button" class="dd-item__btn" title="编辑" @click="onEdit(item.id, $event)">✏️</button>
-        <button type="button" class="dd-item__btn dd-item__btn--danger" title="删除" @click="onRemove(item.id, $event)">🗑️</button>
-      </div>
-    </li>
-  </ol>
+        <!-- 上下移动按钮 -->
+        <div class="ddl__arrows">
+          <button
+            type="button"
+            class="ddl__arrow"
+            :disabled="idx === 0"
+            @click.stop="onMoveUp(idx)"
+            title="上移"
+          >&uarr;</button>
+          <button
+            type="button"
+            class="ddl__arrow"
+            :disabled="idx === props.items.length - 1"
+            @click.stop="onMoveDown(idx)"
+            title="下移"
+          >&darr;</button>
+        </div>
+
+        <!-- 删除 -->
+        <button
+          type="button"
+          class="ddl__remove"
+          @click.stop="emit('remove', item.id)"
+          title="删除"
+        >&times;</button>
+      </li>
+    </TransitionGroup>
+  </div>
 </template>
 
 <style scoped>
-.dd-list {
+.ddl__list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -207,191 +141,152 @@ function onEdit(id: string, e: Event) {
   gap: 6px;
 }
 
-.dd-list--dragging {
-  cursor: grabbing;
-}
-
-/* ===== 空 ===== */
-.dd-list__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 60px 20px;
-  color: var(--text-secondary);
+.ddl__empty {
+  padding: 40px 20px;
   text-align: center;
-  background: var(--bg-secondary);
-  border: 1px dashed var(--border-strong);
-  border-radius: 10px;
-}
-
-.dd-list__empty-icon {
-  font-size: 36px;
-  opacity: 0.5;
-}
-
-.dd-list__empty p {
-  margin: 0;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
-/* ===== 单条 ===== */
-.dd-item {
+.ddl__item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background: var(--bg-secondary);
-  border: 1.5px solid var(--border);
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  cursor: pointer;
-  user-select: none;
-  outline: none;
-  transition: all 200ms;
-  position: relative;
-}
-
-.dd-item:hover {
-  border-color: var(--accent);
-}
-
-.dd-item:focus-visible {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
-}
-
-.dd-item--selected {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 6%, var(--bg-secondary));
-}
-
-.dd-item--dragging {
-  opacity: 0.5;
-  transform: scale(0.98);
-  cursor: grabbing;
-}
-
-.dd-item--over-top::before,
-.dd-item--over-bottom::after {
-  content: '';
-  position: absolute;
-  left: 8px;
-  right: 8px;
-  height: 2px;
-  background: var(--accent);
-  border-radius: 1px;
-  box-shadow: 0 0 4px var(--accent);
-}
-
-.dd-item--over-top::before { top: -4px; }
-.dd-item--over-bottom::after { bottom: -4px; }
-
-.dd-item--disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ===== 手柄 ===== */
-.dd-item__handle {
-  font-size: 14px;
-  color: var(--text-secondary);
   cursor: grab;
-  padding: 0 4px;
-  user-select: none;
-  flex-shrink: 0;
-  line-height: 1;
+  transition: all 200ms;
 }
 
-.dd-item__handle:hover { color: var(--accent); }
-.dd-item__handle--disabled { cursor: not-allowed; }
-
-.dd-item:active .dd-item__handle { cursor: grabbing; }
-
-/* ===== 序号 ===== */
-.dd-item__order {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 4px;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  color: var(--accent);
-  font-family: monospace;
-  font-size: 11px;
-  font-weight: 600;
-  flex-shrink: 0;
+.ddl__item:hover {
+  border-color: var(--accent);
 }
 
-/* ===== 主体 ===== */
-.dd-item__body {
-  flex: 1;
-  min-width: 0;
+.ddl__item--dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 4%, var(--bg-primary));
 }
 
-.dd-item__default {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.dd-item__title {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dd-item__subtitle {
-  font-size: 11px;
+.ddl__handle {
   color: var(--text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ===== 操作 ===== */
-.dd-item__actions {
-  display: flex;
-  gap: 3px;
-  opacity: 0;
-  transition: opacity 200ms;
+  font-size: 14px;
+  cursor: grab;
   flex-shrink: 0;
+  opacity: 0.5;
 }
 
-.dd-item:hover .dd-item__actions,
-.dd-item--selected .dd-item__actions {
+.ddl__item:hover .ddl__handle {
   opacity: 1;
 }
 
-.dd-item__btn {
-  width: 22px;
-  height: 22px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
+.ddl__order {
   font-size: 11px;
+  font-weight: 700;
+  font-family: monospace;
+  color: var(--accent);
+  min-width: 18px;
+  text-align: center;
+}
+
+.ddl__content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ddl__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ddl__subtitle {
+  font-size: 11px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ddl__arrows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.ddl__arrow {
+  width: 20px;
+  height: 16px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 10px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: inherit;
   transition: all 150ms;
+  font-family: inherit;
+  padding: 0;
 }
 
-.dd-item__btn:hover {
+.ddl__arrow:hover:not(:disabled) {
   border-color: var(--accent);
   color: var(--accent);
 }
 
-.dd-item__btn--danger:hover {
-  border-color: var(--danger);
-  color: var(--danger);
+.ddl__arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.ddl__remove {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 150ms;
+  font-family: inherit;
+  padding: 0;
+}
+
+.ddl__remove:hover {
+  border-color: var(--danger, #ef4444);
+  color: var(--danger, #ef4444);
+}
+
+/* Transition animations */
+.ddl-list-move {
+  transition: transform 200ms ease;
+}
+
+.ddl-list-enter-active,
+.ddl-list-leave-active {
+  transition: all 200ms ease;
+}
+
+.ddl-list-enter-from,
+.ddl-list-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
 }
 </style>

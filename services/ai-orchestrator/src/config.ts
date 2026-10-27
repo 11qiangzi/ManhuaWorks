@@ -41,6 +41,16 @@ export const config = {
     url: str(process.env.AI_KEYS_SERVICE_URL, "http://localhost:8083"),
     timeoutMs: num(process.env.AI_KEYS_TIMEOUT_MS, 15_000),
   },
+  billing: {
+    url: str(process.env.BILLING_SERVICE_URL, "http://localhost:8088"),
+    timeoutMs: num(process.env.BILLING_TIMEOUT_MS, 10_000),
+  },
+
+  /** 数据库 */
+  db: {
+    url: str(process.env.DATABASE_URL, "postgresql://mhw:mhw_dev_only@localhost:5432/manhuaworks"),
+    max: num(process.env.DB_MAX, 10),
+  },
 
   /** 鉴权 */
   auth: {

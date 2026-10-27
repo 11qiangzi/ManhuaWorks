@@ -44,6 +44,32 @@ export interface VideoGenInput {
   artStyle: ArtStyle;
   durationSeconds?: number;
   resolution?: string;
+  sourceImageUrl?: string;
+}
+
+export interface BeatSplitInput {
+  text: string;
+  storyType: StoryType;
+  chapterTitle?: string;
+}
+
+export interface ShotComposeInput {
+  beats: Array<{ beatId: string; type: string; description: string; duration: number }>;
+  targetShotCount: number;
+  artStyle: ArtStyle;
+}
+
+export interface AudioAlignInput {
+  segmentUrls: string[];
+  audioUrl?: string;
+  bgmUrl?: string;
+  shots?: Array<{ shotId: string; duration: number; dialogue?: string }>;
+}
+
+export interface SubtitleBurnInput {
+  segmentUrls: string[];
+  subtitleText: string;
+  style?: { position?: string; fontSize?: number; color?: string; outline?: boolean };
 }
 
 export interface ComposeInput {
@@ -51,6 +77,7 @@ export interface ComposeInput {
   audioUrls?: string[];
   subtitleText?: string;
   outputFormat?: "mp4" | "mov";
+  transitions?: { type: string; duration: number };
 }
 
 export interface WorkflowResult<R = unknown> {
@@ -145,6 +172,18 @@ export const workflowClient = {
   },
   compose(input: ComposeInput) {
     return call<WorkflowResult>("/v1/workflow/compose", input, config.workflow.timeoutMs);
+  },
+  beatSplit(input: BeatSplitInput) {
+    return call<WorkflowResult>("/v1/workflow/beat-split", input, config.workflow.timeoutMs);
+  },
+  shotCompose(input: ShotComposeInput) {
+    return call<WorkflowResult>("/v1/workflow/shot-compose", input, config.workflow.timeoutMs);
+  },
+  audioAlign(input: AudioAlignInput) {
+    return call<WorkflowResult>("/v1/workflow/audio-align", input, config.workflow.timeoutMs);
+  },
+  subtitleBurn(input: SubtitleBurnInput) {
+    return call<WorkflowResult>("/v1/workflow/subtitle-burn", input, config.workflow.timeoutMs);
   },
   getStatus(runId: string) {
     return getCall<{ runId: string; status: string; [k: string]: unknown }>(

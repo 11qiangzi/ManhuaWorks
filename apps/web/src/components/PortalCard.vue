@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * PortalCard · 后台入口卡片
- * ManhuaWorks · W1 交付
+ * 千机工坊 · W1 交付
  *
  * 用于 HomeView 展示 4 大后台入口：
  * - 用户后台 app.mhwork

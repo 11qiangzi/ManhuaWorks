@@ -38,6 +38,75 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === 'object' && (v as object).constructor === Object
 }
 
+/* ── P0-1 / P0-2: 响应信封剥离 + 字段映射 ───────────────────── */
+
+/** 后端 status 数字 → 前端 DTO 字符串枚举 */
+const PROJECT_STATUS_MAP: Record<number, string> = { 0: 'active', 1: 'active', 2: 'archived', 3: 'deleted' }
+const SHOT_STATUS_MAP: Record<number, string> = { 0: 'draft', 1: 'wip', 2: 'review', 3: 'done', 4: 'archived' }
+
+/** 剥离 {code, message, data} 信封 + 分页字段统一 + 实体字段映射 */
+function unwrapApiResponse(data: unknown, path: string): unknown {
+  if (!isPlainObject(data)) return data
+
+  // 1) 信封剥离: {code:0, data:{...}} → data 部分
+  let body: unknown = data
+  if ('code' in data && 'data' in data) {
+    body = data.data
+  }
+
+  // 2) 分页规范化: items → list
+  if (isPlainObject(body) && !Array.isArray(body) && 'items' in body && Array.isArray((body as any).items)) {
+    body = { ...body, list: (body as any).items }
+  }
+
+  // 3) 实体字段映射
+  if (Array.isArray(body)) {
+    return body.map((item: unknown) => mapFields(item, path))
+  }
+  if (isPlainObject(body)) {
+    // 分页响应里的 list 数组
+    if ('list' in body && Array.isArray((body as any).list)) {
+      return { ...(body as object), list: ((body as any).list as unknown[]).map((item: unknown) => mapFields(item, path)) }
+    }
+    // 单实体响应
+    return mapFields(body, path)
+  }
+  return body
+}
+
+/** 根据路径判断实体类型，做字段映射 */
+function mapFields(item: unknown, path: string): unknown {
+  if (!isPlainObject(item)) return item
+  const obj = { ...item } as Record<string, unknown>
+
+  // Project 字段映射
+  if (path.includes('/projects') && !path.includes('/shots') && !path.includes('/characters') && !path.includes('/scenes')) {
+    if ('title' in obj && !('name' in obj)) obj.name = obj.title
+    if ('user_id' in obj && !('owner_id' in obj)) obj.owner_id = obj.user_id
+    if (typeof obj.status === 'number') obj.status = PROJECT_STATUS_MAP[obj.status as number] ?? 'active'
+    // 前端 DTO 要求的默认值
+    if (!('visibility' in obj)) obj.visibility = 'private'
+    if (!('shot_count' in obj)) obj.shot_count = 0
+    if (!('member_count' in obj)) obj.member_count = 0
+  }
+
+  // Shot 字段映射
+  if (path.includes('/shots')) {
+    if ('title' in obj && !('name' in obj)) obj.name = obj.title
+    if ('sort_index' in obj && !('order_index' in obj)) obj.order_index = obj.sort_index
+    if ('shot_no' in obj && !('order_index' in obj)) obj.order_index = obj.shot_no
+    if (typeof obj.status === 'number') obj.status = SHOT_STATUS_MAP[obj.status as number] ?? 'draft'
+  }
+
+  // Login 响应：后端 {token, user:{...}} 没有 refresh_token / expires_in
+  if (path.includes('/auth/login') || path.includes('/auth/register')) {
+    if (!('refresh_token' in obj)) obj.refresh_token = ''
+    if (!('expires_in' in obj)) obj.expires_in = 3600
+  }
+
+  return obj
+}
+
 function buildQuery(q?: Record<string, unknown>): string {
   if (!q) return ''
   const parts: string[] = []
@@ -164,10 +233,13 @@ export function createHttp(opts: CreateApiClientOptions): HttpRuntime {
     return resp
   }
 
-  async function parseBody(resp: Response): Promise<unknown> {
+  async function parseBody(resp: Response, path: string): Promise<unknown> {
     const ct = resp.headers.get('content-type') ?? ''
     if (ct.includes('application/json')) {
-      try { return await resp.json() } catch { return null }
+      try {
+        const raw = await resp.json()
+        return unwrapApiResponse(raw, path)
+      } catch { return null }
     }
     const text = await resp.text().catch(() => '')
     return text || null
@@ -186,7 +258,7 @@ export function createHttp(opts: CreateApiClientOptions): HttpRuntime {
         if (resp.ok) {
           // 204 / 空 body
           if (resp.status === 204) return null
-          return await parseBody(resp)
+          return await parseBody(resp, inner.path)
         }
 
         // 401 → 自动 refresh + 重试一次
@@ -198,22 +270,22 @@ export function createHttp(opts: CreateApiClientOptions): HttpRuntime {
             const retryResp = await rawRequest(method, path, body, query, { ...opts, skipAuth: false })
             if (retryResp.ok) {
               if (retryResp.status === 204) return null
-              return await parseBody(retryResp)
+              return await parseBody(retryResp, inner.path)
             }
             if (retryResp.status === 401) {
               // refresh 后仍 401 → 认证失效
               tokenStore.clearAll()
               try { onAuthLost?.() } catch { /* noop */ }
-              const body401 = await parseBody(retryResp)
+              const body401 = await parseBody(retryResp, inner.path)
               if (opts.swallow401) return null
               throw ApiError.fromResponse(401, body401)
             }
-            const body2 = await parseBody(retryResp)
+            const body2 = await parseBody(retryResp, inner.path)
             throw ApiError.fromResponse(retryResp.status, body2)
           }
           tokenStore.clearAll()
           try { onAuthLost?.() } catch { /* noop */ }
-          const body401 = await parseBody(resp)
+          const body401 = await parseBody(resp, inner.path)
           if (opts.swallow401) return null
           throw ApiError.fromResponse(401, body401)
         }
@@ -226,7 +298,7 @@ export function createHttp(opts: CreateApiClientOptions): HttpRuntime {
           continue
         }
 
-        const errBody = await parseBody(resp)
+        const errBody = await parseBody(resp, inner.path)
         if (opts.swallow401 && resp.status === 401) return null
         throw ApiError.fromResponse(resp.status, errBody)
       } catch (e) {

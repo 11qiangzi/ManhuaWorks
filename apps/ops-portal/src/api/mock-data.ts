@@ -1,6 +1,6 @@
 /**
  * mock-data.ts · 业务总后台假数据
- * ManhuaWorks · M1-W4 · L4-B
+ * 千机工坊 · M1-W4 · L4-B
  * 纯前端 mock, 不接后端
  */
 

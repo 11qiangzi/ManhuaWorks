@@ -1,6 +1,6 @@
 /**
  * admin-portal · audit Pinia store — 接 user-service 审计日志
- * ManhuaWorks · L2 task 8
+ * 千机工坊 · L2 task 8
  *
  * user-service 暴露 /audit/*（假设）；若无则降级到 collab-service 的 activities。
  */

@@ -88,6 +88,9 @@ const SERVICE_UPSTREAM: Record<string, { target: string; prefix: string }> = {
   '/v1/projects': { target: process.env.PROJECT_SERVICE_URL  ?? 'http://localhost:8082', prefix: '/v1/projects' },
   '/v1/billing':  { target: process.env.BILLING_SERVICE_URL  ?? 'http://localhost:8083', prefix: '/v1/billing' },
   '/v1/ai':       { target: process.env.AI_ORCHESTRATOR_URL  ?? 'http://localhost:8084', prefix: '/v1/ai' },
+  '/v1/collab':    { target: process.env.COLLAB_SERVICE_URL    ?? 'http://localhost:8091', prefix: '/v1/collab' },
+  '/v1/assets':    { target: process.env.ASSET_SERVICE_URL     ?? 'http://localhost:8085', prefix: '/v1/assets' },
+  '/v1/workflows': { target: process.env.WORKFLOW_ENGINE_URL   ?? 'http://localhost:8084', prefix: '/v1/workflows' },
 };
 
 function buildProxyHandler(serviceKey: string) {

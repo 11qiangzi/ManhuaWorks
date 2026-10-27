@@ -1,6 +1,6 @@
 /**
  * useUser — 用户档案便捷 composable
- * ManhuaWorks · W4 用户后台
+ * 千机工坊 · W4 用户后台
  */
 
 import { onMounted } from 'vue'

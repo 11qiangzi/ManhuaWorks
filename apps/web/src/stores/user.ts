@@ -1,6 +1,6 @@
 /**
  * web · user Pinia store — 接 user-service
- * ManhuaWorks · L2 task 8
+ * 千机工坊 · L2 task 8
  */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'

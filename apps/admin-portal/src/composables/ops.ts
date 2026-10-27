@@ -1,6 +1,6 @@
 /**
  * composables/ops.ts —业务运营 + 合规 composable
- * ManhuaWorks · M1-W3 L3.K
+ * 千机工坊 · M1-W3 L3.K
  *
  * useOps()
  * -4 大模块12 数据点

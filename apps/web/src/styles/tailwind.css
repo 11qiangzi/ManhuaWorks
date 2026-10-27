@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════
- * ManhuaWorks 品牌设计系统 — P0 林知行审定 (2026-06-10)
+ * 千机工坊 品牌设计系统 — P0 林知行审定 (2026-06-10)
  * 5 站统一: web / studio / user-portal / admin-portal / ops-portal
  * 规范来源: packages/shared/design-tokens/tokens.css
  * ═══════════════════════════════════════════════════════════ */
@@ -87,6 +87,34 @@
   --sidebar-expanded: 240px;
   --sidebar-collapsed: 64px;
   --header-height: 56px;
+}
+
+/* ═══ F-08 对比度修复：补齐浅色/深色主题下组件依赖的语义令牌 ═══
+ * StoryboardEditorView 等组件使用了 --bg-tertiary / --bg-card / --surface-* /
+ * --border-color / --border-subtle / --error 等令牌，但浅色主题未覆盖它们，
+ * 导致回退到 :root 的深色值（深色表面 + 深色文字 = 不可见 / 对比度失效）。
+ * 此处按主题分组补齐：浅色主题给浅值，深色主题给与现状一致的深值。
+ */
+.theme-minimal-light, .theme-national-ink, .theme-creator-orange, .theme-light {
+  --bg-tertiary: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --surface-1: #f8fafc;
+  --surface-2: #f1f5f9;
+  --surface-3: #e2e8f0;
+  --border-color: #cbd5e1;
+  --border-subtle: #f1f5f9;
+  --error: #ef4444;
+}
+.theme-dark-workshop, .theme-neon-cyber {
+  --bg-surface: #181B21;
+  --bg-card: #141A2E;
+  --surface-1: #121318;
+  --surface-2: #22252d;
+  --surface-3: #2a2a3e;
+  --border-color: #334155;
+  --border-subtle: #1E1E22;
+  --error: #f87171;
 }
 
 @layer base {

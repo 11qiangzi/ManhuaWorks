@@ -1,40 +1,78 @@
 <script setup lang="ts">
 /**
- * AdminProjectsView.vue — 项目审核 (1:1 复刻 admin-projects.html)
- * 林染 🖥️ 2026-06-10 派单 33C
+ * AdminProjectsView.vue — 项目审核
  */
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getApi } from '../api-bridge'
+
+const http = () => getApi().http
 
 const filter = ref('全部')
 const searchQuery = ref('')
-const projects = ref([
-  { name: '长安月下', author: '梁总', genre: '古风宫廷', episodes: 24, shots: 8, status: 'pending', cover: '🌙', color: 'linear-gradient(135deg,rgba(102,126,234,.2),rgba(118,75,162,.1))', created: '5 分钟前' },
-  { name: '剑破苍穹', author: '林染', genre: '仙侠', shots: 96, status: 'approved', cover: '⚔️', color: 'linear-gradient(135deg,rgba(240,147,251,.2),rgba(245,87,108,.1))', created: '2 小时前' },
-  { name: '逆袭少女', author: '张三', genre: '都市', status: 'rejected', cover: '🔥', color: 'linear-gradient(135deg,rgba(239,68,68,.2),rgba(239,68,68,.05))', created: '昨天', reason: '内容涉及敏感题材' },
-])
-const selectedProject = ref(projects.value[0])
+type MusicStatus = '有配乐' | '无配乐' | '审核中'
+const musicLabel: Record<MusicStatus, string> = { '有配乐': '🎵 有配乐', '无配乐': '— 无配乐', '审核中': '⏳ 审核中' }
+const projects = ref<any[]>([])
+const selectedProject = ref<any>(null)
 const reviewNote = ref('')
+const loading = ref(false)
 
-const filteredProjects = ref(projects.value)
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await http().get('/admin/content', { limit: 50 }) as any
+    const items = res?.items || (Array.isArray(res) ? res : [])
+    projects.value = items.map((p: any) => ({
+      id: p.id,
+      name: p.name || p.title || `项目 ${p.id?.slice(0, 6)}`,
+      author: p.author || p.user_name || p.display_name || '',
+      genre: p.genre || p.category || '',
+      episodes: p.episodes || p.episode_count || 0,
+      shots: p.shots || p.shot_count || 0,
+      status: p.status || 'pending',
+      musicStatus: (p.music_status || '无配乐') as MusicStatus,
+      cover: p.cover || '📁',
+      color: 'linear-gradient(135deg,rgba(102,126,234,.2),rgba(118,75,162,.1))',
+      created: p.created_at ? new Date(p.created_at).toLocaleString('zh-CN') : '',
+      reason: p.review_note || '',
+    }))
+    if (projects.value.length > 0) selectedProject.value = projects.value[0]
+  } catch { /* use empty list */ }
+  loading.value = false
+})
+
+const filteredProjects = computed(() => {
+  const filterStatusMap: Record<string, string> = {
+    '⏳ 待审核': 'pending',
+    '✅ 已通过': 'approved',
+    '❌ 已驳回': 'rejected',
+  }
+  const targetStatus = filterStatusMap[filter.value]
+  const query = searchQuery.value.toLowerCase()
+
+  return projects.value.filter(p => {
+    const matchesStatus = !targetStatus || p.status === targetStatus
+    const matchesSearch = !query ||
+      p.name.toLowerCase().includes(query) ||
+      p.author.toLowerCase().includes(query) ||
+      p.genre.toLowerCase().includes(query)
+    return matchesStatus && matchesSearch
+  })
+})
 
 const acting = ref(false); const actionError = ref('')
 async function approve() {
   acting.value = true; actionError.value = ''
   try {
-    const token = localStorage.getItem('mhw.access_token') || ''
-    const r = await fetch('/api/v1/projects/' + (selectedProject.value as any).id, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ status: 'approved' }) })
-    if (r.ok) { selectedProject.value.status = 'approved' as any }
-    else { const e = await r.json().catch(()=>({})); throw new Error(e.message || '操作失败') }
+    await http().patch(`/admin/content/${selectedProject.value.id}`, { status: 'approved' })
+    selectedProject.value.status = 'approved'
   } catch (err: any) { actionError.value = err.message || '操作失败' }
   finally { acting.value = false }
 }
 async function reject() {
   acting.value = true; actionError.value = ''
   try {
-    const token = localStorage.getItem('mhw.access_token') || ''
-    const r = await fetch('/api/v1/projects/' + (selectedProject.value as any).id, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ status: 'rejected', review_note: reviewNote.value }) })
-    if (r.ok) { selectedProject.value.status = 'rejected' as any }
-    else { const e = await r.json().catch(()=>({})); throw new Error(e.message || '操作失败') }
+    await http().patch(`/admin/content/${selectedProject.value.id}`, { status: 'rejected', review_note: reviewNote.value })
+    selectedProject.value.status = 'rejected'
   } catch (err: any) { actionError.value = err.message || '操作失败' }
   finally { acting.value = false }
 }
@@ -58,7 +96,7 @@ async function reject() {
               {{ p.status === 'pending' ? '待审核' : p.status === 'approved' ? '已通过' : '已驳回' }}
             </span>
           </div>
-          <div class="review-meta">{{ p.author }} · {{ p.genre }}<template v-if="p.episodes"> · {{ p.episodes }} 集</template><template v-if="p.shots"> · 含 {{ p.shots }} 章分镜</template> · 创建 {{ p.created }}<template v-if="p.reason"> · 驳回原因：{{ p.reason }}</template></div>
+          <div class="review-meta">{{ p.author }} · {{ p.genre }}<template v-if="p.episodes"> · {{ p.episodes }} 集</template><template v-if="p.shots"> · 含 {{ p.shots }} 章分镜</template> · {{ musicLabel[p.musicStatus] }} · 创建 {{ p.created }}<template v-if="p.reason"> · 驳回原因：{{ p.reason }}</template></div>
         </div>
         <div class="review-actions">
           <button v-if="p.status === 'pending'" class="btn btn-sm btn-approve" @click="approve">通过</button>
@@ -75,7 +113,8 @@ async function reject() {
         <div class="ap-detail-row"><span>题材</span><span>{{ selectedProject.genre }}</span></div>
         <div class="ap-detail-row"><span>分镜数</span><span>{{ selectedProject.shots || 24 }}</span></div>
         <div class="ap-detail-row"><span>角色数</span><span>6</span></div>
-        <div class="ap-detail-row"><span>内容检查</span><span class="ap-check-ok">✅ 无违规</span></div>
+        <div class="ap-detail-row"><span>配乐状态</span><span>{{ musicLabel[selectedProject.musicStatus] }}</span></div>
+          <div class="ap-detail-row"><span>内容检查</span><span class="ap-check-ok">✅ 无违规</span></div>
       </div>
       <div class="mt-4"><label class="form-label">审核备注</label><textarea class="input" rows="2" v-model="reviewNote" placeholder="输入备注…" style="font-size:12px"></textarea></div>
       <div class="ap-detail-actions">

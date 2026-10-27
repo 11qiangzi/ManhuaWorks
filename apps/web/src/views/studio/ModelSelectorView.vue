@@ -19,6 +19,7 @@ import CostEstimator from '@/components/studio/CostEstimator.vue'
 import FailoverIndicator from '@/components/studio/FailoverIndicator.vue'
 import { PROVIDERS, MODELS, type Provider, type CallType, type ModelMeta } from '@/api/ai-router'
 import { listKeys, type ByokKey } from '@/api/byok'
+import { getToken } from '@/utils/auth'
 
 const route = useRoute()
 const router = useRouter()
@@ -100,7 +101,7 @@ function goByok() {
 onMounted(async () => {
   // 拉取 BYOK 列表（用于判断 provider 是否可用）
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     if (token) {
       keys.value = await listKeys()
     }

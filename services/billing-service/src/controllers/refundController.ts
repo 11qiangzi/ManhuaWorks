@@ -25,10 +25,15 @@ router.get("/", authRequired(), ah(async (req: AuthedRequest, res: Response) => 
   const limit = Math.min(Number(req.query.limit ?? 20), 100);
   const offset = Math.max(Number(req.query.offset ?? 0), 0);
   const isAdmin = (req.user!.role ?? 0) >= 5;
-  const list = isAdmin
-    ? await refundService.listAll(limit, offset)
-    : await refundService.listByUser(req.user!.sub, limit, offset);
-  res.json({ code: 0, message: "ok", data: { list, total: list.length } });
+  const [list, total] = await Promise.all([
+    isAdmin
+      ? refundService.listAll(limit, offset)
+      : refundService.listByUser(req.user!.sub, limit, offset),
+    isAdmin
+      ? refundService.countAll()
+      : refundService.countByUser(req.user!.sub),
+  ]);
+  res.json({ code: 0, message: "ok", data: { list, total } });
 }));
 
 router.post("/", authRequired(), ah(async (req: AuthedRequest, res: Response) => {

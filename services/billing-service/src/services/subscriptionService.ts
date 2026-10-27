@@ -1,6 +1,7 @@
 /**
  * Subscription Service
  * 订阅生命周期：试用→续费→过期→升降级
+ * 4 档套餐：free / basic / pro / enterprise
  */
 
 import { subscriptionRepository } from "../repositories/subscriptionRepository";
@@ -11,14 +12,14 @@ import {
   isPaidPlan,
   quotasForPlan,
   resolvePlanId,
-  type PlanIdDb,
+  type PlanId,
 } from "../config/plans";
 import type { Subscription } from "../models/subscription";
 import { isActive } from "../models/subscription";
 import { logger } from "../config/logger";
 
 export interface UpsertSubscriptionInput {
-  plan: string; // 接受 free/pro/team/enterprise
+  plan: string; // 接受 free / basic / pro / enterprise
   expiresAt?: Date | null;
   autoRenew?: boolean;
 }
@@ -38,8 +39,8 @@ export const subscriptionService = {
     const existing = await subscriptionRepository.findByUserId(userId);
     const now = new Date();
     let expiresAt: Date | null = input.expiresAt ?? null;
-    if (plan === "free") {
-      expiresAt = null; // free 永久
+    if (plan === "free" || plan === "enterprise") {
+      expiresAt = null; // free 永久，enterprise 定制
     } else if (!expiresAt) {
       // 默认 30 天
       expiresAt = new Date(now.getTime() + 30 * 86400_000);
@@ -52,12 +53,10 @@ export const subscriptionService = {
       input.autoRenew ?? false
     );
 
-    // 同步配额
+    // 同步配额（episodes 次/月）
     const q = quotasForPlan(plan);
     await quotaRepository.setMonthly(userId, {
-      monthlyTokens: q.monthlyTokens,
-      monthlyImages: q.monthlyImages,
-      monthlyVideos: q.monthlyVideos,
+      monthlyEpisodes: q.monthlyEpisodes,
       resetAt: new Date(now.getTime() + 30 * 86400_000),
     });
     logger.info(
@@ -103,9 +102,7 @@ export const subscriptionService = {
     // 同步配额到 free
     const q = quotasForPlan("free");
     await quotaRepository.setMonthly(userId, {
-      monthlyTokens: q.monthlyTokens,
-      monthlyImages: q.monthlyImages,
-      monthlyVideos: q.monthlyVideos,
+      monthlyEpisodes: q.monthlyEpisodes,
     });
     logger.info({ userId }, "[subscription] cancelled");
     return sub;
@@ -124,7 +121,7 @@ export const subscriptionService = {
     if (!sub) {
       return subscriptionRepository.getOrInitFree(userId);
     }
-    if (sub.plan !== "free" && !isActive(sub)) {
+    if (sub.plan !== "free" && sub.plan !== "enterprise" && !isActive(sub)) {
       const updated = await subscriptionRepository.upsert(
         userId,
         "free",
@@ -134,9 +131,7 @@ export const subscriptionService = {
       // 同步配额
       const q = quotasForPlan("free");
       await quotaRepository.setMonthly(userId, {
-        monthlyTokens: q.monthlyTokens,
-        monthlyImages: q.monthlyImages,
-        monthlyVideos: q.monthlyVideos,
+        monthlyEpisodes: q.monthlyEpisodes,
       });
       logger.info({ userId }, "[subscription] auto-downgraded to free (expired)");
       return updated;
@@ -146,11 +141,11 @@ export const subscriptionService = {
 
   /** 列出所有档位（公开） */
   listPlans() {
-    return [getPlan("free"), getPlan("pro"), getPlan("team")];
+    return [getPlan("free"), getPlan("basic"), getPlan("pro"), getPlan("enterprise")];
   },
 
   /** 内部用：判断 user 是否能创建新项目 */
-  async canCreateProject(userId: string): Promise<{ allowed: boolean; reason?: string; plan: PlanIdDb; limit: number | null; used: number }> {
+  async canCreateProject(userId: string): Promise<{ allowed: boolean; reason?: string; plan: PlanId; limit: number | null; used: number }> {
     const sub = await this.checkAndDowngradeIfExpired(userId);
     const plan = getPlan(sub.plan);
     if (plan.projectLimit === null) {

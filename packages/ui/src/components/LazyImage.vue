@@ -60,9 +60,9 @@ function onLoad(e: Event) {
   emit('loaded', e.target as HTMLImageElement)
 }
 
-function onError(e: ErrorEvent) {
+function onError(e: Event) {
   isError.value = true
-  emit('error', e)
+  emit('error', e as ErrorEvent)
 }
 
 onMounted(() => {

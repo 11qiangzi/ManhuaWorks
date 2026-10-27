@@ -21,7 +21,7 @@ DB 运维脚本：迁移 / 重置 / 验证 / 种子数据。
 
 ### 用户/账户组（4 张）
 - **users** — 用户主表。`role` SMALLINT 1-5：普通/会员/客服/运营/管理员
-- **subscriptions** — 订阅（plan: free/pro/team），1:1
+- **subscriptions** — 订阅（plan: free/basic/pro/enterprise），1:1
 - **quotas** — 配额（每月 token/image/video），1:1
 - **api_keys** — BYOK 加密存储（`key_encrypted` BYTEA + `key_iv` BYTEA），1:N
 

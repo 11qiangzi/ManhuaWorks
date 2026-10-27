@@ -5,7 +5,7 @@
  * 用于按用户/项目/工作流/Provider 维度的成本聚合与报表。
  */
 
-export type AiProvider = "openai" | "anthropic" | "google" | "deepseek" | "minimax";
+export type AiProvider = "openai" | "anthropic" | "google" | "deepseek" | "minimax" | "volcano" | "alibaba" | "zhipu";
 
 /** 聚合周期 */
 export type AggregatePeriod = "day" | "week" | "month" | "year" | "all";

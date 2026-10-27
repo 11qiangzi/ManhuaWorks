@@ -50,9 +50,42 @@ declare global {
 
 // ─── Token 验证 ──────────────────────────────────────────────
 
+/**
+ * getJwtSecret — 从环境变量读取 JWT 签名密钥
+ *
+ * 安全策略 (P0-1):
+ *   - 必须通过 JWT_SECRET 环境变量提供
+ *   - 开发环境: 缺失时打印警告, 使用临时密钥 (仅允许本地调试)
+ *   - 生产环境: 缺失时直接抛出错误, 拒绝启动
+ *   - 永远不使用硬编码的 fallback 值
+ */
 function getJwtSecret(): string {
-  return process.env.JWT_SECRET ?? "changeme-in-production";
+  const secret = process.env.JWT_SECRET;
+
+  if (secret && secret.length > 0) {
+    return secret;
+  }
+
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (isProduction) {
+    throw new Error(
+      "[auth] FATAL: JWT_SECRET 环境变量未设置。生产环境禁止使用默认密钥，请在部署配置中设置 JWT_SECRET。"
+    );
+  }
+
+  // 非生产环境: 打印一次警告, 使用临时密钥 (每次重启都会失效, 仅用于本地开发)
+  if (!jwtSecretWarned) {
+    console.warn(
+      "[auth] WARNING: JWT_SECRET 环境变量未设置，使用临时开发密钥。此密钥每次重启后变化，仅适用于本地调试。请在 .env 中设置 JWT_SECRET。"
+    );
+    jwtSecretWarned = true;
+  }
+
+  return "dev-only-temporary-key-" + process.pid;
 }
+
+let jwtSecretWarned = false;
 
 export function verifyToken(token: string): AuthUser | null {
   try {

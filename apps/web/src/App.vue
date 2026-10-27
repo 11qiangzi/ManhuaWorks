@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * App.vue · 根组件
- * ManhuaWorks · W1
+ * 千机工坊 · W1
  *
  * 职责：
  * 1. 初始化主题（从 localStorage 恢复）
@@ -34,10 +34,6 @@ onMounted(() => {
 /* ===== 主题样式汇总 ===== */
 @import './styles/tailwind.css';
 @import './themes/dark-workshop.css';
-@import './themes/minimal-light.css';
-@import './themes/creator-orange.css';
-@import './themes/national-ink.css';
-@import './themes/neon-cyber.css';
 
 /* ===== 全局过渡 ===== */
 html {

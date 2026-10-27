@@ -11,10 +11,62 @@
  */
 
 import { nanoid } from "nanoid";
+import { mkdir, readdir, readFile, writeFile, unlink } from "fs/promises";
+import { join } from "path";
 import { config } from "./config.js";
 import { CostTracker } from "./cost-tracker.js";
 import { checkQuota, type QuotaPolicy, type QuotaDenialReason } from "./quota.js";
 import type { AuthUser, UserTier } from "./middleware/auth.js";
+
+export type QuotaKind = "tokens" | "images" | "videos";
+
+/** Map step name → quota kind for billing consumption */
+function getQuotaKind(stepName: string): QuotaKind {
+  const imageSteps = new Set(["image-gen", "detect-style", "regen-frames"]);
+  const videoSteps = new Set(["video-gen", "rerender-videos", "regen-videos"]);
+  if (imageSteps.has(stepName)) return "images";
+  if (videoSteps.has(stepName)) return "videos";
+  return "tokens";
+}
+
+/**
+ * 配额消耗调用
+ * - free/pro 用户：strict 模式 → 失败抛错阻断 pipeline
+ * - business/enterprise 用户：best-effort 模式 → 失败仅 log 不阻断
+ */
+async function consumeQuota(
+  userId: string,
+  stepName: string,
+  amount: number,
+  userTier: string,
+): Promise<void> {
+  const kind = getQuotaKind(stepName);
+  const isStrict = userTier === "free" || userTier === "pro";
+  try {
+    const res = await fetch(`${config.billing.url}/api/v1/quota/consume`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": userId,
+      },
+      body: JSON.stringify({ kind, amount }),
+      signal: AbortSignal.timeout(config.billing.timeoutMs),
+    });
+    if (!res.ok) {
+      const msg = `[quota-consume] billing-service returned ${res.status} for user=${userId} step=${stepName} kind=${kind}`;
+      process.stderr.write(`${msg}\n`);
+      if (isStrict) {
+        throw new Error(`配额消耗失败: ${res.status}`);
+      }
+    }
+  } catch (err) {
+    const msg = `[quota-consume] failed for user=${userId} step=${stepName}: ${(err as Error).message}`;
+    process.stderr.write(`${msg}\n`);
+    if (isStrict) {
+      throw err;
+    }
+  }
+}
 
 export type RunStatus = "pending" | "running" | "success" | "failed" | "cancelled";
 
@@ -85,34 +137,76 @@ export interface SnapshotStore {
   listByUser(userId: string, limit?: number): Promise<RunSnapshot[]>;
 }
 
-/** 内存版 snapshot store（单实例够用；多实例换 Redis） */
-class InMemorySnapshotStore implements SnapshotStore {
-  private map = new Map<string, RunSnapshot>();
+/** File-based snapshot store — persists each run as a JSON file under data/snapshots/ */
+class FileSnapshotStore implements SnapshotStore {
+  private dir = join("data", "snapshots");
+
+  private async ensureDir(): Promise<void> {
+    await mkdir(this.dir, { recursive: true });
+  }
+
+  private filePath(runId: string): string {
+    return join(this.dir, `${runId}.json`);
+  }
 
   async save(snap: RunSnapshot): Promise<void> {
+    await this.ensureDir();
     snap.updatedAt = Date.now();
-    this.map.set(snap.runId, snap);
+    await writeFile(this.filePath(snap.runId), JSON.stringify(snap, null, 2), "utf-8");
   }
+
   async load(runId: string): Promise<RunSnapshot | null> {
-    return this.map.get(runId) ?? null;
+    try {
+      const raw = await readFile(this.filePath(runId), "utf-8");
+      return JSON.parse(raw) as RunSnapshot;
+    } catch {
+      return null;
+    }
   }
+
   async delete(runId: string): Promise<void> {
-    this.map.delete(runId);
+    try {
+      await unlink(this.filePath(runId));
+    } catch {
+      /* ignore if file does not exist */
+    }
   }
+
   async listActive(): Promise<RunSnapshot[]> {
-    return Array.from(this.map.values()).filter(
-      (s) => s.status === "running" || s.status === "pending",
-    );
+    const all = await this.loadAll();
+    return all.filter((s) => s.status === "running" || s.status === "pending");
   }
+
   async listByUser(userId: string, limit = 50): Promise<RunSnapshot[]> {
-    return Array.from(this.map.values())
+    const all = await this.loadAll();
+    return all
       .filter((s) => s.userId === userId)
       .sort((a, b) => b.createdAt - a.createdAt)
       .slice(0, limit);
   }
+
+  private async loadAll(): Promise<RunSnapshot[]> {
+    await this.ensureDir();
+    try {
+      const files = await readdir(this.dir);
+      const results: RunSnapshot[] = [];
+      for (const f of files) {
+        if (!f.endsWith(".json")) continue;
+        try {
+          const raw = await readFile(join(this.dir, f), "utf-8");
+          results.push(JSON.parse(raw) as RunSnapshot);
+        } catch {
+          /* skip corrupted files */
+        }
+      }
+      return results;
+    } catch {
+      return [];
+    }
+  }
 }
 
-export const snapshotStore: SnapshotStore = new InMemorySnapshotStore();
+export const snapshotStore: SnapshotStore = new FileSnapshotStore();
 
 export interface StartRunInput {
   pipeline: PipelineDefinition;
@@ -232,6 +326,8 @@ export class PipelineRunner {
         const result = await runStepWithRetry(step, ctx, snap);
         if (result.status === "success" && result.outputs) {
           stepOutputs[step.name] = result.outputs;
+          // 消耗配额（free/pro 严格模式，business/enterprise best-effort）
+          void consumeQuota(input.user.userId, step.name, 1, input.user.tier);
         }
         if (result.status === "failed" && !step.optional) {
           snap.status = "failed";

@@ -1,6 +1,6 @@
 /**
  * user-service — 用户信息服务 API 客户端
- * ManhuaWorks · W4 用户后台
+ * 千机工坊 · W4 用户后台
  *
  * 后端：user-service（通过 api-gateway :8080 /v1/users 代理）
  * 鉴权：Bearer JWT（从 localStorage 读）

@@ -17,6 +17,18 @@ const emit = defineEmits<{
 function setLevel(v: string) { emit('update:level', v) }
 function setAction(v: string) { emit('update:action', v) }
 function setActor(v: string) { emit('update:actor', v) }
+
+/* ===== 音频操作类型快捷筛选 ===== */
+const audioActions = [
+  { key: 'music.generate', label: '生成音乐' },
+  { key: 'music.assign',   label: '配乐关联项目' },
+  { key: 'music.upload',   label: '上传音频素材' },
+  { key: 'music.delete',   label: '删除音频' },
+]
+
+function toggleAudioAction(key: string) {
+  setAction(props.action === key ? '' : key)
+}
 </script>
 
 <template>
@@ -49,6 +61,20 @@ function setActor(v: string) { emit('update:actor', v) }
       />
     </div>
     <button class="lf-reset" @click="emit('reset')">重置</button>
+
+    <!-- 音频操作类型快捷筛选 -->
+    <div class="lf-chips-row">
+      <span class="lf-chips-label">🎵 音频操作</span>
+      <button
+        v-for="a in audioActions"
+        :key="a.key"
+        class="lf-chip"
+        :class="{ 'lf-chip--active': props.action === a.key }"
+        @click="toggleAudioAction(a.key)"
+      >
+        {{ a.label }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -63,4 +89,50 @@ function setActor(v: string) { emit('update:actor', v) }
 .lf-select:focus, .lf-input:focus { border-color: var(--accent); }
 .lf-reset { padding: 7px 14px; border-radius: 6px; background: var(--bg-primary); border: 1px solid var(--border); color: var(--text-secondary); font-size: 12px; cursor: pointer; }
 .lf-reset:hover { color: var(--accent); border-color: var(--accent); }
+
+/* Audio operation filter chips */
+.lf-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+
+.lf-chips-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.lf-chip {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-family: inherit;
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.lf-chip:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.lf-chip--active {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
 </style>

@@ -128,6 +128,24 @@ CREATE TABLE IF NOT EXISTS characters (
 );
 CREATE INDEX IF NOT EXISTS idx_characters_project ON characters(project_id, created_at DESC);
 
+-- 素材资产表：武器 / 道具 / 饰品 / 特效·技能（合一表 + category 子类型）
+CREATE TABLE IF NOT EXISTS assets (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  category VARCHAR(32) NOT NULL DEFAULT 'prop',
+  name VARCHAR(200) NOT NULL,
+  description TEXT,
+  prompt TEXT,
+  thumbnail_url VARCHAR(500),
+  video_url VARCHAR(500),
+  tags JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT chk_assets_category CHECK (category IN ('weapon','prop','accessory','effect'))
+);
+CREATE INDEX IF NOT EXISTS idx_assets_project ON assets(project_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_assets_category ON assets(category);
+
 -- P0-1: shot table column migrations (add missing columns from L3 spec)
 DO $$ BEGIN
  ALTER TABLE shots ADD COLUMN IF NOT EXISTS camera_angle VARCHAR(50);
@@ -153,9 +171,9 @@ END $$;
 
 export async function bootstrapTables(): Promise<void> {
  await pool.query(BOOTSTRAP_SQL);
- logger.info(
- 'bootstrap tables ready (project_versions / project_members / project_tags / shots / scenes / characters)'
- );
+  logger.info(
+  'bootstrap tables ready (project_versions / project_members / project_tags / shots / scenes / characters / assets)'
+  );
 }
 
 export async function closeDb(): Promise<void> {

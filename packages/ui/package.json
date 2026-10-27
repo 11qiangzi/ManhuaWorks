@@ -16,7 +16,8 @@
     "./animations/*": "./src/animations/*",
     "./components": "./src/components/index.ts",
     "./components/*": "./src/components/*",
-    "./styles/*.css": "./src/styles/*.css"
+    "./styles/*.css": "./src/styles/*.css",
+    "./tailwind.base": "./tailwind.base.ts"
   },
   "scripts": {
     "test": "vitest run",

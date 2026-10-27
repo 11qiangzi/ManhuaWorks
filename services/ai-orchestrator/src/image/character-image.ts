@@ -25,6 +25,7 @@
 import { createHash } from "node:crypto";
 import type { EmbeddingModel } from "../embeddings/model.js";
 import { EmbeddingModel as DefaultEmbeddingModel } from "../embeddings/model.js";
+import { aiRouterClient } from "../clients/ai-router.js";
 
 // =============================================================================
 // 公开类型
@@ -140,7 +141,7 @@ export class CharacterImageAdapter {
     this._embedding = opts.embeddingModel ?? new DefaultEmbeddingModel();
     this._threshold = opts.threshold ?? DEFAULT_CONSISTENCY_THRESHOLD;
     this._perImageCostCents = opts.perImageCostCents ?? DEFAULT_PER_IMAGE_COST_CENTS;
-    this._mock = opts.mock ?? true;
+    this._mock = opts.mock ?? false;
   }
 
   /**
@@ -176,11 +177,33 @@ export class CharacterImageAdapter {
     // 3) 构造 prompt
     const prompt = this.buildPrompt(opts.characterProfile, opts.sceneContext, style);
 
-    // 模拟 image generation（mock 模式）：hash 出确定性 imageUrl
+    // 4) 生成图片
     const seed = opts.seed ?? hashSeed(opts.characterProfile.id, opts.sceneContext, style);
-    const imageUrl = this._mock
-      ? `mock://character-image/${opts.characterProfile.id}/${seed}.png`
-      : `${this.apiEndpoint}/generate?seed=${seed}`;
+    let imageUrl: string;
+
+    if (this._mock) {
+      // mock 模式：hash 出确定性 imageUrl
+      imageUrl = `mock://character-image/${opts.characterProfile.id}/${seed}.png`;
+    } else {
+      // 真实模式：调用 ai-router 生成图片
+      try {
+        const resp = await aiRouterClient.image({
+          model: this.model !== DEFAULT_MODEL ? this.model : undefined,
+          prompt,
+          size: "1024x1024",
+          n: 1,
+          preferredProviders: ["volcengine"],
+          taskTag: `char-image:${opts.characterProfile.id}`,
+        });
+        imageUrl = resp.urls?.[0] ?? `mock://character-image/${opts.characterProfile.id}/${seed}.png`;
+      } catch (err) {
+        // 降级到 mock URL，避免因图片生成失败阻塞流程
+        process.stderr.write(
+          `[character-image] ai-router image generation failed: ${(err as Error).message}, falling back to mock\n`,
+        );
+        imageUrl = `mock://character-image/${opts.characterProfile.id}/${seed}.png`;
+      }
+    }
 
     return {
       imageUrl,

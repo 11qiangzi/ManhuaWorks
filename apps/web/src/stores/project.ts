@@ -1,6 +1,6 @@
 /**
  * web · project Pinia store — 接 project-service
- * ManhuaWorks · L2 task 8
+ * 千机工坊 · L2 task 8
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
@@ -21,8 +21,8 @@ export const useProjectStore = defineStore('project', () => {
   const page = ref(1)
   const pageSize = ref(20)
 
-  const archived = computed(() => projects.value.filter((p) => p.status === 3))
-  const active = computed(() => projects.value.filter((p) => p.status !== 3))
+  const archived = computed(() => projects.value.filter((p) => p.status === 'archived'))
+  const active = computed(() => projects.value.filter((p) => p.status !== 'archived'))
 
   async function loadList(reset = true): Promise<void> {
     loading.value = true
@@ -109,7 +109,7 @@ export const useProjectStore = defineStore('project', () => {
     shots.value = r.list
   }
 
-  async function createShot(projectId: string, req: { order: number; title: string; description?: string; duration_sec?: number; camera?: string }): Promise<ShotDTO> {
+  async function createShot(projectId: string, req: { order_index: number; name: string; description?: string }): Promise<ShotDTO> {
     const s = await api.projects.createShot(projectId, req)
     shots.value.push(s)
     return s

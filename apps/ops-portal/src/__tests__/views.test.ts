@@ -1,18 +1,19 @@
 /**
  * ops-portal 业务总后台测试
- * ManhuaWorks · M1-W4 · L4-B
+ * 千机工坊 · P1-3 更新: dashboard/users/billing 已重定向到 admin-portal(5174)
  *
- * 10 测试覆盖:
- *   1. router 注册 /dashboard + /users
- *   2. router / → /dashboard 重定向
- *   3. mock-data 5 KPI 字段
- *   4. revenueSeries 长度 = 7
- *   5. userList 长度 = 50
- *   6. providerUsage 5 项
- *   7. projectStatus 6 状态
- *   8. recentOps 长度 = 10
- *   9. provider 全部命中已知 5 个
- *  10. user status 4 种
+ * 测试覆盖:
+ *   1. router 注册 /monitoring + /system + /logs
+ *   2. router / → /monitoring 重定向
+ *   3. router /dashboard /users /billing → 重定向到 admin
+ *   4. mock-data 5 KPI 字段
+ *   5. revenueSeries 长度 = 7
+ *   6. userList 长度 = 50
+ *   7. providerUsage 5 项
+ *   8. projectStatus 6 状态
+ *   9. recentOps 长度 = 10
+ *  10. provider 全部命中已知 5 个
+ *  11. user status 4 种
  */
 import { describe, it, expect } from 'vitest'
 import { router } from '@/router'
@@ -25,17 +26,26 @@ import {
   userList
 } from '@/api/mock-data'
 
-describe('ops-portal router', () => {
-  it('注册 /dashboard + /users 两条路由', () => {
+describe('ops-portal router (P1-3: 已精简)', () => {
+  it('注册 /monitoring + /system + /logs 三条路由', () => {
     const names = router.getRoutes().map(r => r.path)
-    expect(names).toContain('/dashboard')
-    expect(names).toContain('/users')
+    expect(names).toContain('/monitoring')
+    expect(names).toContain('/system')
+    expect(names).toContain('/logs')
   })
 
-  it('/ 重定向到 /dashboard', () => {
+  it('重复视图已重定向到 admin', () => {
+    const paths = router.getRoutes().map(r => r.path)
+    expect(paths).toContain('/dashboard')
+    expect(paths).toContain('/users')
+    expect(paths).toContain('/billing')
+    // 这些路由仍然注册但 component 已删除，redirect 到 admin
+  })
+
+  it('/ 重定向到 /monitoring', () => {
     const root = router.getRoutes().find(r => r.path === '/')
     expect(root).toBeDefined()
-    expect(root!.redirect).toBe('/dashboard')
+    expect(root!.redirect).toBe('/monitoring')
   })
 })
 

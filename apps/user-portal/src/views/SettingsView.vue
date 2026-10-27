@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * SettingsView · 设置
- * ManhuaWorks · W4 用户后台
+ * 千机工坊 · W4 用户后台
  *
  * 功能：
  *1.4标签页：账号 /订阅 /BYOK /通知
@@ -11,7 +11,7 @@
  *5.订阅档位展示（free/pro/studio/team）
  */
 
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
 import PlanBadge from '@/components/PlanBadge.vue'
@@ -389,6 +389,9 @@ function deleteAccount() {
  <div v-else-if="activeTab === 'byok'" class="st__panel">
  <h2 class="st__panel-title">🔑 BYOK · 自带密钥</h2>
  <p class="st__panel-desc">使用你自己的 API Key 调用第三方 AI 服务，平台不存储明文</p>
+ <p style="margin-top:8px;font-size:12px;">
+ <RouterLink to="/settings/api-keys" style="color:var(--accent);font-weight:600;">🆕 试试新版 (派单 17 · 6 provider 卡片 + 测试)</RouterLink>
+ </p>
 
  <div class="st__byok-form">
  <div class="st__byok-row">

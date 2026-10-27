@@ -5,7 +5,7 @@
  * - 检测系统偏好 (prefers-color-scheme)
  * - 跨标签页同步 (storage 事件)
  */
-import { computed, ref, watch, onMounted, onBeforeUnmount, type Ref } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount, type Ref, type ComputedRef } from 'vue'
 import type { ThemeName } from '../themes'
 import { themeNames } from '../themes'
 
@@ -191,7 +191,7 @@ function applyAppTheme(name: AppThemeName) {
 
 export interface UseAppThemeReturn {
   current: Ref<AppThemeName>
-  currentMeta: ReturnType<typeof computed<AppThemeMeta>>
+  currentMeta: ComputedRef<AppThemeMeta>
   themes: AppThemeMeta[]
   setTheme: (name: AppThemeName) => void
   initTheme: () => void

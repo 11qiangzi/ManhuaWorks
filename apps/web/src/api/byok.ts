@@ -1,6 +1,6 @@
 /**
  * byok API 客户端（BYOK = Bring Your Own Key）
- * ManhuaWorks · W2 创作者工作台
+ * 千机工坊 · W2 创作者工作台
  *
  * 后端：user-service 服务的 api_keys 表（通过 api-gateway :8080 /v1/users 代理）
  * 加密：后端用 AES-256-GCM 加密存储（参考 schema.ts: apiKeys.keyEncrypted/keyIv）
@@ -10,6 +10,7 @@
 
 import axios, { type AxiosInstance } from 'axios'
 import type { Provider } from './ai-router'
+import { getToken } from '@/utils/auth'
 
 /* ------------------------------------------------------------------ */
 /*                            类型定义                                 */
@@ -32,6 +33,10 @@ export interface ByokKey {
   createdAt: string
   /** 距过期天数（如果 provider 支持 key 过期） */
   expiresInDays?: number
+  /** 本月累计费用（USD） */
+  monthlyUsageUsd?: number
+  /** 是否启用 */
+  enabled?: boolean
 }
 
 /** 测试连通性结果 */
@@ -68,11 +73,7 @@ export interface CreateKeyResponse {
 /*                            API 客户端                                */
 /* ------------------------------------------------------------------ */
 
-const BASE = '/v1/users/api-keys'
-
-function getToken(): string | null {
-  try { return localStorage.getItem('token') } catch { return null }
-}
+const BASE = '/v1/keys/byok'
 
 const client: AxiosInstance = axios.create({
   baseURL: BASE,
@@ -87,11 +88,9 @@ client.interceptors.request.use((cfg) => {
 })
 
 function unwrap<T>(res: unknown): T {
-  const body = res as { data: { code: number; data: T; message: string } }
-  if (body?.data?.code !== 0) {
-    throw new Error(body?.data?.message ?? '请求失败')
-  }
-  return body.data.data
+  // ai-router 返回格式：直接返回数据对象（非嵌套 { code, data }）
+  const body = res as { data: T }
+  return body?.data ?? (res as T)
 }
 
 /* -------- 业务接口 -------- */
@@ -104,7 +103,12 @@ export async function listKeys(): Promise<ByokKey[]> {
 
 /** 新增 API Key（明文 key 仅传输一次） */
 export async function createKey(req: CreateKeyRequest): Promise<CreateKeyResponse> {
-  const res = await client.post('/', req)
+  // 映射前端字段到 ai-router 端点格式
+  const res = await client.post('/', {
+    providerId: req.provider,
+    apiKey: req.apiKey,
+    label: req.keyAlias,
+  })
   return unwrap<CreateKeyResponse>(res)
 }
 

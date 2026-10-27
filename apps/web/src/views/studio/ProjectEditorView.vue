@@ -12,11 +12,15 @@
 
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useToast } from '@manhuaworks/ui'
 import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
 import CostEstimator from '@/components/studio/CostEstimator.vue'
 import ProviderCard from '@/components/studio/ProviderCard.vue'
 import { PROVIDERS, MODELS, type Provider, type CallType, estimateTokens } from '@/api/ai-router'
 import { listKeys, type ByokKey } from '@/api/byok'
+import { getToken } from '@/utils/auth'
+
+const toast = useToast()
 
 const route = useRoute()
 const router = useRouter()
@@ -78,7 +82,7 @@ const canGenerate = computed(() => {
 async function loadProject() {
   loading.value = true
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     if (!token) {
       // 未登录：用占位
       project.value = MOCK_PROJECT(projectId.value)
@@ -140,12 +144,12 @@ function onDragLeave() {
 function readFile(file: File) {
   // 限制 5MB
   if (file.size > 5 * 1024 * 1024) {
-    alert('文件过大（> 5MB），请分章节上传')
+    toast.error('文件过大（> 5MB），请分章节上传')
     return
   }
   // 仅文本类
   if (!/text|markdown|json/.test(file.type) && !/\.(txt|md|json)$/i.test(file.name)) {
-    alert('请上传 .txt / .md / .json 文件')
+    toast.error('请上传 .txt / .md / .json 文件')
     return
   }
   const reader = new FileReader()
@@ -222,7 +226,7 @@ onMounted(async () => {
   }
   // 拉 BYOK 列表
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     if (token) {
       keys.value = await listKeys()
       // 重新应用

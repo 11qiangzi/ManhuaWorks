@@ -1,34 +1,42 @@
 -- ManhuaWorks 业务种子数据
--- 2026-06-08 谢擎
+-- 2026-06-08 谢擎 (创建)
+-- 2026-06-15 谢擎 (派单32: 加 demo-creator 用户，password 用 bcryptjs cost 12 哈希)
 -- 跑完 001a_core.sql 后再跑
--- 内容：1 个 admin + 4 个角色演示用户（role 1-4 各一） + 3 个项目场景 + 订阅/配额/调用日志
+-- 内容：1 个 admin + 4 个角色演示用户（role 1-4 各一） + 1 个 demo-creator (role 2) + 3 个项目场景 + 订阅/配额/调用日志
+-- demo-creator 密码: Test1234! (bcryptjs $2a$12$ 哈希, 可正常登录 web 3000)
 
 BEGIN;
 
--- ============ 5 个用户（覆盖 role 1=普通 2=会员 3=客服 4=运营 5=管理员） ============
+-- ============ 6 个用户（覆盖 role 1=普通 2=会员/创作者 3=客服 4=运营 5=管理员） ============
 -- admin@manhuaworks.local 是核心用户
+-- demo-creator@manhuaworks.local 是 web 3000 测试账号 (派单7/32 指定)
+--   password_hash = bcryptjs.hashSync('Test1234!', 12)  验证: bcryptjs.compareSync('Test1234!', hash) === true
 INSERT INTO users (id, email, phone, display_name, role, status, password_hash) VALUES
-  ('00000000-0000-0000-0000-000000000001', 'admin@manhuaworks.local',  '+8613800000001', '系统管理员',   5, 1, 'argon2id$v=19$m=65536,t=3,p=4$YWRtaW5fc2FsdA$placeholder_admin_hash_2026'),
-  ('00000000-0000-0000-0000-000000000002', 'normal@manhuaworks.local',  '+8613800000002', '小张-普通用户', 1, 1, 'argon2id$v=19$m=65536,t=3,p=4$bm9ybWFsX3NhbHQ$placeholder_normal_hash_2026'),
-  ('00000000-0000-0000-0000-000000000003', 'pro@manhuaworks.local',     '+8613800000003', '老李-PRO会员',  2, 1, 'argon2id$v=19$m=65536,t=3,p=4$cHJvX3NhbHQ$placeholder_pro_hash_2026'),
-  ('00000000-0000-0000-0000-000000000004', 'cs@manhuaworks.local',       '+8613800000004', '客服-小王',     3, 1, 'argon2id$v=19$m=65536,t=3,p=4$Y3Nfc2FsdA$placeholder_cs_hash_2026'),
-  ('00000000-0000-0000-0000-000000000005', 'ops@manhuaworks.local',      '+8613800000005', '运营-小赵',     4, 1, 'argon2id$v=19$m=65536,t=3,p=4$b3BzX3NhbHQ$placeholder_ops_hash_2026');
+  ('00000000-0000-0000-0000-000000000001', 'admin@manhuaworks.local',     '+8613800000001', '系统管理员',   5, 1, 'argon2id$v=19$m=65536,t=3,p=4$YWRtaW5fc2FsdA$placeholder_admin_hash_2026'),
+  ('00000000-0000-0000-0000-000000000002', 'normal@manhuaworks.local',     '+8613800000002', '小张-普通用户', 1, 1, 'argon2id$v=19$m=65536,t=3,p=4$bm9ybWFsX3NhbHQ$placeholder_normal_hash_2026'),
+  ('00000000-0000-0000-0000-000000000003', 'pro@manhuaworks.local',        '+8613800000003', '老李-PRO会员',  2, 1, 'argon2id$v=19$m=65536,t=3,p=4$cHJvX3NhbHQ$placeholder_pro_hash_2026'),
+  ('00000000-0000-0000-0000-000000000004', 'cs@manhuaworks.local',         '+8613800000004', '客服-小王',     3, 1, 'argon2id$v=19$m=65536,t=3,p=4$Y3Nfc2FsdA$placeholder_cs_hash_2026'),
+  ('00000000-0000-0000-0000-000000000005', 'ops@manhuaworks.local',        '+8613800000005', '运营-小赵',     4, 1, 'argon2id$v=19$m=65536,t=3,p=4$b3BzX3NhbHQ$placeholder_ops_hash_2026'),
+  ('00000000-0000-0000-0000-000000000006', 'demo-creator@manhuaworks.local','+8613800000006', 'Demo创作者',    2, 1, '$2a$12$wziNFtMspkcn8Pw8RU.20.t1BzXEBzn5Xy2CGJijsqCPtFhT2cyta');
 
--- ============ 5 条订阅（每个用户一条） ============
+-- ============ 6 条订阅（每个用户一条） ============
+-- demo-creator (id...0006) 给 pro 计划 + 30 天, 跟 pro 用户一样, 方便 web 端创作者面板测试
 INSERT INTO subscriptions (user_id, plan, auto_renew, expires_at) VALUES
   ('00000000-0000-0000-0000-000000000001', 'team', TRUE,  NOW() + INTERVAL '365 days'),
   ('00000000-0000-0000-0000-000000000002', 'free', FALSE, NULL),
   ('00000000-0000-0000-0000-000000000003', 'pro',  TRUE,  NOW() + INTERVAL '30 days'),
   ('00000000-0000-0000-0000-000000000004', 'team', TRUE,  NOW() + INTERVAL '365 days'),
-  ('00000000-0000-0000-0000-000000000005', 'team', TRUE,  NOW() + INTERVAL '365 days');
+  ('00000000-0000-0000-0000-000000000005', 'team', TRUE,  NOW() + INTERVAL '365 days'),
+  ('00000000-0000-0000-0000-000000000006', 'pro',  TRUE,  NOW() + INTERVAL '30 days');
 
--- ============ 5 条配额（每个用户一条，team 配额更高） ============
+-- ============ 6 条配额（每个用户一条，team 配额更高） ============
 INSERT INTO quotas (user_id, monthly_tokens, used_tokens, monthly_images, used_images, monthly_videos, used_videos) VALUES
   ('00000000-0000-0000-0000-000000000001', 5000000, 12000, 1000, 3,   200, 0),
   ('00000000-0000-0000-0000-000000000002', 100000,  4500,  50,   2,   10,  0),
   ('00000000-0000-0000-0000-000000000003', 1000000, 88000, 300,  25,  50,  2),
   ('00000000-0000-0000-0000-000000000004', 5000000, 22000, 1000, 8,   200, 1),
-  ('00000000-0000-0000-0000-000000000005', 5000000, 31000, 1000, 12,  200, 1);
+  ('00000000-0000-0000-0000-000000000005', 5000000, 31000, 1000, 12,  200, 1),
+  ('00000000-0000-0000-0000-000000000006', 1000000, 0,     300,  0,   50,  0);
 
 -- ============ 3 个项目场景（admin 的作品，覆盖 art_style 三种 + status 0/1/2 演示） ============
 INSERT INTO projects (id, user_id, title, description, art_style, story_type, status) VALUES

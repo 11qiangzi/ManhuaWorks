@@ -55,6 +55,26 @@ router.get("/me", authRequired(), ah(async (req: AuthedRequest, res: Response) =
 
 router.put("/me", authRequired(), ah(async (req: AuthedRequest, res: Response) => {
   const body = upsertSchema.parse(req.body);
+  const targetPlan = body.plan;
+
+  // Free plan always allowed (downgrade/cancel)
+  if (targetPlan !== "free") {
+    // Admin bypass
+    const isAdmin = (req as any).user?.role >= 5;
+    if (!isAdmin) {
+      // Check for a paid order for this plan
+      const { orderRepository } = await import("../repositories/orderRepository");
+      const paidOrder = await orderRepository.findPaidByUserAndPlan(req.user!.sub, targetPlan);
+      if (!paidOrder) {
+        throw new (await import("../middleware/error")).HttpError(
+          403,
+          "payment_required",
+          "需要有效的已支付订单才能升级订阅"
+        );
+      }
+    }
+  }
+
   const sub = await subscriptionService.upsert(req.user!.sub, {
     plan: body.plan,
     expiresAt: body.expires_at ? new Date(body.expires_at) : null,

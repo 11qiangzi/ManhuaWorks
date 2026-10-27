@@ -67,6 +67,10 @@ export const invoiceService = {
     return invoiceRepository.listByUser(userId, limit, offset);
   },
 
+  async countByUser(userId: string): Promise<number> {
+    return invoiceRepository.countByUser(userId);
+  },
+
   async listAll(limit: number, offset: number): Promise<Invoice[]> {
     return invoiceRepository.listAll(limit, offset);
   },

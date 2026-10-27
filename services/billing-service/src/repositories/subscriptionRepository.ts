@@ -7,11 +7,11 @@ import { query, withTransaction } from "../config/db";
 import type { PoolClient } from "pg";
 import type { Subscription, SubscriptionRow } from "../models/subscription";
 import { rowToSubscription } from "../models/subscription";
-import type { PlanIdDb } from "../config/plans";
+import type { PlanId } from "../config/plans";
 
 export interface CreateSubscriptionInput {
   userId: string;
-  plan: PlanIdDb;
+  plan: PlanId;
   expiresAt?: Date | null;
   autoRenew?: boolean;
 }
@@ -65,7 +65,7 @@ export const subscriptionRepository = {
 
   async upsert(
     userId: string,
-    plan: PlanIdDb,
+    plan: PlanId,
     expiresAt: Date | null,
     autoRenew: boolean
   ): Promise<Subscription> {

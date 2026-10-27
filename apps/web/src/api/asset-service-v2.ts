@@ -8,8 +8,7 @@
  *   import { assetService } from '@/api/asset-service'
  *   const data = await assetService.list({ page: 1 })
  */
-import { getClient } from '@manhuaworks/api-client'
-import type { HttpClient } from '@manhuaworks/api-client'
+import { getClient, tokenStore } from '@manhuaworks/api-client'
 
 export type AssetType = 'image' | 'video' | 'audio' | 'other'
 
@@ -75,7 +74,6 @@ class AssetService {
       const res = await this.http.get<{ data: AssetListResp }>(`${BASE}`, query)
       return res.data
     } catch {
-      console.warn('[assetService.list] 失败，返回占位')
       return { list: [], total: 0, page: 1, pageSize: filter.pageSize ?? 24 }
     }
   }
@@ -89,16 +87,27 @@ class AssetService {
     }
   }
 
-  async upload(file: File, options: { projectId?: string; tags?: string[]; alias?: string } = {}): Promise<AssetItem> {
+  async upload(file: File, options: { projectId?: string; tags?: string[]; alias?: string; kind?: string } = {}): Promise<AssetItem> {
     const form = new FormData()
     form.append('file', file)
-    if (options.projectId) form.append('projectId', options.projectId)
-    if (options.alias) form.append('alias', options.alias)
-    if (options.tags?.length) form.append('tags', options.tags.join(','))
+
+    // 后端期望 meta JSON 字段格式
+    const meta: Record<string, unknown> = {}
+    if (options.projectId) meta.projectId = options.projectId
+    if (options.alias) meta.name = options.alias
+    if (options.tags?.length) meta.tags = options.tags
+    if (options.kind) meta.kind = options.kind
+
+    if (Object.keys(meta).length > 0) {
+      form.append('meta', JSON.stringify(meta))
+    }
 
     try {
-      const res = await this.http.post<{ data: AssetItem }>(`${BASE}`, form)
-      return res.data
+      const res = await this.http.post<{ uploaded: boolean; asset: AssetItem }>(`${BASE}/upload`, form)
+      // 兼容两种返回格式: { uploaded, asset } 或 { data }
+      if (res.asset) return res.asset
+      if ((res as any).data) return (res as any).data
+      return res as any
     } catch (err) {
       if (!navigator.onLine) {
         return this.localUpload(file, options)
@@ -127,6 +136,114 @@ class AssetService {
     } catch {
       return []
     }
+  }
+
+  /* ==================================================================
+   *  导出方法（合并自 asset-service v1）
+   * ================================================================== */
+
+  /** 单集资产 zip 导出 */
+  async exportEpisodeZip(
+    episodeAssetIds: string[],
+    opts?: { filePrefix?: string; includeThumbs?: boolean },
+  ) {
+    return this.postBlob('/v1/assets/export/episode', {
+      episodeAssetIds,
+      filePrefix: opts?.filePrefix ?? 'episode',
+      includeThumbs: opts?.includeThumbs ?? true,
+    })
+  }
+
+  /** 整季资产 zip 导出 */
+  async exportSeasonZip(
+    projectId: string,
+    opts?: { seasonNo?: number; filePrefix?: string },
+  ) {
+    return this.postBlob('/v1/assets/export/season', {
+      projectId,
+      seasonNo: opts?.seasonNo,
+      filePrefix: opts?.filePrefix ?? 'season',
+    })
+  }
+
+  /** 字幕 SRT 导出 */
+  async exportSrt(
+    assetIds: string[],
+    opts?: { withSpeaker?: boolean },
+  ) {
+    return this.postText('/v1/assets/export/srt', {
+      assetIds,
+      withSpeaker: opts?.withSpeaker ?? true,
+    })
+  }
+
+  /**
+   * 触发浏览器下载 Blob
+   */
+  downloadBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  /**
+   * 触发浏览器下载纯文本
+   */
+  downloadText(text: string, filename: string, mime = 'text/plain'): void {
+    this.downloadBlob(new Blob([text], { type: `${mime};charset=utf-8` }), filename)
+  }
+
+  /* ==================================================================
+   *  内部辅助方法
+   * ================================================================== */
+
+  /** POST 请求，返回 Blob（zip 下载用） */
+  private async postBlob(path: string, body: unknown): Promise<{ blob: Blob; filename: string }> {
+    const token = tokenStore.get()
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
+    const resp = await fetch(`${BASE}${path}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    })
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '')
+      throw new Error(`asset-service ${path} failed: ${resp.status} ${text}`)
+    }
+    const blob = await resp.blob()
+    const cd = resp.headers.get('Content-Disposition') ?? ''
+    const match = cd.match(/filename="?([^";\n]+)"?/)
+    const filename = match?.[1] ?? `export-${Date.now()}.zip`
+    return { blob, filename }
+  }
+
+  /** POST 请求，返回纯文本（srt 用） */
+  private async postText(path: string, body: unknown): Promise<{ text: string; filename: string }> {
+    const token = tokenStore.get()
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
+    const resp = await fetch(`${BASE}${path}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    })
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '')
+      throw new Error(`asset-service ${path} failed: ${resp.status} ${text}`)
+    }
+    const text = await resp.text()
+    const cd = resp.headers.get('Content-Disposition') ?? ''
+    const match = cd.match(/filename="?([^";\n]+)"?/)
+    const filename = match?.[1] ?? `subtitles-${Date.now()}.srt`
+    return { text, filename }
   }
 
   private localUpload(file: File, options: { projectId?: string; tags?: string[]; alias?: string }): AssetItem {

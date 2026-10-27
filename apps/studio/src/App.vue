@@ -1,13 +1,17 @@
 <template>
   <AppShell
-    brand-name="漫工场"
-    brand-short="漫"
+    brand-name="千机工坊"
+    brand-short="千机"
     sidebar-title="创作工作台"
   >
     <template #nav-items>
       <SidebarNavItem :link-component="RouterLink" :current-path="route.path" to="/" icon="🏠" title="首页" exact />
+      <SidebarNavItem :link-component="RouterLink" :current-path="route.path" to="/project/new" icon="✨" title="新建项目" />
       <SidebarNavItem :link-component="RouterLink" :current-path="route.path" to="/project" icon="📖" title="项目编辑器" match-prefix />
+      <SidebarNavItem :link-component="RouterLink" :current-path="route.path" to="/project/1/storyboard" icon="🎼" title="配乐编辑" />
       <SidebarNavItem :link-component="RouterLink" :current-path="route.path" to="/materials" icon="🎭" title="素材库" match-prefix />
+      <SidebarNavItem :link-component="RouterLink" :current-path="route.path" to="/characters" icon="👤" title="角色管理" match-prefix />
+      <SidebarNavItem :link-component="RouterLink" :current-path="route.path" to="/scenes" icon="🎬" title="场景管理" match-prefix />
       <SidebarNavItem :link-component="RouterLink" :current-path="route.path" to="/workflow" icon="🔀" title="工作流" match-prefix />
       <SidebarNavItem :link-component="RouterLink" :current-path="route.path" to="/tools" icon="🧰" title="工具箱" />
       <SidebarNavItem :link-component="RouterLink" :current-path="route.path" to="/export" icon="📤" title="导出" match-prefix />
@@ -36,26 +40,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { computed, onMounted } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { AppShell, SidebarNavItem } from '@manhuaworks/ui'
+import { useAuthStore } from './stores/auth'
 
 const route = useRoute()
-const userEmail = ref<string>('')
+const router = useRouter()
+const auth = useAuthStore()
+
+const userEmail = computed(() => auth.user?.email ?? '')
 
 onMounted(() => {
-  try {
-    const u = localStorage.getItem('mhw.user')
-    if (u) userEmail.value = JSON.parse(u)?.email || ''
-  } catch {}
+  auth.initAuth()
 })
 
 function logout() {
-  try {
-    localStorage.removeItem('mhw.access_token')
-    localStorage.removeItem('mhw.user')
-  } catch {}
-  window.location.href = `http://${window.location.hostname}:3000/login`
+  auth.logout()
+  router.push('/')
 }
 </script>
 

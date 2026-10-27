@@ -60,6 +60,14 @@
  *   GET    /v1/shelf
  *   GET    /v1/shelf/project/:projectId
  *   GET    /v1/shelf/global
+ *
+ *   # 参考图档案
+ *   GET    /v1/reference-images
+ *   POST   /v1/reference-images
+ *   POST   /v1/reference-images/batch
+ *   GET    /v1/reference-images/project/:projectId/summary
+ *   PATCH  /v1/reference-images/:id
+ *   DELETE /v1/reference-images/:id
  */
 
 import { serve } from '@hono/node-server';
@@ -77,6 +85,7 @@ import { lockFaceRoute } from './assets/lock-face.js';
 import { versionRoute } from './assets/version.js';
 import { exportRoute } from './assets/export.js';
 import { shelfRoute } from './assets/shelf.js';
+import { referenceImagesRoute } from './assets/reference-images.js';
 
 const app = new Hono();
 
@@ -169,6 +178,9 @@ app.route('/v1/assets/export', exportRoute);
 
 // 货架
 app.route('/v1/shelf', shelfRoute);
+
+// 参考图档案
+app.route('/v1/reference-images', referenceImagesRoute);
 
 // =================== 启动 ===================
 const port = config.port;

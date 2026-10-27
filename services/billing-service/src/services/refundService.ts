@@ -66,6 +66,14 @@ export const refundService = {
     return refundRepository.listAll(limit, offset);
   },
 
+  async countByUser(userId: string): Promise<number> {
+    return refundRepository.countByUser(userId);
+  },
+
+  async countAll(): Promise<number> {
+    return refundRepository.countAll();
+  },
+
   async getById(id: string, userId: string, isAdmin: boolean): Promise<Refund> {
     const r = await refundRepository.findById(id);
     if (!r) throw new HttpError(404, "refund_not_found");

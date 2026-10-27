@@ -38,8 +38,8 @@ class KeyManager {
 
   /** 列出所有 key 的摘要（admin 用） */
   async listAll(): Promise<KeySummary[]> {
-    // 简单遍历：4 个 provider × 2 个 owner 维度
-    const providers: ProviderId[] = ["minimax", "deepseek", "zhipu", "volcengine"];
+    // 简单遍历：8 个 provider × 2 个 owner 维度
+    const providers: ProviderId[] = ["minimax", "deepseek", "zhipu", "volcengine", "qwen", "openai", "replicate", "fal", "agnes"];
     const out: KeySummary[] = [];
     for (const p of providers) {
       const platform = await keyStore.list({ providerId: p, ownerUserId: null });

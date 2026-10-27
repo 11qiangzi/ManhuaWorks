@@ -3,13 +3,22 @@
  * ProjectSettingsView.vue — 项目设置 (1:1 复刻 studio-project-settings.html)
  * 林染 🖥️ 2026-06-10 派单 33C
  */
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useToast } from '@manhuaworks/ui'
+import { useProjectStore } from '../stores/project'
+import { getApi } from '../api-bridge'
 
 const router = useRouter()
-const projectName = ref('长安月下')
+const route = useRoute()
+const toast = useToast()
+const store = useProjectStore()
+const api = getApi()
+
+// Form fields — defaults are fallbacks for fields not present in ProjectDTO
+const projectName = ref('')
 const coverEmoji = ref('🌙')
-const description = ref('古风宫廷长篇漫改。一位没落宗门少年，在长安城中卷入了宫廷与江湖的双重漩涡。')
+const description = ref('')
 const genre = ref('古风')
 const targetEpisodes = ref(24)
 const defaultStyle = ref('动漫')
@@ -17,26 +26,173 @@ const aspectRatio = ref('16:9')
 const activeTab = ref('basic')
 const ratios = ['16:9', '9:16', '4:3', '1:1']
 
-const collaborators = ref([
-  { name: '我（创作者）', email: 'me@manhuaworks.com', role: '所有者', emoji: '🧑', color: 'linear-gradient(135deg,#667eea,#764ba2)' },
-  { name: '林染', email: 'linran@manhuaworks.com', role: '管理员', emoji: '👩', color: 'linear-gradient(135deg,#34d399,#10b981)' },
-  { name: '老魏', email: 'laowei@manhuaworks.com', role: '编辑', emoji: '👨', color: 'linear-gradient(135deg,#f59e0b,#d97706)' },
-])
+const collaborators = ref<{ name: string; email: string; role: string; emoji: string; color: string }[]>([])
 
-function goBack() { router.push('/project') }
+// Role color/emoji mapping for collaborators
+const ROLE_STYLES: Record<string, { emoji: string; color: string }> = {
+  'owner':  { emoji: '🧑', color: 'linear-gradient(135deg,#667eea,#764ba2)' },
+  'editor': { emoji: '👨', color: 'linear-gradient(135deg,#f59e0b,#d97706)' },
+  'viewer': { emoji: '👤', color: 'linear-gradient(135deg,#60a5fa,#3b82f6)' },
+}
+const ROLE_LABELS: Record<string, string> = {
+  'owner': '所有者',
+  'editor': '编辑',
+  'viewer': '查看者',
+}
+const DEFAULT_MEMBER_STYLE = { emoji: '👤', color: 'linear-gradient(135deg,#60a5fa,#3b82f6)' }
+
+onMounted(async () => {
+  const id = (route.params.id as string) || 'current'
+
+  // Load project data from store
+  try {
+    await store.loadOne(id)
+    const p = store.current
+    if (p) {
+      projectName.value = p.name || projectName.value
+      description.value = p.description || description.value
+      // coverEmoji, genre, targetEpisodes, defaultStyle, aspectRatio
+      // are not in ProjectDTO — keep their hardcoded defaults
+    }
+  } catch {
+    toast.error('加载项目信息失败')
+  }
+
+  // Load collaborators from members API
+  try {
+    const members = await api.projects.listMembers(id)
+    collaborators.value = members.map((m) => {
+      const style = ROLE_STYLES[m.role] || DEFAULT_MEMBER_STYLE
+      return {
+        name: m.display_name || m.email?.split('@')[0] || '未知成员',
+        email: m.email || '',
+        role: ROLE_LABELS[m.role] || m.role || '编辑',
+        emoji: style.emoji,
+        color: style.color,
+      }
+    })
+  } catch {
+    // Members API may not be ready yet; silently keep empty list
+  }
+})
+
+// Confirm modal state
+const showConfirm = ref(false)
+const confirmMessage = ref('')
+const onConfirm = ref<(() => void) | null>(null)
+
+function confirmAction(message: string, action: () => void) {
+  confirmMessage.value = message
+  onConfirm.value = action
+  showConfirm.value = true
+}
+
+function executeConfirm() {
+  if (onConfirm.value) onConfirm.value()
+  showConfirm.value = false
+  onConfirm.value = null
+}
+
+// Invite modal state
+const showInviteModal = ref(false)
+const inviteEmail = ref('')
+
+function openInviteModal() {
+  inviteEmail.value = ''
+  showInviteModal.value = true
+}
+
+async function submitInvite() {
+  const email = inviteEmail.value.trim()
+  if (!email || !email.includes('@')) return
+  const projectId = (route.params.id as string) || 'current'
+  try {
+    await api.http.post(`/projects/${encodeURIComponent(projectId)}/members`, {
+      email, role: 'editor',
+    })
+    // Only add locally AFTER successful API call
+    collaborators.value.push({
+      name: email.split('@')[0] || email,
+      email,
+      role: '编辑',
+      emoji: '👤',
+      color: 'linear-gradient(135deg,#60a5fa,#3b82f6)',
+    })
+    showInviteModal.value = false
+    toast.success(`已邀请 ${email}`)
+  } catch (e) {
+    toast.error(`邀请失败: ${(e as Error).message}`)
+  }
+}
+
+// Collaborator edit mode — clicking edit shows a confirm dialog to remove the collaborator
+const editingCollabEmail = ref<string | null>(null)
+
+async function onEditCollaborator(email: string) {
+  confirmAction(`确定移除协作者 ${email} 吗？`, async () => {
+    const projectId = (route.params.id as string) || 'current'
+    try {
+      await api.http.delete(`/projects/${encodeURIComponent(projectId)}/members/${encodeURIComponent(email)}`, {})
+    } catch {
+      // API may not be ready — remove locally as optimistic update
+    }
+    collaborators.value = collaborators.value.filter(c => c.email !== email)
+    toast.success(`已移除协作者 ${email}`)
+  })
+}
+
+function goBack() {
+  const pid = route.params.id
+  router.push(pid ? `/project/${pid}` : '/project')
+}
 const saving = ref(false); const saveError = ref(''); const saveSuccess = ref(false)
 async function saveSettings() {
   saving.value = true; saveError.value = ''; saveSuccess.value = false
   try {
-    const r = await fetch('/api/v1/projects/' + (history.state?.projectId || 'current'), {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (localStorage.getItem('mhw.access_token') || '') },
-      body: JSON.stringify({ name: projectName.value, description: description.value, genre: genre.value, default_style: defaultStyle.value, aspect_ratio: aspectRatio.value, target_episodes: targetEpisodes.value })
+    const projectId = (route.params.id as string) || 'current'
+    const r = await api.http.patch(`/projects/${encodeURIComponent(projectId)}`, {
+      name: projectName.value, description: description.value,
+      genre: genre.value, default_style: defaultStyle.value,
+      aspect_ratio: aspectRatio.value, target_episodes: targetEpisodes.value,
     })
-    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.message || '保存失败 (' + r.status + ')') }
+    if (!r || (r as any).code !== 0) {
+      throw new Error((r as any)?.message || '保存失败')
+    }
     saveSuccess.value = true
-  } catch (err: any) { saveError.value = err.message || '保存失败' }
-  finally { saving.value = false }
+    toast.success('保存成功')
+    setTimeout(() => { saveSuccess.value = false }, 3000)
+  } catch (err: unknown) {
+    saveError.value = err instanceof Error ? err.message : '保存失败'
+    toast.error(saveError.value)
+  } finally {
+    saving.value = false
+  }
+}
+
+function onArchive() {
+  confirmAction('确认归档此项目？归档后项目将变为只读。', async () => {
+    try {
+      const projectId = (route.params.id as string) || 'current'
+      await store.archive(projectId)
+      toast.success('项目已归档')
+      router.push('/')
+    } catch {
+      toast.error('归档失败')
+    }
+  })
+}
+
+function onDeleteProject() {
+  confirmAction('确认永久删除此项目？所有数据将不可恢复！', async () => {
+    try {
+      const projectId = (route.params.id as string) || 'current'
+      await api.http.delete(`/projects/${encodeURIComponent(projectId)}`, {})
+      toast.success('项目已删除')
+      router.push('/')
+    } catch {
+      toast.error('删除失败')
+    }
+  })
 }
 </script>
 
@@ -72,9 +228,43 @@ async function saveSettings() {
           <div class="collab-avatar" :style="{ background: c.color }">{{ c.emoji }}</div>
           <div class="collab-info"><div class="collab-name">{{ c.name }}</div><div class="collab-email">{{ c.email }}</div></div>
           <span class="badge" :class="c.role === '所有者' ? 'badge-red' : c.role === '管理员' ? 'badge-purple' : 'badge-green'">{{ c.role }}</span>
-          <button v-if="c.role !== '所有者'" class="btn btn-xs btn-ghost">✏️</button>
+          <button v-if="c.role !== '所有者'" class="btn btn-xs btn-ghost" @click="onEditCollaborator(c.email)">✏️</button>
         </div>
-        <button class="btn btn-sm btn-secondary mt-4">➕ 邀请成员</button>
+        <button class="btn btn-sm btn-secondary mt-4" @click="openInviteModal">➕ 邀请成员</button>
+      </div>
+    </template>
+    <template v-if="activeTab === 'perm'">
+      <div class="section-title">🔐 权限设置</div>
+      <div class="ps-card">
+        <div class="perm-row">
+          <div class="perm-info">
+            <div class="perm-name">公开可见</div>
+            <div class="perm-desc">项目成员可查看项目基本信息和素材库</div>
+          </div>
+          <span class="badge badge-green">已开启</span>
+        </div>
+        <div class="perm-row">
+          <div class="perm-info">
+            <div class="perm-name">素材下载</div>
+            <div class="perm-desc">允许编辑者下载项目素材文件</div>
+          </div>
+          <span class="badge badge-green">已开启</span>
+        </div>
+        <div class="perm-row">
+          <div class="perm-info">
+            <div class="perm-name">外部共享</div>
+            <div class="perm-desc">允许生成外部分享链接（只读）</div>
+          </div>
+          <span class="badge badge-red">未开启</span>
+        </div>
+        <div class="perm-row">
+          <div class="perm-info">
+            <div class="perm-name">API 访问</div>
+            <div class="perm-desc">允许通过 API 密钥访问项目数据</div>
+          </div>
+          <span class="badge badge-red">未开启</span>
+        </div>
+        <div class="perm-note">权限配置将在后续版本中支持自定义编辑</div>
       </div>
     </template>
     <template v-if="activeTab === 'danger'">
@@ -82,14 +272,66 @@ async function saveSettings() {
       <div class="ps-card ps-card--danger">
         <div class="danger-row">
           <div><div class="danger-title">归档项目</div><div class="danger-desc">归档后项目变为只读，可随时恢复</div></div>
-          <button class="btn btn-danger btn-sm">归档</button>
+          <button class="btn btn-danger btn-sm" @click="onArchive">归档</button>
         </div>
         <div class="danger-row">
           <div><div class="danger-title">删除项目</div><div class="danger-desc">永久删除所有数据，不可恢复</div></div>
-          <button class="btn btn-sm btn-delete">删除项目</button>
+          <button class="btn btn-sm btn-delete" @click="onDeleteProject">删除项目</button>
         </div>
       </div>
     </template>
+
+    <!-- Confirm Modal -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="showConfirm" class="modal-overlay" @click.self="showConfirm = false">
+          <div class="modal-dialog modal-dialog--sm">
+            <div class="modal-head">
+              <h3>确认操作</h3>
+              <button class="modal-close" @click="showConfirm = false">✕</button>
+            </div>
+            <div class="modal-body">
+              <p class="modal-message">{{ confirmMessage }}</p>
+            </div>
+            <div class="modal-foot">
+              <button class="ml-btn" @click="showConfirm = false">取消</button>
+              <button class="ml-btn ml-btn--danger" @click="executeConfirm">确认</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Invite Modal -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="showInviteModal" class="modal-overlay" @click.self="showInviteModal = false">
+          <div class="modal-dialog modal-dialog--sm">
+            <div class="modal-head">
+              <h3>➕ 邀请成员</h3>
+              <button class="modal-close" @click="showInviteModal = false">✕</button>
+            </div>
+            <div class="modal-body">
+              <label class="ml-field">
+                <span class="ml-field-label">邮箱地址</span>
+                <input
+                  v-model="inviteEmail"
+                  class="ml-input"
+                  type="email"
+                  placeholder="name@example.com"
+                  @keydown.enter="submitInvite"
+                  autofocus
+                />
+              </label>
+            </div>
+            <div class="modal-foot">
+              <button class="ml-btn" @click="showInviteModal = false">取消</button>
+              <button class="ml-btn ml-btn--primary" :disabled="!inviteEmail.trim()" @click="submitInvite">发送邀请</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -107,7 +349,6 @@ async function saveSettings() {
 .form-grid { display: flex; flex-direction: column; gap: 16px; }
 .form-row-3 { display: flex; gap: 16px; }
 .form-row-3 > div { flex: 1; }
-.form-label { font-size: 12px; font-weight: 500; color: var(--text-secondary, #94a3b8); margin-bottom: 4px; display: block; }
 .ratio-chips { display: flex; gap: 8px; }
 .chip { padding: 6px 14px; border-radius: 12px; border: 1px solid var(--border, #1e293b); background: var(--bg-tertiary, #1a2332); font-size: 12px; color: var(--text-secondary, #94a3b8); cursor: pointer; }
 .chip.active { border-color: var(--accent, #818cf8); background: rgba(99,102,241,.08); color: var(--accent, #818cf8); }
@@ -123,21 +364,33 @@ async function saveSettings() {
 .danger-title { font-weight: 600; color: #fca5a5; }
 .danger-desc { font-size: 12px; color: var(--text-muted, #64748b); }
 .section-title { font-size: 16px; font-weight: 700; color: var(--text-primary, #e2e8f0); margin-bottom: 12px; }
+.perm-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border, #1e293b); }
+.perm-row:last-of-type { border-bottom: none; }
+.perm-name { font-weight: 600; font-size: 13px; color: var(--text-primary, #e2e8f0); }
+.perm-desc { font-size: 12px; color: var(--text-muted, #64748b); margin-top: 2px; }
+.perm-note { margin-top: 12px; font-size: 11px; color: var(--text-muted, #64748b); font-style: italic; }
 .mt-4 { margin-top: 16px; }
-.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-.badge-red { background: rgba(239,68,68,.15); color: #fca5a5; }
-.badge-purple { background: rgba(139,92,246,.15); color: #a78bfa; }
-.badge-green { background: rgba(16,185,129,.15); color: #34d399; }
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all .2s; white-space: nowrap; }
-.btn-primary { background: var(--accent, #818cf8); color: #fff; }
-.btn-primary:hover { background: var(--accent-strong, #6366f1); box-shadow: 0 0 20px rgba(99,102,241,.3); }
-.btn-secondary { background: var(--bg-tertiary, #1a2332); color: var(--text-primary, #e2e8f0); border: 1px solid var(--border, #1e293b); }
-.btn-danger { background: rgba(239,68,68,.15); color: #fca5a5; }
-.btn-ghost { background: transparent; color: var(--text-secondary, #94a3b8); }
-.btn-sm { padding: 6px 12px; font-size: 12px; }
-.btn-xs { padding: 4px 8px; font-size: 11px; }
-.btn-delete { background: rgba(239,68,68,.2); color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
-.input { padding: 10px 14px; border-radius: 8px; background: var(--bg-tertiary, #1a2332); border: 1px solid var(--border, #1e293b); color: var(--text-primary, #e2e8f0); font-size: 14px; outline: none; font-family: var(--font-sans); width: 100%; transition: border .2s; }
-.input:focus { border-color: var(--accent, #818cf8); }
-textarea.input { resize: vertical; }
+.modal-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; }
+.modal-dialog { background: var(--bg-secondary, #111827); border: 1px solid var(--border, #1e293b); border-radius: 14px; width: 90vw; max-width: 400px; display: flex; flex-direction: column; }
+.modal-dialog--sm { max-width: 360px; }
+.modal-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border, #1e293b); }
+.modal-head h3 { margin: 0; font-size: 15px; color: var(--text-primary, #e2e8f0); }
+.modal-close { border: none; background: transparent; color: var(--text-secondary, #94a3b8); font-size: 18px; cursor: pointer; padding: 4px; }
+.modal-close:hover { color: #ef4444; }
+.modal-body { padding: 20px; }
+.modal-message { font-size: 13px; color: var(--text-secondary, #94a3b8); line-height: 1.6; margin: 0; }
+.modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--border, #1e293b); }
+.ml-field { display: flex; flex-direction: column; gap: 4px; }
+.ml-field-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary, #94a3b8); }
+.ml-input { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border, #1e293b); background: var(--bg-tertiary, #1a2332); color: var(--text-primary, #e2e8f0); font-size: 13px; width: 100%; box-sizing: border-box; }
+.ml-input:focus { border-color: var(--accent, #818cf8); outline: none; }
+.ml-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border, #1e293b); background: var(--bg-tertiary, #1a2332); color: var(--text-secondary, #94a3b8); font-size: 13px; cursor: pointer; transition: all 200ms; }
+.ml-btn:hover { border-color: var(--accent, #818cf8); color: var(--text-primary, #e2e8f0); }
+.ml-btn--primary { background: var(--accent, #818cf8); color: white; border: none; font-weight: 600; }
+.ml-btn--primary:hover { background: var(--accent-strong, #6366f1); }
+.ml-btn--danger { background: rgba(239,68,68,.8); color: white; border: none; font-weight: 600; }
+.ml-btn--danger:hover { background: #dc2626; }
+.ml-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 200ms ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 </style>

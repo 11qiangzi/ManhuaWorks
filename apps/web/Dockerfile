@@ -2,7 +2,7 @@
 # 2026-06-08 谢擎 L2-task-12
 #
 # 多阶段：deps → build → runtime
-# - builder:  node:20-alpine (npm install + vite build)
+# - builder:  node:20-alpine (pnpm install + vite build)
 # - runtime:  node:20-alpine (npx vite preview)
 # - 工作目录: /app，监听 :3000
 #
@@ -17,14 +17,13 @@ FROM node:20-alpine AS deps
 WORKDIR /repo
 # web 依赖 @manhuaworks/api-client + @manhuaworks/ui（workspace 包）
 # 因此 build context 必须是 monorepo 根。
-COPY package.json pnpm-workspace.yaml* ./
+COPY package.json pnpm-workspace.yaml* pnpm-lock.yaml* ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/api-client/package.json ./packages/api-client/ 2>/dev/null || true
 COPY packages/ui/package.json ./packages/ui/ 2>/dev/null || true
 COPY packages/ui-components/package.json ./packages/ui-components/ 2>/dev/null || true
-RUN npm install --no-audit --no-fund --workspaces=false \
- || (echo "[fallback] npm install workspaces failed, trying direct" \
-  && cd apps/web && npm install --no-audit --no-fund)
+RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
+RUN pnpm install --frozen-lockfile --filter @manhuaworks/web...
 
 # ==================== Stage 2: build ====================
 FROM deps AS build
@@ -33,7 +32,7 @@ COPY apps/web ./apps/web
 COPY packages/api-client ./packages/api-client 2>/dev/null || true
 COPY packages/ui ./packages/ui 2>/dev/null || true
 COPY packages/ui-components ./packages/ui-components 2>/dev/null || true
-RUN cd apps/web && npx vite build
+RUN pnpm --filter @manhuaworks/web build
 
 # ==================== Stage 3: runtime ====================
 FROM node:20-alpine AS runtime

@@ -109,9 +109,9 @@ describe("seed: 4 角色用户 + 余额", () => {
     const planByUser: Record<string, string> = {};
     r.rows.forEach((row) => (planByUser[row.user_id] = row.plan));
     expect(planByUser[DEMO_USER_IDS.free]).toBe("free");
-    expect(planByUser[DEMO_USER_IDS.creator]).toBe("pro");
-    expect(planByUser[DEMO_USER_IDS.business]).toBe("team");
-    expect(planByUser[DEMO_USER_IDS.admin]).toBe("team");
+    expect(planByUser[DEMO_USER_IDS.creator]).toBe("basic");
+    expect(planByUser[DEMO_USER_IDS.business]).toBe("pro");
+    expect(planByUser[DEMO_USER_IDS.admin]).toBe("enterprise");
   });
 
   it("2 根 api-key（admin + creator）", async () => {

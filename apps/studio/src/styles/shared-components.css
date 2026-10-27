@@ -1,0 +1,158 @@
+/*
+ * shared-components.css
+ * Unified component classes for 千机工坊 (ManhuaWorks)
+ * Brand palette:  #00BFA5 千机青 · #7C3AED 墨韵紫
+ *
+ * Import once in main.ts so every view can use these classes
+ * without re-declaring them in scoped <style> blocks.
+ */
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: all .2s;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: #00BFA5;
+  color: #fff;
+}
+.btn-primary:hover {
+  background: #00a891;
+  box-shadow: 0 0 20px rgba(0, 191, 165, .3);
+}
+
+.btn-secondary {
+  background: #1A1C21;
+  color: #E8EAED;
+  border: 1px solid #2E3139;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #9CA3AF;
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, .15);
+  color: #fca5a5;
+}
+
+.btn-delete {
+  background: rgba(239, 68, 68, .2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, .3);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn-xs {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.btn-full {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ── Inputs ──────────────────────────────────────────────────────────────── */
+
+.input {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #1A1C21;
+  border: 1px solid #2E3139;
+  color: #E8EAED;
+  font-size: 14px;
+  outline: none;
+  font-family: var(--font-sans);
+  width: 100%;
+  transition: border .2s;
+}
+.input:focus {
+  border-color: #00BFA5;
+}
+
+textarea.input {
+  resize: vertical;
+}
+
+/* ── Form label ──────────────────────────────────────────────────────────── */
+
+.form-label {
+  font-size: 11px;
+  color: #9CA3AF;
+  margin-bottom: 4px;
+  display: block;
+}
+
+/* ── Badge ───────────────────────────────────────────────────────────────── */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-green {
+  background: rgba(16, 185, 129, .15);
+  color: #34d399;
+}
+
+.badge-amber {
+  background: rgba(245, 158, 11, .15);
+  color: #fbbf24;
+}
+
+.badge-blue {
+  background: rgba(59, 130, 246, .15);
+  color: #60a5fa;
+}
+
+.badge-purple {
+  background: rgba(124, 58, 237, .15);
+  color: #a78bfa;
+}
+
+.badge-red {
+  background: rgba(239, 68, 68, .15);
+  color: #fca5a5;
+}
+
+.badge-yellow {
+  background: rgba(251, 191, 36, .15);
+  color: #fbbf24;
+}
+
+.badge-gray {
+  background: rgba(156, 163, 175, .15);
+  color: #9ca3af;
+}
+
+/* ── Card ────────────────────────────────────────────────────────────────── */
+
+.card {
+  background: #0E0F12;
+  border: 1px solid #2E3139;
+  border-radius: 12px;
+  padding: 16px;
+}

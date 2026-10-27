@@ -77,6 +77,30 @@ export interface VideoResponse {
   usedByok: boolean;
 }
 
+export interface AudioRequest {
+  model?: string;
+  prompt: string;
+  /** 场景描述 / 情感标签，用于生成匹配的配乐 */
+  mood?: string;
+  /** 参考风格：epic / emotional / tense / relaxing / upbeat */
+  style?: string;
+  durationSeconds?: number;
+  strategy?: RouteStrategy;
+  preferredProviders?: ProviderId[];
+  useByok?: boolean;
+  taskTag?: string;
+}
+
+export interface AudioResponse {
+  model: string;
+  provider: ProviderId;
+  url: string;
+  durationSeconds: number;
+  cost: number;
+  latencyMs: number;
+  usedByok: boolean;
+}
+
 export class RouterClientError extends Error {
   constructor(
     public status: number,
@@ -127,6 +151,9 @@ export const aiRouterClient = {
   },
   async video(req: VideoRequest, signal?: AbortSignal): Promise<VideoResponse> {
     return call<VideoResponse>("/v1/video", req, signal ?? new AbortController().signal, config.aiRouter.timeoutMs);
+  },
+  async audio(req: AudioRequest, signal?: AbortSignal): Promise<AudioResponse> {
+    return call<AudioResponse>("/v1/audio", req, signal ?? new AbortController().signal, config.aiRouter.timeoutMs);
   },
   async health(): Promise<unknown> {
     const url = `${config.aiRouter.url}/health`;

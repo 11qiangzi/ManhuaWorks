@@ -1,10 +1,12 @@
-﻿/**
+/**
  * Quota Controller
  *  GET   /api/v1/quota
  *  GET   /api/v1/quota/usage       (admin)
  *  POST  /api/v1/quota/reset       (admin)
  *  POST  /api/v1/quota/consume     (内部 / billing 回调)
  *  PUT   /api/v1/quota             (admin)
+ *
+ * 配额统一使用"次"（episodes）计量。
  */
 
 import { Router, Response } from "express";
@@ -34,24 +36,19 @@ router.post("/reset", authRequired(), adminOnly, ah(async (req: AuthedRequest, r
 
 const setSchema = z.object({
   user_id: z.string().uuid().optional(),
-  monthly_tokens: z.number().int().min(0).optional(),
-  monthly_images: z.number().int().min(0).optional(),
-  monthly_videos: z.number().int().min(0).optional(),
+  monthly_episodes: z.number().int().min(-1).optional(),
 });
 
 router.put("/", authRequired(), adminOnly, ah(async (req: AuthedRequest, res: Response) => {
   const body = setSchema.parse(req.body);
   const target = body.user_id ?? req.user!.sub;
   const q = await quotaService.setMonthly(target, true, {
-    monthlyTokens: body.monthly_tokens,
-    monthlyImages: body.monthly_images,
-    monthlyVideos: body.monthly_videos,
+    monthlyEpisodes: body.monthly_episodes,
   });
   res.json({ code: 0, message: "ok", data: q });
 }));
 
 const consumeSchema = z.object({
-  type: z.enum(["tokens", "images", "videos"]),
   amount: z.number().int().min(1).max(1_000_000),
   user_id: z.string().uuid().optional(),
 });
@@ -63,7 +60,7 @@ router.post("/consume", authRequired(), ah(async (req: AuthedRequest, res: Respo
   if (target !== req.user!.sub && !isAdmin) {
     throw new HttpError(403, "forbidden");
   }
-  const result = await quotaService.consume(target, body.type, body.amount);
+  const result = await quotaService.consume(target, body.amount);
   if (!result.ok) {
     res.status(429).json({
       code: 429,

@@ -1,6 +1,6 @@
 /**
  * studio · auth Pinia store — 接 user-service
- * ManhuaWorks · L2 task 8
+ * 千机工坊 · L2 task 8
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
@@ -92,6 +92,23 @@ export const useAuthStore = defineStore('auth', () => {
     try { await api.users.logout() } catch { /* noop */ }
     user.value = null
     token.value = null
+    tokenStore.clear()
+  }
+
+  /**
+   * Initialize auth: hydrate user from token + listen for auth-lost events.
+   * Call once at app boot after Pinia is installed.
+   */
+  function initAuth(): void {
+    // Hydrate user if we have a token but no user data
+    if (token.value && !user.value) {
+      fetchMe().catch(() => { /* silent — user stays null */ })
+    }
+    // Listen for auth-lost events from api-bridge
+    window.addEventListener('mhw:auth-lost', () => {
+      user.value = null
+      token.value = null
+    })
   }
 
   return {
@@ -99,6 +116,6 @@ export const useAuthStore = defineStore('auth', () => {
     isLoggedIn, role, isAdmin,
     loginByPassword, loginByCode, register, sendCode,
     enable2FA, verify2FA, disable2FA,
-    changePassword, fetchMe, logout,
+    changePassword, fetchMe, logout, initAuth,
   }
 })

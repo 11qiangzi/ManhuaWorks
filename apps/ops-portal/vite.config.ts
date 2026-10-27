@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import viteCompression from 'vite-plugin-compression'
 import { viteWebpPlugin } from '../../scripts/build/vite-plugin-webp'
 import path from 'path'
+import { BRAND } from './src/config/branding'
 
 const isProd = process.env.NODE_ENV === 'production'
 const cdnBase = isProd ? (process.env.VITE_CDN_BASE || '/') : '/'
@@ -13,6 +14,19 @@ export default defineConfig({
     viteCompression({ algorithm: 'gzip', ext: '.gz', threshold: 1024, deleteOriginFile: false }),
     viteCompression({ algorithm: 'brotliCompress', ext: '.br', threshold: 1024, deleteOriginFile: false }),
     viteWebpPlugin({ quality: 80, silent: false }),
+    {
+      // 派单 21B · 林染: Vite 原生 transformIndexHtml 注入动态 title + meta
+      // (覆盖 apps/ops-portal/index.html 里的 hardcode 乱码 title)
+      name: 'qianji-html-inject',
+      transformIndexHtml(html) {
+        return html
+          .replace(/<title>.*?<\/title>/, `<title>${BRAND.nameCn} - 运营后台</title>`)
+          .replace(
+            '</head>',
+            `<meta name="description" content="${BRAND.nameCn} - ${BRAND.tagline}">\n</head>`
+          )
+      },
+    },
   ],
   base: cdnBase,
   resolve: {
@@ -71,6 +85,14 @@ export default defineConfig({
         target: 'http://localhost:8090',
         changeOrigin: true,
         rewrite: (path) => '/api' + path
+      },
+      '/api/v1/ops': {
+        target: 'http://localhost:8088',
+        changeOrigin: true
+      },
+      '/api/v1/admin': {
+        target: 'http://localhost:8088',
+        changeOrigin: true
       },
       '/v1': {
         target: 'http://localhost:8089',

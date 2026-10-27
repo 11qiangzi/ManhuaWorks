@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * MyProjectsView · 我的项目
- * ManhuaWorks · W4 用户后台
+ * 千机工坊 · W4 用户后台
  *
  * 功能：
  * 1. 项目列表（卡片网格 / 列表切换）
@@ -45,17 +45,65 @@ const STATUS_TABS: { id: ProjectStatus | 'all'; label: string; icon: string }[] 
 
 /* ===== 新建项目弹窗 ===== */
 const showCreate = ref(false)
+const wizardStep = ref(1)
 const newName = ref('')
 const newDesc = ref('')
 const newTags = ref('')
 const newCover = ref('🎬')
 const creating = ref(false)
 
+/* ===== Step 3: 配乐风格 ===== */
+const MOOD_CATEGORIES = [
+  { id: 'suspense', label: '悬疑', icon: '🔍', color: '#6366f1' },
+  { id: 'battle',   label: '战斗', icon: '⚔️', color: '#ef4444' },
+  { id: 'warm',     label: '温情', icon: '💕', color: '#f59e0b' },
+  { id: 'scifi',    label: '科幻', icon: '🚀', color: '#06b6d4' },
+  { id: 'epic',     label: '史诗', icon: '🏔️', color: '#8b5cf6' },
+  { id: 'daily',    label: '日常', icon: '☀️', color: '#10b981' },
+  { id: 'dark',     label: '黑暗', icon: '🌑', color: '#374151' },
+  { id: 'healing',  label: '治愈', icon: '🌿', color: '#34d399' }
+] as const
+
+const selectedMoods = ref<string[]>([])
+const aiRecommend = ref(false)
+const previewingMood = ref<string | null>(null)
+
+function toggleMood(id: string) {
+  const idx = selectedMoods.value.indexOf(id)
+  if (idx >= 0) {
+    selectedMoods.value.splice(idx, 1)
+  } else {
+    if (selectedMoods.value.length < 3) {
+      selectedMoods.value.push(id)
+    }
+  }
+}
+
+function previewMood(id: string) {
+  previewingMood.value = previewingMood.value === id ? null : id
+  // Simulate preview playback timeout
+  if (previewingMood.value) {
+    setTimeout(() => { previewingMood.value = null }, 3000)
+  }
+}
+
+function wizardNext() {
+  if (wizardStep.value < 3) wizardStep.value++
+}
+
+function wizardPrev() {
+  if (wizardStep.value > 1) wizardStep.value--
+}
+
 function resetCreateForm() {
   newName.value = ''
   newDesc.value = ''
   newTags.value = ''
   newCover.value = '🎬'
+  wizardStep.value = 1
+  selectedMoods.value = []
+  aiRecommend.value = false
+  previewingMood.value = null
 }
 
 async function submitCreate() {
@@ -66,7 +114,8 @@ async function submitCreate() {
       name: newName.value.trim(),
       description: newDesc.value.trim() || undefined,
       cover: newCover.value || undefined,
-      tags: newTags.value.split(/[,，\s]+/).filter(Boolean)
+      tags: newTags.value.split(/[,，\s]+/).filter(Boolean),
+      musicStyle: selectedMoods.value.length ? { moods: selectedMoods.value, aiRecommend: aiRecommend.value } : undefined
     }
     const created = await create(req)
     if (created) {
@@ -247,45 +296,127 @@ const studioHref = computed(() => `http://${window.location.hostname}:5175`)
       </div>
     </div>
 
-    <!-- ===== 创建项目弹窗 ===== -->
+    <!-- ===== 创建项目弹窗（3 步向导） ===== -->
     <Teleport to="body">
       <div v-if="showCreate" class="mp__modal" @click.self="showCreate = false">
         <div class="mp__modal-card">
           <h2>＋ 新建项目</h2>
-          <p class="mp__modal-sub">项目是漫改创作的容器，包含分镜、角色、场景等</p>
 
-          <label class="mp__field">
-            <span>项目名 *</span>
-            <input v-model="newName" type="text" placeholder="如：《灰星》第三章" maxlength="50" />
-          </label>
-
-          <label class="mp__field">
-            <span>描述</span>
-            <textarea v-model="newDesc" placeholder="简要描述这个项目..." maxlength="200" rows="3"></textarea>
-          </label>
-
-          <label class="mp__field">
-            <span>封面（emoji）</span>
-            <div class="mp__cover-grid">
-              <button
-                v-for="c in TEMPLATE_COVERS"
-                :key="c"
-                type="button"
-                class="mp__cover-opt"
-                :class="{ 'mp__cover-opt--active': newCover === c }"
-                @click="newCover = c"
-              >{{ c }}</button>
+          <!-- 步骤指示器 -->
+          <div class="mp__wizard-steps">
+            <div v-for="s in 3" :key="s" class="mp__wizard-step"
+              :class="{ 'mp__wizard-step--active': wizardStep === s, 'mp__wizard-step--done': wizardStep > s }">
+              <span class="mp__wizard-step-num">{{ wizardStep > s ? '✓' : s }}</span>
+              <span class="mp__wizard-step-label">{{ s === 1 ? '基本信息' : s === 2 ? '封面 & 标签' : '配乐风格' }}</span>
             </div>
-          </label>
+          </div>
 
-          <label class="mp__field">
-            <span>标签（逗号或空格分隔）</span>
-            <input v-model="newTags" type="text" placeholder="科幻, 漫改, 短剧" />
-          </label>
+          <!-- Step 1: 基本信息 -->
+          <div v-if="wizardStep === 1" class="mp__wizard-panel">
+            <p class="mp__modal-sub">填写项目名称和描述</p>
+            <label class="mp__field">
+              <span>项目名 *</span>
+              <input v-model="newName" type="text" placeholder="如：《灰星》第三章" maxlength="50" />
+            </label>
+            <label class="mp__field">
+              <span>描述</span>
+              <textarea v-model="newDesc" placeholder="简要描述这个项目..." maxlength="200" rows="3"></textarea>
+            </label>
+          </div>
+
+          <!-- Step 2: 封面 & 标签 -->
+          <div v-if="wizardStep === 2" class="mp__wizard-panel">
+            <p class="mp__modal-sub">选择封面图标和项目标签</p>
+            <label class="mp__field">
+              <span>封面（emoji）</span>
+              <div class="mp__cover-grid">
+                <button
+                  v-for="c in TEMPLATE_COVERS"
+                  :key="c"
+                  type="button"
+                  class="mp__cover-opt"
+                  :class="{ 'mp__cover-opt--active': newCover === c }"
+                  @click="newCover = c"
+                >{{ c }}</button>
+              </div>
+            </label>
+            <label class="mp__field">
+              <span>标签（逗号或空格分隔）</span>
+              <input v-model="newTags" type="text" placeholder="科幻, 漫改, 短剧" />
+            </label>
+          </div>
+
+          <!-- Step 3: 配乐风格 -->
+          <div v-if="wizardStep === 3" class="mp__wizard-panel">
+            <p class="mp__modal-sub">选择项目的配乐风格（最多 3 个），AI 将根据风格推荐配乐</p>
+
+            <!-- AI 自动推荐开关 -->
+            <label class="mp__ai-toggle">
+              <input type="checkbox" v-model="aiRecommend" />
+              <span class="mp__ai-track">
+                <span class="mp__ai-thumb"></span>
+              </span>
+              <span class="mp__ai-label">
+                <span class="mp__ai-icon">🤖</span>
+                AI 自动推荐配乐
+              </span>
+            </label>
+
+            <!-- 8 mood category buttons -->
+            <div class="mp__mood-grid">
+              <button
+                v-for="m in MOOD_CATEGORIES"
+                :key="m.id"
+                type="button"
+                class="mp__mood-btn"
+                :class="{ 'mp__mood-btn--selected': selectedMoods.includes(m.id) }"
+                :style="{ '--mood-color': m.color }"
+                @click="toggleMood(m.id)"
+              >
+                <span class="mp__mood-icon">{{ m.icon }}</span>
+                <span class="mp__mood-label">{{ m.label }}</span>
+                <span v-if="selectedMoods.includes(m.id)" class="mp__mood-check">✓</span>
+              </button>
+            </div>
+
+            <!-- Preview area -->
+            <div class="mp__mood-preview">
+              <div v-if="selectedMoods.length === 0" class="mp__mood-preview-empty">
+                请选择至少一个配乐风格，点击试听样本
+              </div>
+              <div v-else class="mp__mood-preview-list">
+                <button
+                  v-for="mid in selectedMoods"
+                  :key="mid"
+                  type="button"
+                  class="mp__mood-preview-chip"
+                  :class="{ 'mp__mood-preview-chip--playing': previewingMood === mid }"
+                  @click="previewMood(mid)"
+                >
+                  <span class="mp__mood-preview-dot"
+                    :style="{ background: MOOD_CATEGORIES.find(c => c.id === mid)?.color }"
+                  ></span>
+                  {{ MOOD_CATEGORIES.find(c => c.id === mid)?.label }}
+                  <span class="mp__mood-preview-play">{{ previewingMood === mid ? '⏸' : '🎵' }}</span>
+                </button>
+              </div>
+              <div v-if="previewingMood" class="mp__mood-preview-bar">
+                <div class="mp__mood-preview-progress"></div>
+              </div>
+            </div>
+          </div>
 
           <div class="mp__modal-actions">
-            <button type="button" class="mp__btn" @click="showCreate = false">取消</button>
-            <button type="button" class="mp__btn mp__btn--primary" :disabled="!newName.trim() || creating" @click="submitCreate">
+            <button v-if="wizardStep > 1" type="button" class="mp__btn" @click="wizardPrev">← 上一步</button>
+            <button v-if="wizardStep === 1" type="button" class="mp__btn" @click="showCreate = false">取消</button>
+            <button v-if="wizardStep < 3" type="button" class="mp__btn mp__btn--primary"
+              :disabled="wizardStep === 1 && !newName.trim()"
+              @click="wizardNext">
+              下一步 →
+            </button>
+            <button v-if="wizardStep === 3" type="button" class="mp__btn mp__btn--primary"
+              :disabled="!newName.trim() || creating"
+              @click="submitCreate">
               {{ creating ? '创建中...' : '创建并进入' }}
             </button>
           </div>
@@ -783,7 +914,7 @@ const studioHref = computed(() => `http://${window.location.hostname}:5175`)
 
 .mp__modal-card {
   width: 90%;
-  max-width: 480px;
+  max-width: 540px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -792,6 +923,269 @@ const studioHref = computed(() => `http://${window.location.hostname}:5175`)
   flex-direction: column;
   gap: 14px;
   box-shadow: var(--shadow);
+}
+
+/* ===== Wizard Steps ===== */
+.mp__wizard-steps {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.mp__wizard-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: all 200ms;
+}
+
+.mp__wizard-step--active {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.mp__wizard-step--done {
+  color: var(--success, #10b981);
+  border-color: color-mix(in srgb, var(--success, #10b981) 40%, var(--border));
+}
+
+.mp__wizard-step-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.mp__wizard-step--active .mp__wizard-step-num {
+  background: var(--accent);
+  color: white;
+}
+
+.mp__wizard-step--done .mp__wizard-step-num {
+  background: color-mix(in srgb, var(--success, #10b981) 20%, transparent);
+  color: var(--success, #10b981);
+}
+
+.mp__wizard-step-label {
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.mp__wizard-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: mp-slide-in 200ms ease;
+}
+
+@keyframes mp-slide-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ===== AI Toggle ===== */
+.mp__ai-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg-primary));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mp__ai-toggle input {
+  display: none;
+}
+
+.mp__ai-track {
+  width: 36px;
+  height: 20px;
+  background: var(--border);
+  border-radius: 999px;
+  position: relative;
+  transition: background 200ms;
+  flex-shrink: 0;
+}
+
+.mp__ai-thumb {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  top: 2px;
+  left: 2px;
+  transition: left 200ms;
+  display: block;
+}
+
+.mp__ai-toggle input:checked + .mp__ai-track {
+  background: var(--accent);
+}
+
+.mp__ai-toggle input:checked + .mp__ai-track .mp__ai-thumb {
+  left: 18px;
+}
+
+.mp__ai-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mp__ai-icon {
+  font-size: 16px;
+}
+
+/* ===== Mood Grid ===== */
+.mp__mood-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.mp__mood-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  background: var(--bg-primary);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text-primary);
+  transition: all 200ms;
+  position: relative;
+}
+
+.mp__mood-btn:hover {
+  border-color: var(--mood-color, var(--accent));
+  background: color-mix(in srgb, var(--mood-color, var(--accent)) 8%, var(--bg-primary));
+}
+
+.mp__mood-btn--selected {
+  border-color: var(--mood-color, var(--accent));
+  background: color-mix(in srgb, var(--mood-color, var(--accent)) 15%, var(--bg-primary));
+  box-shadow: 0 0 0 1px var(--mood-color, var(--accent));
+}
+
+.mp__mood-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.mp__mood-label {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.mp__mood-check {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 10px;
+  color: var(--mood-color, var(--accent));
+  font-weight: 700;
+}
+
+/* ===== Mood Preview ===== */
+.mp__mood-preview {
+  padding: 12px 14px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-height: 48px;
+}
+
+.mp__mood-preview-empty {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 8px 0;
+}
+
+.mp__mood-preview-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mp__mood-preview-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 200ms;
+}
+
+.mp__mood-preview-chip:hover {
+  border-color: var(--accent);
+}
+
+.mp__mood-preview-chip--playing {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-secondary));
+}
+
+.mp__mood-preview-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mp__mood-preview-play {
+  font-size: 11px;
+}
+
+.mp__mood-preview-bar {
+  margin-top: 10px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.mp__mood-preview-progress {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  animation: mp-preview-fill 3s linear forwards;
+}
+
+@keyframes mp-preview-fill {
+  from { width: 0; }
+  to { width: 100%; }
 }
 
 .mp__modal-card h2 {

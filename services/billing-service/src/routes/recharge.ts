@@ -420,6 +420,7 @@ router.get(
 
 router.get(
   "/ping",
+  requireAuth(),
   ah(async (_req: Request, res: Response) => {
     res.json({ code: 0, message: "pong", data: { ts: new Date().toISOString() } });
   })

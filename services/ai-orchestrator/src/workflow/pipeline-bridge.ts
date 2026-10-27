@@ -48,6 +48,16 @@ import {
   buildMultiCharacterReplaceOutput,
   type MultiCharacterReplaceInput,
 } from "../pipelines/multi-character-replace.refined.js";
+import {
+  decomposePipeline,
+  buildDecomposeOutput,
+  type DecomposeInput,
+} from "../pipelines/decompose.js";
+import {
+  composeVideoPipeline,
+  buildComposeVideoOutput,
+  type ComposeVideoInput,
+} from "../pipelines/compose-video.js";
 
 // =============================================================================
 // 类型
@@ -85,7 +95,9 @@ type AnyInput =
   | EpisodeBatchRefinedInput
   | StyleTransferRefinedInput
   | NovelToDramaRefinedInput
-  | MultiCharacterReplaceInput;
+  | MultiCharacterReplaceInput
+  | DecomposeInput
+  | ComposeVideoInput;
 
 type OutputBuilder<TIn extends AnyInput> = (snap: RunSnapshot) => unknown;
 
@@ -126,6 +138,16 @@ export const PIPELINE_REGISTRY: Record<NodeType, PipelineEntry<AnyInput>> = {
     pipelineName: "multi-character-replace.refined",
     pipeline: multiCharacterReplaceRefinedPipeline,
     buildOutput: (snap) => buildMultiCharacterReplaceOutput(snap) as unknown,
+  },
+  "decompose": {
+    pipelineName: "decompose",
+    pipeline: decomposePipeline,
+    buildOutput: (snap) => buildDecomposeOutput(snap) as unknown,
+  },
+  "compose-video": {
+    pipelineName: "compose-video",
+    pipeline: composeVideoPipeline,
+    buildOutput: (snap) => buildComposeVideoOutput(snap) as unknown,
   },
 };
 

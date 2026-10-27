@@ -1,5 +1,5 @@
 /**
- * ManhuaWorks 微信小程序 - 认证 Pinia Store
+ * 千机工坊 微信小程序 - 认证 Pinia Store
  *
  * 后端契约:
  *   POST /api/v1/auth/login  -> { code:0, data: TokenPair }

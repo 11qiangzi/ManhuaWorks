@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * ThemeSwitcher.vue · 主题切换器
- * ManhuaWorks · W4 用户后台（内联版）
+ * 千机工坊 · W4 用户后台（内联版）
  *
  * mode='compact'  → 顶栏用的小按钮
  * mode='grid'     → 设置页用的大卡片

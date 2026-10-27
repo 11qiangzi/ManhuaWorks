@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* === 千机工坊 开发者平台 自定义样式 === */
+
+:root {
+  --brand-primary: #00BFA5;
+  --brand-accent: #7C3AED;
+  --bg-base: #0f1117;
+  --bg-surface: #1a1d2e;
+  --bg-elevated: #242838;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --border-color: #2d3348;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3d4460;
+}
+
+/* 代码高亮基础色 */
+.code-block {
+  background: #1e2235;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-x: auto;
+  color: #c9d1d9;
+}
+
+/* 方法徽章 */
+.method-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 0.5px;
+}
+.method-get { background: #064e3b; color: #34d399; }
+.method-post { background: #1e3a5f; color: #60a5fa; }
+.method-patch { background: #4a3728; color: #fbbf24; }
+.method-delete { background: #4a1d2e; color: #f87171; }
+
+/* 过渡 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}

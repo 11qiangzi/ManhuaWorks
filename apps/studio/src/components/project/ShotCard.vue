@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * ShotCard.vue — 分镜卡片
+ * ShotCard.vue — 镜头卡片
  * L2 林染 任务 2：项目编辑器核心单元
  *
  * 显示：序号 / 缩略图 / 标题 / 描述 / 角色/场景标签 / 镜头语言 / 时长 / 状态
@@ -55,7 +55,7 @@ function onEdit(e: MouseEvent) {
 
 function onDelete(e: MouseEvent) {
   e.stopPropagation()
-  if (confirm(`删除分镜 ${props.shot.index} · ${props.shot.title}?`)) {
+  if (confirm(`删除镜头 ${props.shot.index} · ${props.shot.title}?`)) {
     emit('delete', props.shot.id)
   }
 }
@@ -142,7 +142,7 @@ function onDragStart(e: PointerEvent) {
       <img
         v-if="shot.imageUrl"
         :src="shot.imageUrl"
-        :alt="`分镜 ${shot.index}`"
+        :alt="`镜头 ${shot.index}`"
         class="h-full w-full object-cover"
         draggable="false"
       />

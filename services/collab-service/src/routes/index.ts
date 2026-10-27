@@ -193,7 +193,7 @@ router.post("/notifications/read-all", requireAuth(), notifCtl.markAllRead);
 router.post("/notifications/:id/archive", requireAuth(), notifCtl.archive);
 
 /* ============== Stats (公开�?ops) ============== */
-router.get("/stats", (_req, res) => {
+router.get("/stats", requireAuth(), (_req, res) => {
   res.json({ code: 0, message: "ok", data: realtimeService.stats() });
 });
 

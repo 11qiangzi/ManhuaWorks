@@ -3,35 +3,38 @@
  * HomeView.vue — 创作者工作台首页
  * 林染 🔮 2026-06-10: V2 改版
  *   新增：创作链路引导 / 模式选择 / 更新公告 / 素材案例
- *   对标：阅文漫剧助手首页全链路设计
+ *   对标：阅文动画助手首页全链路设计
  */
 import { RouterLink } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { ref, onMounted } from 'vue'
+import { useProjectStore } from '../stores/project'
+import { useAuthStore } from '../stores/auth'
+import { useToast } from '@manhuaworks/ui'
+
+const projectStore = useProjectStore()
+const authStore = useAuthStore()
+const toast = useToast()
+const router = useRouter()
 
 const userEmail = ref('')
 const projectCount = ref(0)
-const stats = ref({ shots: 0, characters: 0, scenes: 0, videos: 0 })
+const stats = ref({ shots: 0 })
+const loading = ref(true)
 
 onMounted(async () => {
+  loading.value = true
   try {
-    const u = localStorage.getItem('mhw.user')
-    if (u) userEmail.value = JSON.parse(u)?.email || ''
-    const token = localStorage.getItem('mhw.access_token')
-    if (token) fetchStats(token)
-  } catch {}
+    userEmail.value = authStore.user?.email ?? ''
+    await projectStore.loadList()
+    projectCount.value = projectStore.total
+    stats.value.shots = projectStore.projects.reduce((sum, p) => sum + (p.shot_count ?? 0), 0)
+  } catch (e) {
+    toast.error('加载项目数据失败，请稍后重试')
+  } finally {
+    loading.value = false
+  }
 })
-
-async function fetchStats(token: string) {
-  try {
-    const r = await fetch('/api/v1/projects?limit=1', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (r.ok) {
-      const d = await r.json()
-      projectCount.value = d?.data?.total ?? d?.data?.length ?? 0
-    }
-  } catch {}
-}
 
 // ============ 🆕 创作模式 (mockup 1:1) ============
 const activeAutoStyle = ref('premium')
@@ -40,13 +43,13 @@ const creationModes = [
     id: 'auto',
     title: '自动流程',
     icon: '🚀',
-    desc: '我们预配好的小说 → 漫剧流水线，上传小说后跟着步骤走，AI 自动完成角色提取、分镜生成、视频合片。适合快速出片。',
+    desc: '我们预配好的小说 → 动画流水线，上传小说后跟着步骤走，AI 自动完成角色提取、镜头生成、视频合片。适合快速出片。',
     badges: ['推荐', '零门槛', '一键出片'],
     to: '/project',
     active: true,
     subOptions: [
-      { id: 'premium', name: '精品漫', icon: '🎨', desc: '高画质角色' },
-      { id: 'commentary', name: '解说漫', icon: '🎙️', desc: '故事驱动型' },
+      { id: 'premium', name: '精品动画', icon: '🎨', desc: '高画质角色' },
+      { id: 'commentary', name: '解说动画', icon: '🎙️', desc: '故事驱动型' },
       { id: 'liveaction', name: '真人剧', icon: '🎬', desc: '写实风格' },
     ],
   },
@@ -66,10 +69,11 @@ const creationModes = [
 const pipelineSteps = [
   { step: 1, title: '故事', sub: '小说/剧本', icon: '📖', desc: '选择小说章节或上传剧本，AI 智能生成剧本', to: '/project' },
   { step: 2, title: '素材', sub: '角色+场景', icon: '🎭', desc: '智能提取角色/场景，管理主视觉图和设定集', to: '/characters' },
-  { step: 3, title: '分镜', sub: '分镜生成', icon: '🎞️', desc: '智能导演模式生成分镜，宫格/多机位可选', to: '/project' },
+  { step: 3, title: '镜头', sub: '镜头生成', icon: '🎞️', desc: '智能导演模式生成镜头，宫格/多机位可选', to: '/project' },
   { step: 4, title: '视频', sub: '视频生成', icon: '🎥', desc: '多模型视频生成，音画同步，首尾帧控制', to: '/workflow' },
-  { step: 5, title: '后期', sub: '工具处理', icon: '🔧', desc: '智能剪辑/视频高清/运镜/字幕去除/图片扩展', to: '/tools' },
-  { step: 6, title: '导出', sub: '成品输出', icon: '📤', desc: '预览成片，多格式导出，一键下载', to: '/export' },
+  { step: 5, title: '配乐', sub: '配乐设定', icon: '🎵', desc: 'AI 智能配乐，情绪时间线+BGM/SFX/旁白三轨混音', to: '/project' },
+  { step: 6, title: '后期', sub: '工具处理', icon: '🔧', desc: '智能剪辑/视频高清/运镜/字幕去除/图片扩展', to: '/tools' },
+  { step: 7, title: '导出', sub: '成品输出', icon: '📤', desc: '预览成片，多格式导出，一键下载', to: '/export' },
 ]
 
 // ============ 🆕 更新公告 ============
@@ -88,6 +92,10 @@ const demos = [
   { title: '觉醒时刻', style: '异能', duration: '00:20', color: '#a78bfa' },
   { title: '开局拒入宫斗剧本', style: '古装', duration: '00:28', color: '#f87171' },
 ]
+
+function onDemoClick(demo: typeof demos[number]) {
+  router.push({ path: '/materials', query: { title: demo.title } })
+}
 </script>
 
 <template>
@@ -96,18 +104,27 @@ const demos = [
     <div class="home-hero">
       <div class="home-hero-left">
         <h1 class="home-hero-title">
-          {{ userEmail ? `欢迎回来，${userEmail.split('@')[0]}` : '欢迎使用 ManhuaWorks' }}
+          {{ userEmail ? `欢迎回来，${userEmail.split('@')[0]}` : '欢迎使用千机工坊' }}
         </h1>
         <p class="home-hero-desc">
-          AI 驱动的漫画创作平台 — 从小说到成片，一站式全链路创作
+          AI 驱动的动画创作平台 — 从小说到成片，一站式全链路创作
         </p>
         <div class="home-hero-actions">
-          <RouterLink to="/project" class="home-hero-cta">
+          <RouterLink to="/project/new" class="home-hero-cta">
             🚀 开始创作
           </RouterLink>
           <RouterLink to="/project" class="home-hero-secondary">
             查看项目列表 →
           </RouterLink>
+        </div>
+        <div class="home-hero-stats">
+          <template v-if="loading">
+            <span class="home-hero-stat home-hero-stat--loading">加载数据中...</span>
+          </template>
+          <template v-else>
+            <span class="home-hero-stat">{{ projectCount }} 个项目</span>
+            <span class="home-hero-stat">{{ stats.shots }} 个镜头</span>
+          </template>
         </div>
       </div>
       <div class="home-hero-right">
@@ -152,7 +169,10 @@ const demos = [
               </div>
             </div>
           </div>
-          <RouterLink :to="mode.to" class="home-choice-cta">
+          <RouterLink
+            :to="mode.to"
+            class="home-choice-cta"
+          >
             {{ mode.id==='auto'?'开始创作 →':'打开工作流 →' }}
           </RouterLink>
         </div>
@@ -162,7 +182,7 @@ const demos = [
     <!-- ========== 🆕 创作全链路 ========== -->
     <div class="home-section">
       <h2 class="home-section-title">📋 创作全链路</h2>
-      <p class="home-section-desc">从小说到成品视频，六步完成创作</p>
+      <p class="home-section-desc">从小说到成品视频，七步完成创作</p>
       <div class="home-pipeline">
         <RouterLink
           v-for="step in pipelineSteps"
@@ -189,9 +209,9 @@ const demos = [
             <span class="home-announce-text">{{ a.text }}</span>
             <span class="home-announce-date">{{ a.date.slice(5) }}</span>
           </div>
-          <div class="home-announce-more">
-            <span>查看全部更新 →</span>
-          </div>
+          <RouterLink to="/project" class="home-announce-more">
+            查看全部更新 →
+          </RouterLink>
         </div>
       </div>
 
@@ -199,7 +219,7 @@ const demos = [
       <div class="home-section home-section--half">
         <h2 class="home-section-title">🎬 素材案例</h2>
         <div class="home-demos">
-          <div v-for="d in demos" :key="d.title" class="home-demo-card">
+          <div v-for="d in demos" :key="d.title" class="home-demo-card" @click="onDemoClick(d)">
             <div class="home-demo-thumb" :style="{ background: d.color }">
               <span class="home-demo-play">▶</span>
               <span class="home-demo-duration">{{ d.duration }}</span>
@@ -221,7 +241,7 @@ const demos = [
           <span class="home-step-num">1</span>
           <div class="home-step-content">
             <h4 class="home-step-title">新建项目</h4>
-            <p class="home-step-desc">从首页选择创作模式，创建你的漫画项目</p>
+            <p class="home-step-desc">从首页选择创作模式，创建你的动画项目</p>
           </div>
         </div>
         <div class="home-step">
@@ -234,8 +254,8 @@ const demos = [
         <div class="home-step">
           <span class="home-step-num">3</span>
           <div class="home-step-content">
-            <h4 class="home-step-title">生成分镜</h4>
-            <p class="home-step-desc">AI 智能分镜，选择风格和机位</p>
+            <h4 class="home-step-title">生成镜头</h4>
+            <p class="home-step-desc">AI 智能镜头，选择风格和机位</p>
           </div>
         </div>
         <div class="home-step">
@@ -249,7 +269,7 @@ const demos = [
     </div>
 
     <div class="home-footer">
-      <span>ManhuaWorks · AI 漫画创作平台</span>
+      <span>千机工坊 - AI 动画创作平台</span>
     </div>
   </div>
 </template>
@@ -300,6 +320,9 @@ const demos = [
   transition: all 200ms;
 }
 .home-hero-secondary:hover { color: var(--text-primary, #e4e4e7); border-color: var(--accent, #818cf8); }
+.home-hero-stats { display: flex; gap: 16px; margin-top: 14px; font-size: 12px; color: var(--text-secondary, #94a3b8); }
+.home-hero-stat--loading { opacity: 0.5; animation: homeStatsPulse 1.5s ease-in-out infinite; }
+@keyframes homeStatsPulse { 0%,100%{opacity:.3} 50%{opacity:.7} }
 .home-hero-right { width: 180px; height: 140px; flex-shrink: 0; position: relative; }
 .home-hero-orb { position: absolute; border-radius: 50%; filter: blur(40px); opacity: 0.3; }
 .home-hero-orb-1 { width: 90px; height: 90px; background: #667eea; top: 10px; left: 30px; animation: orb1 6s ease-in-out infinite; }
@@ -420,7 +443,7 @@ const demos = [
 .home-announce-tag--优化 { background: rgba(251,191,36,0.12); color: #fbbf24; }
 .home-announce-text { flex: 1; color: var(--text-primary, #e4e4e7); }
 .home-announce-date { font-size: 10px; color: var(--text-secondary, #94a3b8); flex-shrink: 0; }
-.home-announce-more { padding: 10px 14px; background: var(--bg-secondary, #111827); font-size: 11px; color: var(--accent, #818cf8); cursor: pointer; text-align: center; }
+.home-announce-more { display: block; padding: 10px 14px; background: var(--bg-secondary, #111827); font-size: 11px; color: var(--accent, #818cf8); cursor: pointer; text-align: center; text-decoration: none; }
 .home-announce-more:hover { background: var(--bg-tertiary, #1f2937); }
 
 /* ===== 🆕 素材案例 ===== */

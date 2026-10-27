@@ -4,27 +4,50 @@
  * 5 站统一: 展开 240px, 品牌紫 #7C3AED
  */
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { computed, ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { notificationService } from '@/api/notification-service'
 
 const route = useRoute()
 const router = useRouter()
 const userEmail = ref<string>('')
+const unreadCount = ref(0)
+let unreadTimer: ReturnType<typeof setInterval> | null = null
+
+async function fetchUnread() {
+  try { unreadCount.value = await notificationService.unreadCount() } catch { /* ignore */ }
+}
 
 onMounted(() => {
   try {
     const u = localStorage.getItem('user')
     if (u) userEmail.value = JSON.parse(u)?.email || JSON.parse(u)?.nickname || ''
   } catch {}
+  fetchUnread()
+  unreadTimer = setInterval(fetchUnread, 60000)
 })
 
-const menus = [
+onUnmounted(() => {
+  if (unreadTimer) clearInterval(unreadTimer)
+})
+
+const userMenus = [
   { name: 'dashboard', title: '工作台', icon: '🏠', to: '/dashboard' },
   { name: 'my-projects', title: '我的项目', icon: '📁', to: '/projects' },
   { name: 'my-works', title: '我的作品', icon: '🎬', to: '/works' },
   { name: 'asset-library', title: '素材库', icon: '🖼️', to: '/assets' },
   { name: 'team', title: '我的团队', icon: '👥', to: '/team' },
+  { name: 'notifications', title: '通知中心', icon: '🔔', to: '/notifications' },
+  { name: 'service-status', title: '服务状态', icon: '📡', to: '/service-status' },
   { name: 'byok', title: 'API 密钥', icon: '🔑', to: '/byok' },
   { name: 'settings', title: '设置', icon: '⚙️', to: '/settings' },
+]
+
+// P1-2: 开发者工具 (merged from dev-portal)
+const devMenus = [
+  { name: 'dev-docs', title: 'API文档', icon: '📖', to: '/dev/docs' },
+  { name: 'dev-keys', title: 'Key管理', icon: '🔑', to: '/dev/keys' },
+  { name: 'dev-playground', title: 'Playground', icon: '🧪', to: '/dev/playground' },
+  { name: 'dev-sdk', title: 'SDK下载', icon: '📦', to: '/dev/sdk' },
 ]
 
 const isActive = (to: string) => {
@@ -46,15 +69,32 @@ function logout() {
   <div class="user-layout">
     <aside class="user-sidebar">
       <div class="user-brand">
-        <span class="user-logo">漫</span>
-        <span class="user-brand-text">漫工场</span>
+        <span class="user-logo">千机</span>
+        <span class="user-brand-text">千机工坊</span>
       </div>
 
       <div class="user-section-label">用户后台</div>
 
+      <nav class="user-nav user-nav--primary">
+        <RouterLink
+          v-for="m in userMenus"
+          :key="m.name"
+          :to="m.to"
+          class="user-nav-item"
+          :class="{ 'user-nav-item--active': isActive(m.to) }"
+        >
+          <span class="user-nav-icon">{{ m.icon }}</span>
+          <span class="user-nav-title">{{ m.title }}</span>
+          <span v-if="m.name === 'notifications' && unreadCount > 0" class="user-nav-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+        </RouterLink>
+      </nav>
+
+      <div class="user-nav-divider"></div>
+      <div class="user-section-label">开发者</div>
+
       <nav class="user-nav">
         <RouterLink
-          v-for="m in menus"
+          v-for="m in devMenus"
           :key="m.name"
           :to="m.to"
           class="user-nav-item"
@@ -138,12 +178,21 @@ function logout() {
   color: var(--text-muted, #94A3B8);
 }
 
+.user-nav-divider {
+  height: 1px;
+  margin: 12px 20px;
+  background: var(--border, #E2E8F0);
+}
+
 .user-nav {
-  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
   padding: 0 12px;
+}
+
+.user-nav--primary {
+  flex: 1;
 }
 
 .user-nav-item {
@@ -176,6 +225,22 @@ function logout() {
   font-size: 18px;
   width: 20px;
   text-align: center;
+}
+
+.user-nav-badge {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--accent, #7C3AED);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .user-sidebar-footer {

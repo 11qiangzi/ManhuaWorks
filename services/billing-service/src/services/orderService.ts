@@ -6,7 +6,7 @@
 import { orderRepository } from "../repositories/orderRepository";
 import { paymentRepository } from "../repositories/paymentRepository";
 import { subscriptionService } from "./subscriptionService";
-import { getPlan, resolvePlanId, type PlanIdDb } from "../config/plans";
+import { getPlan, resolvePlanId, type PlanId } from "../config/plans";
 import { HttpError } from "../middleware/error";
 import { genOrderNo, type BillingCycle, type Order } from "../models/order";
 import type { PaymentMethod, PaymentChannel } from "../models/payment";
@@ -15,7 +15,7 @@ import { logger } from "../config/logger";
 import { findMethod } from "../models/payment";
 
 export interface CreateOrderInput {
-  plan: string; // free/pro/team/enterprise
+  plan: string; // free/basic/pro/enterprise
   billingCycle?: BillingCycle;
   paymentMethod?: string;
   channel?: PaymentChannel;

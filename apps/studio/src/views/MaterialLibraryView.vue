@@ -1,3 +1,18 @@
+<!--
+/**
+ * MaterialLibraryView · 素材中心
+ *
+ * ⚠️ 大组件 (1672+ 行) — 建议拆分为:
+ *   - AudioListView: 音频列表+播放+筛选 (~300行)
+ *   - MaterialGridView: 素材网格+搜索 (~400行)
+ *   - CreateMaterialModal: 新建素材弹窗 (~200行)
+ *   - EditImageModal: 图片编辑弹窗 (~300行)
+ *   - ProjectSwitcher: 项目切换器 (~100行)
+ *
+ * 当前状态: 功能完整但单文件过大，后续迭代时逐步拆分
+ */
+-->
+
 <script setup lang="ts">
 /**
  * MaterialLibraryView.vue — 统一素材库 V2
@@ -8,11 +23,14 @@
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useProjectStore } from '../stores/project'
+import { useCharacterStore } from '../stores/characterStore'
+import { useSceneStore } from '../stores/sceneStore'
 
 const route = useRoute()
 const router = useRouter()
 
-// ============ Types ============
+// ============ Types — 素材图片和素材项的类型定义 ============
 interface MaterialImage {
   id: string
   url: string | null          // 图片 URL (data: 或 http:)
@@ -37,7 +55,12 @@ interface MaterialItem {
   updatedAt: number
 }
 
-// 🆕 作品/项目
+// ============ Stores — 项目/角色/场景 store 实例及项目列表 ============
+const projectStore = useProjectStore()
+const characterStore = useCharacterStore()
+const sceneStore = useSceneStore()
+
+// 🆕 作品/项目 (initialized from API, with mock fallback)
 interface ProjectInfo {
   id: string
   name: string
@@ -52,8 +75,8 @@ const projects = ref<ProjectInfo[]>([
 ])
 const activeProject = ref<string>(projects.value[0]?.id ?? '')
 
-// ============ Tabs ============
-type MaterialTab = 'characters' | 'scenes' | 'props' | 'voices'
+// ============ Tabs — 素材分类标签页配置 (角色/场景/道具/音色/音频) ============
+type MaterialTab = 'characters' | 'scenes' | 'props' | 'voices' | 'audio'
 const activeTab = ref<MaterialTab>( (route.query.tab as MaterialTab) || 'characters' )
 
 const tabs: { id: MaterialTab; label: string; icon: string; addLabel: string }[] = [
@@ -61,11 +84,12 @@ const tabs: { id: MaterialTab; label: string; icon: string; addLabel: string }[]
   { id: 'scenes', label: '场景', icon: '🎬', addLabel: '新场景' },
   { id: 'props', label: '道具', icon: '🗡️', addLabel: '新道具' },
   { id: 'voices', label: '音色', icon: '🎙️', addLabel: '新音色' },
+  { id: 'audio', label: '音频', icon: '🎵', addLabel: '新音频' },
 ]
 
 watch(activeTab, tab => { router.replace({ query: { tab } }) })
 
-// ============ 素材数据 ============
+// ============ 素材数据 — 默认图片工厂、种子数据、生命周期初始化 ============
 const items = ref<MaterialItem[]>([])
 
 function createDefaultImage(): MaterialImage {
@@ -118,9 +142,208 @@ function seedItems() {
   ]
 }
 
-onMounted(() => { seedItems(); const t = route.query.tab as MaterialTab|undefined; if (t) activeTab.value = t })
+// ============ 🎵 音频素材系统 — 音频类型/筛选/排序/播放/情绪标签 ============
+type AudioType = 'BGM' | '音效' | '配音'
+type AudioFilter = 'all' | AudioType
+type AudioSort = 'recent' | 'name' | 'duration' | 'plays'
 
-// ============ 筛选 ============
+interface AudioItem {
+  id: string
+  name: string
+  audioType: AudioType
+  duration: number          // seconds
+  uploadDate: number        // timestamp
+  plays: number
+  moodTags: string[]        // from 16-tag mood system
+  genre: string
+  projectId: string
+  usageCount: number
+}
+
+const audioFilter = ref<AudioFilter>('all')
+const audioSort = ref<AudioSort>('recent')
+const playingAudioId = ref<string | null>(null)
+const audioVolume = ref(80)
+
+const audioItems = ref<AudioItem[]>([
+  {
+    id: 'aud_1', name: '春日序曲.mp3', audioType: 'BGM',
+    duration: 150, uploadDate: Date.now() - 86400000 * 2, plays: 342,
+    moodTags: ['温馨', '浪漫', '平静'], genre: '古风',
+    projectId: 'proj_1', usageCount: 12,
+  },
+  {
+    id: 'aud_2', name: '剑鸣九天.mp3', audioType: 'BGM',
+    duration: 210, uploadDate: Date.now() - 86400000 * 5, plays: 587,
+    moodTags: ['激昂', '史诗', '庄严'], genre: '仙侠',
+    projectId: 'proj_1', usageCount: 8,
+  },
+  {
+    id: 'aud_3', name: '拔剑音效.wav', audioType: '音效',
+    duration: 3, uploadDate: Date.now() - 86400000 * 1, plays: 1204,
+    moodTags: ['激昂', '紧张'], genre: '动作',
+    projectId: 'proj_1', usageCount: 45,
+  },
+  {
+    id: 'aud_4', name: '脚步声_石板路.wav', audioType: '音效',
+    duration: 5, uploadDate: Date.now() - 86400000 * 3, plays: 890,
+    moodTags: ['平静', '神秘'], genre: '环境',
+    projectId: 'proj_1', usageCount: 23,
+  },
+  {
+    id: 'aud_5', name: '林启_独白_第一集.mp3', audioType: '配音',
+    duration: 45, uploadDate: Date.now() - 86400000 * 7, plays: 156,
+    moodTags: ['悲伤', '孤独', '希望'], genre: '独白',
+    projectId: 'proj_1', usageCount: 3,
+  },
+  {
+    id: 'aud_6', name: '苏婉_对白_炼丹房.mp3', audioType: '配音',
+    duration: 32, uploadDate: Date.now() - 86400000 * 4, plays: 98,
+    moodTags: ['温馨', '欢快'], genre: '对白',
+    projectId: 'proj_1', usageCount: 5,
+  },
+])
+
+const filteredAudioItems = computed(() => {
+  let list = audioItems.value.filter(a => a.projectId === activeProject.value)
+  if (audioFilter.value !== 'all') {
+    list = list.filter(a => a.audioType === audioFilter.value)
+  }
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(a => a.name.toLowerCase().includes(q) || a.genre.toLowerCase().includes(q))
+  }
+  // Sort
+  switch (audioSort.value) {
+    case 'name': list = [...list].sort((a, b) => a.name.localeCompare(b.name, 'zh')); break
+    case 'duration': list = [...list].sort((a, b) => b.duration - a.duration); break
+    case 'plays': list = [...list].sort((a, b) => b.plays - a.plays); break
+    default: list = [...list].sort((a, b) => b.uploadDate - a.uploadDate); break
+  }
+  return list
+})
+
+function formatDuration(sec: number): string {
+  const m = Math.floor(sec / 60)
+  const s = sec % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+function formatDate(ts: number): string {
+  const d = new Date(ts)
+  return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`
+}
+
+function toggleAudioPlay(id: string) {
+  playingAudioId.value = playingAudioId.value === id ? null : id
+}
+
+function deleteAudioItem(id: string) {
+  audioItems.value = audioItems.value.filter(a => a.id !== id)
+  if (playingAudioId.value === id) playingAudioId.value = null
+}
+
+// Mood tag color map (from musicScore composable)
+const moodColors: Record<string, string> = {
+  '紧张': '#ef4444', '温馨': '#f59e0b', '悲伤': '#6366f1', '欢快': '#22c55e',
+  '激昂': '#dc2626', '神秘': '#8b5cf6', '浪漫': '#ec4899', '恐惧': '#1e1b4b',
+  '平静': '#06b6d4', '愤怒': '#b91c1c', '希望': '#fbbf24', '孤独': '#64748b',
+  '史诗': '#d97706', '喜剧': '#84cc16', '悬疑': '#7c3aed', '庄严': '#0f766e',
+}
+
+const audioTypeColors: Record<AudioType, string> = {
+  'BGM': '#818cf8',
+  '音效': '#f59e0b',
+  '配音': '#34d399',
+}
+
+onMounted(async () => {
+  seedItems() // mock fallback
+  const t = route.query.tab as MaterialTab | undefined
+  if (t) activeTab.value = t
+
+  // Load projects from API
+  try {
+    await projectStore.loadList()
+    if (projectStore.projects.length > 0) {
+      projects.value = projectStore.projects.map(p => ({
+        id: p.id,
+        name: p.name || '未命名项目',
+        icon: '📁',
+        description: p.description || '',
+      }))
+      activeProject.value = projects.value[0].id
+    }
+  } catch {
+    // Keep mock projects as fallback
+  }
+
+  // Sync characters/scenes from stores to material items
+  await syncFromStores()
+})
+
+// Sync character/scene store data to material items when active project changes
+watch(activeProject, () => { syncFromStores() })
+
+async function syncFromStores() {
+  const pid = activeProject.value
+  if (!pid) return
+
+  // Only reload if the store doesn't already have this project's data
+  const needCharacterLoad = characterStore.projectId !== pid
+  const needSceneLoad = sceneStore.projectId !== pid
+
+  try {
+    if (needCharacterLoad) {
+      await characterStore.load(pid, [])
+    }
+    if (characterStore.characters.length > 0) {
+      // Remove old character items for this project, then add from store
+      items.value = items.value.filter(i => !(i.type === 'characters' && i.projectId === pid))
+      for (const c of characterStore.characters) {
+        items.value.push({
+          id: c.id,
+          name: c.name,
+          type: 'characters',
+          images: [{ id: `img_${c.id}`, url: c.thumbnail_url || null, prompt: c.description || '', negativePrompt: '', style: 'anime', aspectRatio: '1:1', resolution: '1024x1024', status: c.thumbnail_url ? 'ready' : 'idle' }],
+          tags: c.tags || [],
+          description: c.description || '',
+          projectId: pid,
+          createdAt: c.created_at ? new Date(c.created_at).getTime() : Date.now(),
+          updatedAt: c.updated_at ? new Date(c.updated_at).getTime() : Date.now(),
+        })
+      }
+    }
+  } catch {
+    // Keep mock character data
+  }
+
+  try {
+    if (needSceneLoad) {
+      await sceneStore.load(pid, [])
+    }
+    if (sceneStore.scenes.length > 0) {
+      items.value = items.value.filter(i => !(i.type === 'scenes' && i.projectId === pid))
+      for (const s of sceneStore.scenes) {
+        items.value.push({
+          id: s.id,
+          name: s.name,
+          type: 'scenes',
+          images: [{ id: `img_${s.id}`, url: null, prompt: s.description || '', negativePrompt: '', style: 'anime', aspectRatio: '16:9', resolution: '1920x1080', status: 'idle' }],
+          tags: s.tags || [],
+          description: s.description || '',
+          projectId: pid,
+          createdAt: s.created_at ? new Date(s.created_at).getTime() : Date.now(),
+          updatedAt: s.updated_at ? new Date(s.updated_at).getTime() : Date.now(),
+        })
+      }
+    }
+  } catch {
+    // Keep mock scene data
+  }
+}
+
+// ============ 筛选 — 搜索/标签过滤/项目统计/项目切换 ============
 const searchQuery = ref('')
 const activeTag = ref<string | null>(null)
 
@@ -168,7 +391,7 @@ const filteredItems = computed(() => {
   return list
 })
 
-// ============ 新建素材 模态框 ============
+// ============ 新建素材模态框 — 三步流程: 填表→AI生成预览→选择确认 ============
 const showCreateModal = ref(false)
 const createStep = ref<'form' | 'generating' | 'select'>('form')  // 🆕 步骤：填表→生成→选择
 const selectedPreview = ref(0)  // 选中的预览图索引
@@ -231,6 +454,7 @@ function confirmCreate() {
     id,
     name: createForm.value.name.trim(),
     type: activeTab.value,
+    projectId: activeProject.value,
     images: [{
       id: `img_${Date.now().toString(36)}`,
       url: selected?.url ?? null,
@@ -257,13 +481,13 @@ function backToForm() {
   generatedPreviews.value = []
 }
 
-// ============ 选中 & 详情 ============
+// ============ 选中 & 详情 — 右侧面板的素材选中状态 ============
 const selectedId = ref<string | null>(null)
 const selectedItem = computed(() => items.value.find(i => i.id === selectedId.value) ?? null)
 
 function selectItem(id: string) { selectedId.value = id }
 
-// ============ 图片操作 ============
+// ============ 图片操作 — 编辑弹窗/重新生成/上传/添加/删除 ============
 const showImageModal = ref(false)
 const editImageIndex = ref(0)
 const editImageForm = ref<MaterialImage>(createDefaultImage())
@@ -334,7 +558,7 @@ function deleteItem() {
   selectedId.value = items.value.filter(i => i.type === activeTab.value)[0]?.id ?? null
 }
 
-// ============ 样式常量 ============
+// ============ 样式常量 — 风格/比例/分辨率选项 + 键盘事件 ============
 const styleOptions = [
   { value: 'anime', label: '动漫风', icon: '🎨' },
   { value: 'realistic', label: '写实风', icon: '📷' },
@@ -411,18 +635,165 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       >
         <span class="ml-tab-icon">{{ tab.icon }}</span>
         <span class="ml-tab-label">{{ tab.label }}</span>
-        <span class="ml-tab-count"> ({{ tab.id === 'characters' ? projectStats.characters : tab.id === 'scenes' ? projectStats.scenes : tab.id === 'props' ? projectStats.props : projectStats.voices }})</span>
+        <span class="ml-tab-count"> ({{ tab.id === 'characters' ? projectStats.characters : tab.id === 'scenes' ? projectStats.scenes : tab.id === 'props' ? projectStats.props : tab.id === 'audio' ? audioItems.filter(a => a.projectId === activeProject).length : projectStats.voices }})</span>
       </button>
     </nav>
 
     <!-- ===== Tags 筛选 ===== -->
-    <div v-if="allTags.length > 0" class="ml-tags-bar">
+    <div v-if="allTags.length > 0 && activeTab !== 'audio'" class="ml-tags-bar">
       <button class="ml-tag-chip" :class="{ 'ml-tag-chip--active': !activeTag }" @click="activeTag = null">全部</button>
       <button v-for="t in allTags" :key="t" class="ml-tag-chip" :class="{ 'ml-tag-chip--active': activeTag === t }" @click="activeTag = activeTag === t ? null : t">{{ t }}</button>
     </div>
 
     <!-- ===== Body ===== -->
     <div class="ml-body">
+      <!-- ===== 🎵 音频列表视图 ===== -->
+      <template v-if="activeTab === 'audio'">
+        <div class="ml-audio-root">
+          <!-- Filter bar -->
+          <div class="ml-audio-filters">
+            <div class="ml-audio-filter-group">
+              <button
+                v-for="f in (['all', 'BGM', '音效', '配音'] as const)"
+                :key="f"
+                class="ml-audio-filter-btn"
+                :class="{ 'ml-audio-filter-btn--active': audioFilter === f }"
+                @click="audioFilter = f"
+              >
+                {{ f === 'all' ? '所有音频' : f }}
+              </button>
+            </div>
+            <div class="ml-audio-sort-group">
+              <span class="ml-audio-sort-label">排序:</span>
+              <select v-model="audioSort" class="ml-audio-sort-select">
+                <option value="recent">最近上传</option>
+                <option value="name">名称</option>
+                <option value="duration">时长</option>
+                <option value="plays">播放量</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Audio list -->
+          <div class="ml-audio-list-area">
+            <!-- Empty state -->
+            <div v-if="filteredAudioItems.length === 0" class="ml-audio-empty">
+              <span class="ml-audio-empty-icon">🎵</span>
+              <h3>还没有音频素材</h3>
+              <p>试试 <button class="ml-audio-empty-link" @click="openCreateModal">生成音乐</button> 或 <button class="ml-audio-empty-link">上传音频文件</button></p>
+            </div>
+
+            <!-- List cards -->
+            <div v-else class="ml-audio-list">
+              <div
+                v-for="item in filteredAudioItems"
+                :key="item.id"
+                class="ml-audio-card"
+                :class="{ 'ml-audio-card--playing': playingAudioId === item.id }"
+              >
+                <!-- Play button -->
+                <button
+                  class="ml-audio-play-btn"
+                  :class="{ 'ml-audio-play-btn--active': playingAudioId === item.id }"
+                  @click="toggleAudioPlay(item.id)"
+                >
+                  <span v-if="playingAudioId === item.id" class="ml-audio-waveform">
+                    <span class="ml-waveform-bar"></span>
+                    <span class="ml-waveform-bar"></span>
+                    <span class="ml-waveform-bar"></span>
+                    <span class="ml-waveform-bar"></span>
+                    <span class="ml-waveform-bar"></span>
+                  </span>
+                  <span v-else class="ml-audio-play-icon">▶</span>
+                </button>
+
+                <!-- File info -->
+                <div class="ml-audio-info">
+                  <div class="ml-audio-name">{{ item.name }}</div>
+                  <div class="ml-audio-meta">
+                    <span
+                      class="ml-audio-type-badge"
+                      :style="{ background: audioTypeColors[item.audioType] + '22', color: audioTypeColors[item.audioType], borderColor: audioTypeColors[item.audioType] + '44' }"
+                    >{{ item.audioType }}</span>
+                    <span class="ml-audio-duration">{{ formatDuration(item.duration) }}</span>
+                    <span class="ml-audio-date">{{ formatDate(item.uploadDate) }}</span>
+                  </div>
+                </div>
+
+                <!-- Mood tags -->
+                <div class="ml-audio-moods">
+                  <span
+                    v-for="tag in item.moodTags"
+                    :key="tag"
+                    class="ml-audio-mood-dot"
+                    :title="tag"
+                    :style="{ background: moodColors[tag] || '#64748b' }"
+                  ></span>
+                  <span class="ml-audio-mood-labels">
+                    <span
+                      v-for="tag in item.moodTags"
+                      :key="tag"
+                      class="ml-audio-mood-chip"
+                      :style="{ color: moodColors[tag] || '#64748b' }"
+                    >{{ tag }}</span>
+                  </span>
+                </div>
+
+                <!-- Genre -->
+                <span class="ml-audio-genre">{{ item.genre }}</span>
+
+                <!-- Usage count -->
+                <span class="ml-audio-usage">使用 {{ item.usageCount }} 次</span>
+
+                <!-- Actions -->
+                <div class="ml-audio-actions">
+                  <button class="ml-audio-action-btn" @click="toggleAudioPlay(item.id)" :title="playingAudioId === item.id ? '暂停' : '播放'">
+                    {{ playingAudioId === item.id ? '⏸' : '▶' }}
+                  </button>
+                  <button class="ml-audio-action-btn ml-audio-action-btn--add" title="添加到项目">+</button>
+                  <button class="ml-audio-action-btn" title="下载">⬇</button>
+                  <button class="ml-audio-action-btn ml-audio-action-btn--danger" title="删除" @click="deleteAudioItem(item.id)">🗑</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Audio preview bar (when playing) -->
+          <Transition name="modal-fade">
+            <div v-if="playingAudioId" class="ml-audio-preview-bar">
+              <div class="ml-audio-preview-info">
+                <span class="ml-audio-preview-waveform">
+                  <span class="ml-waveform-bar"></span>
+                  <span class="ml-waveform-bar"></span>
+                  <span class="ml-waveform-bar"></span>
+                  <span class="ml-waveform-bar"></span>
+                  <span class="ml-waveform-bar"></span>
+                  <span class="ml-waveform-bar"></span>
+                  <span class="ml-waveform-bar"></span>
+                </span>
+                <span class="ml-audio-preview-name">{{ audioItems.find(a => a.id === playingAudioId)?.name }}</span>
+              </div>
+              <div class="ml-audio-preview-controls">
+                <button class="ml-audio-preview-stop" @click="playingAudioId = null">⏹ 停止</button>
+                <div class="ml-audio-volume">
+                  <span class="ml-audio-volume-icon">{{ audioVolume > 50 ? '🔊' : audioVolume > 0 ? '🔉' : '🔇' }}</span>
+                  <input
+                    type="range"
+                    class="ml-audio-volume-slider"
+                    min="0"
+                    max="100"
+                    v-model="audioVolume"
+                  />
+                  <span class="ml-audio-volume-val">{{ audioVolume }}%</span>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </template>
+
+      <!-- ===== 常规素材视图（非音频） ===== -->
+      <template v-else>
       <!-- 左侧列表 -->
       <div class="ml-list">
         <!-- 空状态 -->
@@ -441,7 +812,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
             :class="{ 'ml-card--selected': selectedId === item.id }"
             @click="selectItem(item.id)"
           >
-            <!-- 🆕 图片预览区 -->
+            <!-- 图片预览区 -->
             <div class="ml-card-img-wrap">
               <div
                 v-if="item.images[0]?.url"
@@ -527,7 +898,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
           <!-- 提示词 -->
           <label class="ml-field">
-            <span class="ml-field-label">Prompt</span>
+            <span class="ml-field-label">提示词</span>
             <p class="ml-field-text ml-field-mono">{{ selectedItem.images[0]?.prompt || '未设置' }}</p>
           </label>
         </div>
@@ -536,6 +907,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       <div v-else class="ml-detail-empty">
         <span>👈 选择素材查看详情</span>
       </div>
+      </template>
     </div>
 
     <!-- ============ 新建素材 模态框 ============ -->
@@ -572,11 +944,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
               <div class="modal-col">
                 <h4 class="modal-col-title">🤖 AI 生成参数</h4>
                 <label class="ml-field">
-                  <span class="ml-field-label">提示词 (Prompt) *</span>
+                  <span class="ml-field-label">提示词 *</span>
                   <textarea v-model="createForm.prompt" class="ml-input ml-textarea" rows="4" placeholder="描述你想要的画面…&#10;例：少年剑修，白衣黑发，眼神坚定，仙侠风格"></textarea>
                 </label>
                 <label class="ml-field">
-                  <span class="ml-field-label">反向提示词 (Negative)</span>
+                  <span class="ml-field-label">反向提示词</span>
                   <input v-model="createForm.negativePrompt" class="ml-input" placeholder="低质量, 模糊, 变形" />
                 </label>
                 <div class="ml-field-row">
@@ -1078,4 +1450,237 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 .ml-other-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12px; font-weight: 600; }
 .ml-other-card-link { font-size: 10px; color: var(--accent, #818cf8); }
 .ml-other-card-stats { display: flex; gap: 8px; font-size: 11px; color: var(--text-secondary, #94a3b8); }
+
+/* ===== 🎵 Audio List View ===== */
+.ml-audio-root {
+  flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;
+}
+
+/* Filter bar */
+.ml-audio-filters {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 20px; border-bottom: 1px solid var(--border, #1f2937);
+  background: var(--bg-secondary, #111827); gap: 12px;
+}
+.ml-audio-filter-group { display: flex; gap: 4px; }
+.ml-audio-filter-btn {
+  padding: 5px 14px; border-radius: 16px;
+  border: 1px solid var(--border, #1f2937);
+  background: transparent; color: var(--text-secondary, #94a3b8);
+  font-size: 12px; cursor: pointer; transition: all 150ms;
+}
+.ml-audio-filter-btn:hover { border-color: var(--accent, #818cf8); }
+.ml-audio-filter-btn--active {
+  background: rgba(129,140,248,0.12); border-color: var(--accent, #818cf8);
+  color: var(--accent, #818cf8); font-weight: 600;
+}
+.ml-audio-sort-group { display: flex; align-items: center; gap: 6px; }
+.ml-audio-sort-label { font-size: 11px; color: var(--text-secondary, #94a3b8); }
+.ml-audio-sort-select {
+  padding: 4px 8px; border-radius: 6px;
+  border: 1px solid var(--border, #1f2937);
+  background: var(--bg-tertiary, #1f2937);
+  color: var(--text-primary, #e4e4e7); font-size: 11px;
+  cursor: pointer; outline: none;
+}
+.ml-audio-sort-select:focus { border-color: var(--accent, #818cf8); }
+
+/* Audio list area */
+.ml-audio-list-area { flex: 1; overflow-y: auto; padding: 12px 20px; }
+
+/* Empty state */
+.ml-audio-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; gap: 8px; color: var(--text-secondary, #94a3b8); padding: 60px 20px;
+}
+.ml-audio-empty-icon { font-size: 48px; opacity: 0.3; }
+.ml-audio-empty h3 { font-size: 16px; margin: 0; color: var(--text-primary, #e4e4e7); }
+.ml-audio-empty p { font-size: 13px; margin: 4px 0 0; }
+.ml-audio-empty-link {
+  background: none; border: none; color: var(--accent, #818cf8);
+  font-size: 13px; cursor: pointer; text-decoration: underline;
+  text-underline-offset: 2px; padding: 0;
+}
+.ml-audio-empty-link:hover { color: #a5b4fc; }
+
+/* Audio list */
+.ml-audio-list { display: flex; flex-direction: column; gap: 6px; }
+
+/* Audio card (list row) */
+.ml-audio-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: 10px;
+  border: 1px solid var(--border, #1f2937);
+  background: var(--bg-secondary, #111827);
+  transition: all 200ms;
+}
+.ml-audio-card:hover {
+  border-color: var(--border-strong, #334155);
+  background: var(--bg-tertiary, #1f2937);
+}
+.ml-audio-card--playing {
+  border-color: var(--accent, #818cf8);
+  background: rgba(129,140,248,0.06);
+  box-shadow: 0 0 0 1px rgba(129,140,248,0.15);
+}
+
+/* Play button */
+.ml-audio-play-btn {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid var(--border, #1f2937);
+  background: var(--bg-tertiary, #1f2937);
+  color: var(--text-secondary, #94a3b8);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 200ms;
+}
+.ml-audio-play-btn:hover {
+  border-color: var(--accent, #818cf8);
+  color: var(--accent, #818cf8);
+  background: rgba(129,140,248,0.1);
+}
+.ml-audio-play-btn--active {
+  border-color: var(--accent, #818cf8);
+  background: rgba(129,140,248,0.15);
+  color: var(--accent, #818cf8);
+}
+.ml-audio-play-icon { font-size: 14px; margin-left: 2px; }
+
+/* Waveform animation */
+.ml-audio-waveform {
+  display: flex; align-items: flex-end; gap: 2px; height: 18px;
+}
+.ml-waveform-bar {
+  width: 3px; border-radius: 1.5px;
+  background: var(--accent, #818cf8);
+  animation: waveform-dance 0.8s ease-in-out infinite alternate;
+}
+.ml-waveform-bar:nth-child(1) { height: 40%; animation-delay: 0s; }
+.ml-waveform-bar:nth-child(2) { height: 70%; animation-delay: 0.1s; }
+.ml-waveform-bar:nth-child(3) { height: 100%; animation-delay: 0.2s; }
+.ml-waveform-bar:nth-child(4) { height: 55%; animation-delay: 0.3s; }
+.ml-waveform-bar:nth-child(5) { height: 80%; animation-delay: 0.15s; }
+.ml-waveform-bar:nth-child(6) { height: 45%; animation-delay: 0.25s; }
+.ml-waveform-bar:nth-child(7) { height: 65%; animation-delay: 0.05s; }
+@keyframes waveform-dance {
+  0% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+  100% { transform: scaleY(0.5); }
+}
+
+/* Audio info */
+.ml-audio-info { flex: 1; min-width: 0; }
+.ml-audio-name {
+  font-size: 13px; font-weight: 600; color: var(--text-primary, #e4e4e7);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ml-audio-meta {
+  display: flex; align-items: center; gap: 8px; margin-top: 3px;
+}
+.ml-audio-type-badge {
+  padding: 1px 8px; border-radius: 8px;
+  font-size: 10px; font-weight: 600;
+  border: 1px solid;
+}
+.ml-audio-duration {
+  font-size: 11px; color: var(--text-secondary, #94a3b8);
+  font-family: monospace; font-weight: 500;
+}
+.ml-audio-date { font-size: 11px; color: var(--text-muted, #64748b); }
+
+/* Mood tags */
+.ml-audio-moods {
+  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+}
+.ml-audio-mood-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block; flex-shrink: 0;
+}
+.ml-audio-mood-labels { display: flex; gap: 4px; }
+.ml-audio-mood-chip { font-size: 10px; font-weight: 600; }
+
+/* Genre */
+.ml-audio-genre {
+  padding: 2px 8px; border-radius: 6px;
+  background: var(--bg-tertiary, #1f2937);
+  border: 1px solid var(--border, #1f2937);
+  font-size: 10px; color: var(--text-secondary, #94a3b8);
+  flex-shrink: 0; white-space: nowrap;
+}
+
+/* Usage */
+.ml-audio-usage {
+  font-size: 10px; color: var(--text-muted, #64748b);
+  flex-shrink: 0; white-space: nowrap;
+}
+
+/* Actions */
+.ml-audio-actions {
+  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+}
+.ml-audio-action-btn {
+  width: 28px; height: 28px; border-radius: 6px;
+  border: 1px solid var(--border, #1f2937);
+  background: transparent; color: var(--text-secondary, #94a3b8);
+  font-size: 12px; cursor: pointer; transition: all 150ms;
+  display: flex; align-items: center; justify-content: center;
+}
+.ml-audio-action-btn:hover {
+  border-color: var(--accent, #818cf8);
+  color: var(--accent, #818cf8);
+  background: rgba(129,140,248,0.08);
+}
+.ml-audio-action-btn--add:hover {
+  border-color: #34d399; color: #34d399;
+  background: rgba(52,211,153,0.08);
+}
+.ml-audio-action-btn--danger:hover {
+  border-color: #ef4444; color: #ef4444;
+  background: rgba(239,68,68,0.08);
+}
+
+/* Audio preview bar (bottom) */
+.ml-audio-preview-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 20px;
+  border-top: 1px solid var(--accent, #818cf8);
+  background: linear-gradient(135deg, rgba(129,140,248,0.08) 0%, rgba(118,75,162,0.06) 100%);
+  flex-shrink: 0;
+}
+.ml-audio-preview-info { display: flex; align-items: center; gap: 10px; }
+.ml-audio-preview-waveform {
+  display: flex; align-items: flex-end; gap: 2px; height: 20px;
+}
+.ml-audio-preview-name {
+  font-size: 13px; font-weight: 600; color: var(--text-primary, #e4e4e7);
+}
+.ml-audio-preview-controls { display: flex; align-items: center; gap: 16px; }
+.ml-audio-preview-stop {
+  padding: 5px 14px; border-radius: 6px;
+  border: 1px solid rgba(239,68,68,0.3);
+  background: rgba(239,68,68,0.08);
+  color: #f87171; font-size: 12px; cursor: pointer;
+  transition: all 150ms;
+}
+.ml-audio-preview-stop:hover {
+  background: rgba(239,68,68,0.15); border-color: #ef4444;
+}
+.ml-audio-volume { display: flex; align-items: center; gap: 6px; }
+.ml-audio-volume-icon { font-size: 14px; }
+.ml-audio-volume-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 80px; height: 4px; border-radius: 2px;
+  background: var(--bg-tertiary, #1f2937); outline: none; cursor: pointer;
+}
+.ml-audio-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--accent, #818cf8); cursor: pointer;
+}
+.ml-audio-volume-slider::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--accent, #818cf8); cursor: pointer; border: none;
+}
+.ml-audio-volume-val {
+  font-size: 10px; color: var(--text-muted, #64748b);
+  width: 32px; text-align: right;
+}
 </style>

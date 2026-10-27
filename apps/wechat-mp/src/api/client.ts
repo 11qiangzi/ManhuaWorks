@@ -1,5 +1,5 @@
 /**
- * ManhuaWorks 微信小程序 - 后端 API 客户端
+ * 千机工坊 微信小程序 - 后端 API 客户端
  *
  * 后端契约 (从 services/user-service/src/{routes/index.ts,authService.ts,api-key.repo.ts} 抄录, 2026-06-09 10:36)
  *   监听: http://127.0.0.1:8088

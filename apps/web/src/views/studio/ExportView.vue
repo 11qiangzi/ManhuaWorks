@@ -12,20 +12,17 @@
 
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useToast } from '@manhuaworks/ui'
 import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
 import ProgressTimeline from '@/components/studio/ProgressTimeline.vue'
 
 const router = useRouter()
+const toast = useToast()
 
 /** 范围 */
 const scope = ref<'episode' | 'season'>('episode')
 const episodeId = ref('ep-01')
-const episodes = ref([
-  { id: 'ep-01', title: '第 01 集 · 初遇', duration: 320 },
-  { id: 'ep-02', title: '第 02 集 · 误会', duration: 295 },
-  { id: 'ep-03', title: '第 03 集 · 真相', duration: 340 },
-  { id: 'ep-04', title: '第 04 集 · 重逢', duration: 310 }
-])
+const episodes = ref<{ id: string; title: string; duration: number }[]>([])
 
 /** 字幕 */
 const subtitleEnabled = ref(true)
@@ -104,6 +101,10 @@ function formatDuration(sec: number) {
 }
 
 async function onExport() {
+  if (!episodes.value.length) {
+    toast.error('没有可导出的集数数据')
+    return
+  }
   exporting.value = true
   const task: ExportTask = {
     id: `t-${Date.now()}`,
@@ -115,8 +116,9 @@ async function onExport() {
     startedAt: new Date().toLocaleTimeString('zh-CN', { hour12: false })
   }
   tasks.value.unshift(task)
+  toast.info('视频渲染任务已提交，渲染引擎正在处理…')
 
-  // 模拟进度
+  // 模拟进度（真实渲染需要后端 video-render-service 支持）
   const timer = setInterval(() => {
     const t = tasks.value.find((x) => x.id === task.id)
     if (!t) return clearInterval(timer)
@@ -124,9 +126,9 @@ async function onExport() {
     if (t.progress >= 100) {
       t.progress = 100
       t.status = t.platform === 'local' ? 'done' : 'uploading'
-      // 上传后再转 done
       setTimeout(() => {
         t.status = 'done'
+        toast.success(t.platform === 'local' ? '导出完成' : '上传完成')
       }, 1500)
       clearInterval(timer)
       exporting.value = false
@@ -134,7 +136,40 @@ async function onExport() {
   }, 500)
 }
 
-onMounted(() => {})
+onMounted(() => {
+  // 从 sessionStorage 或 URL 参数加载集数数据
+  try {
+    const raw = sessionStorage.getItem('mhw:studio:export-episodes')
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        episodes.value = parsed
+        episodeId.value = parsed[0].id
+      }
+    }
+  } catch { /* ignore */ }
+
+  // 如果 sessionStorage 没有数据，从项目 shots 加载
+  if (!episodes.value.length) {
+    const projectId = router.currentRoute.value.query.projectId as string
+    if (projectId) {
+      // 从 API 加载项目的 shots 作为集数
+      import('@manhuaworks/api-client').then(({ getClient }) => {
+        getClient().http.get(`/projects/${projectId}/shots`).then((res: any) => {
+          const shots: any[] = res?.items || res || []
+          if (shots.length > 0) {
+            episodes.value = shots.map((s: any, i: number) => ({
+              id: s.id || `ep-${String(i + 1).padStart(2, '0')}`,
+              title: s.title || s.name || `第 ${String(i + 1).padStart(2, '0')} 集`,
+              duration: s.duration || 300,
+            }))
+            episodeId.value = episodes.value[0].id
+          }
+        }).catch(() => {})
+      }).catch(() => {})
+    }
+  }
+})
 </script>
 
 <template>

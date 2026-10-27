@@ -5,12 +5,12 @@
 import { query } from "../config/db";
 import type { Order, OrderRow, OrderStatus, BillingCycle } from "../models/order";
 import { rowToOrder } from "../models/order";
-import type { PlanIdDb } from "../config/plans";
+import type { PlanId } from "../config/plans";
 
 export interface CreateOrderInput {
   userId: string;
   orderNo: string;
-  plan: PlanIdDb;
+  plan: PlanId;
   billingCycle?: BillingCycle;
   amountCents: number;
   currency?: string;
@@ -106,5 +106,16 @@ export const orderRepository = {
       [userId]
     );
     return Number(rows[0]?.count ?? 0);
+  },
+
+  async findPaidByUserAndPlan(userId: string, plan: string): Promise<Order | null> {
+    const { rows } = await query<OrderRow>(
+      `SELECT * FROM orders
+        WHERE user_id = $1 AND plan = $2 AND status = 'paid'
+        ORDER BY paid_at DESC NULLS LAST
+        LIMIT 1`,
+      [userId, plan]
+    );
+    return rows[0] ? rowToOrder(rows[0]) : null;
   },
 };

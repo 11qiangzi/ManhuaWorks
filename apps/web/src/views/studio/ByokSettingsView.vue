@@ -58,6 +58,10 @@ const grouped = computed(() => {
   return map
 })
 
+const totalMonthlyUsage = computed(() => {
+  return keys.value.reduce((sum, k) => sum + (k.monthlyUsageUsd ?? 0), 0)
+})
+
 async function loadKeys() {
   loading.value = true
   try {
@@ -218,7 +222,7 @@ onMounted(() => {
     <!-- 顶栏 -->
     <header class="byok__nav">
       <div class="byok__brand">
-        <button class="byok__back" @click="router.push('/studio')" title="返回">←</button>
+        <button class="byok__back" @click="router.push('/settings')" title="返回设置">←</button>
         <span class="byok__logo">M</span>
         <span class="byok__brand-name">BYOK 设置</span>
       </div>
@@ -279,6 +283,21 @@ onMounted(() => {
 
       <!-- Key 列表（按 provider 分组） -->
       <section v-else class="byok__groups">
+        <!-- 用量总览 -->
+        <div class="byok__usage-summary">
+          <div class="byok__usage-item">
+            <span>Key 总数</span>
+            <strong>{{ keys.length }}</strong>
+          </div>
+          <div class="byok__usage-item">
+            <span>本月总费用</span>
+            <strong>${{ totalMonthlyUsage.toFixed(2) }}</strong>
+          </div>
+          <div class="byok__usage-item">
+            <span>供应商</span>
+            <strong>{{ Object.keys(grouped).length }}</strong>
+          </div>
+        </div>
         <div
           v-for="(groupKeys, providerId) in grouped"
           :key="providerId"
@@ -312,6 +331,10 @@ onMounted(() => {
                 <div v-if="k.lastUsedAt">
                   <span>最近使用</span>
                   <strong>{{ k.lastUsedAt }}</strong>
+                </div>
+                <div v-if="k.monthlyUsageUsd !== undefined">
+                  <span>本月用量</span>
+                  <strong>${{ k.monthlyUsageUsd.toFixed(2) }}</strong>
                 </div>
                 <div v-if="k.status === 'expiring' && k.expiresInDays !== undefined">
                   <span>过期倒计时</span>
@@ -620,6 +643,28 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+.byok__usage-summary {
+  display: flex;
+  gap: 24px;
+  padding: 16px 20px;
+  background: var(--bg-card, rgba(255,255,255,0.04));
+  border-radius: 12px;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+}
+.byok__usage-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.byok__usage-item span {
+  font-size: 12px;
+  color: var(--text-secondary, #888);
+}
+.byok__usage-item strong {
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .byok__group-head {

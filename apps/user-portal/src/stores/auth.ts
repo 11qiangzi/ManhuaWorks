@@ -1,6 +1,6 @@
 /**
  * user-portal · auth Pinia store — 接 user-service（注册/登录/2FA/邮箱验证/改密/登出）
- * ManhuaWorks · L2 task 8
+ * 千机工坊 · L2 task 8
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * MyWorksView · 我的作品
- * ManhuaWorks · W4 用户后台
+ * 千机工坊 · W4 用户后台
  *
  * 功能：
  * 1. 作品网格（视频/动画/漫画/有声）
@@ -36,6 +36,66 @@ const {
 const sharing = ref<string | null>(null)
 const shareUrl = ref<string | null>(null)
 
+/* ===== Audio Panel State ===== */
+const selectedWorkId = ref<string | null>(null)
+const audioPanelLoading = ref(false)
+
+interface AudioTrack {
+  id: string
+  title: string
+  type: 'bgm' | 'sfx' | 'voiceover'
+  duration: string
+  playing: boolean
+}
+
+interface WorkAudio {
+  bgm: AudioTrack | null
+  sfx: AudioTrack[]
+  voiceover: AudioTrack | null
+}
+
+const workAudioData = ref<WorkAudio | null>(null)
+
+// Mock audio data keyed by work type
+function loadWorkAudio(workId: string) {
+  audioPanelLoading.value = true
+  // Simulate async loading
+  setTimeout(() => {
+    workAudioData.value = {
+      bgm: { id: `bgm-${workId}`, title: '背景配乐 - 暗夜序曲', type: 'bgm', duration: '03:24', playing: false },
+      sfx: [
+        { id: `sfx-1-${workId}`, title: '脚步声', type: 'sfx', duration: '00:02', playing: false },
+        { id: `sfx-2-${workId}`, title: '门关闭', type: 'sfx', duration: '00:01', playing: false },
+        { id: `sfx-3-${workId}`, title: '风声', type: 'sfx', duration: '00:05', playing: false },
+        { id: `sfx-4-${workId}`, title: '雨声', type: 'sfx', duration: '00:08', playing: false },
+        { id: `sfx-5-${workId}`, title: '心跳', type: 'sfx', duration: '00:03', playing: false }
+      ],
+      voiceover: { id: `vo-${workId}`, title: '旁白配音 - 第一章', type: 'voiceover', duration: '05:12', playing: false }
+    }
+    audioPanelLoading.value = false
+  }, 350)
+}
+
+function toggleWorkDetail(workId: string) {
+  if (selectedWorkId.value === workId) {
+    selectedWorkId.value = null
+    workAudioData.value = null
+  } else {
+    selectedWorkId.value = workId
+    loadWorkAudio(workId)
+  }
+}
+
+function toggleAudioPlay(track: AudioTrack) {
+  if (!workAudioData.value) return
+  // Stop all playing tracks
+  if (workAudioData.value.bgm) workAudioData.value.bgm.playing = false
+  workAudioData.value.sfx.forEach(s => s.playing = false)
+  if (workAudioData.value.voiceover) workAudioData.value.voiceover.playing = false
+  // Toggle the clicked one
+  track.playing = !track.playing
+}
+
 const TYPES: { id: WorkType | 'all'; label: string; icon: string }[] = [
   { id: 'all', label: '全部', icon: '🎞' },
   { id: 'video', label: '视频', icon: '🎬' },
@@ -56,8 +116,7 @@ onMounted(async () => {
 })
 
 function play(workId: string) {
-  // 占位：实际播放可跳转到作品详情页或弹出播放器
-  console.log('[play]', workId)
+  // TODO: navigate to work detail or open player
 }
 
 function download(workId: string, url?: string | null) {
@@ -233,6 +292,9 @@ function onLogout() {
               <button type="button" class="work-card__btn" @click="share(w.id)">
                 {{ sharing === w.id ? '生成中...' : '🔗 分享' }}
               </button>
+              <button type="button" class="work-card__btn" @click="toggleWorkDetail(w.id)">
+                {{ selectedWorkId === w.id ? '🔊 收起' : '🔊 音频' }}
+              </button>
               <select
                 :value="w.visibility"
                 class="work-card__select"
@@ -246,6 +308,97 @@ function onLogout() {
             </div>
           </div>
         </article>
+      </div>
+
+      <!-- ===== 音频详情面板 ===== -->
+      <div v-if="selectedWorkId" class="audio-panel">
+        <div class="audio-panel__head">
+          <h2 class="audio-panel__title">🔊 音频轨道</h2>
+          <span class="audio-panel__work-id">作品 #{{ selectedWorkId }}</span>
+          <button type="button" class="audio-panel__close" @click="selectedWorkId = null; workAudioData = null">✕</button>
+        </div>
+
+        <div v-if="audioPanelLoading" class="audio-panel__loading">
+          <div class="mw__spinner"></div>
+          <span>加载音频数据...</span>
+        </div>
+
+        <div v-else-if="!workAudioData" class="audio-panel__empty">
+          暂无音频数据
+        </div>
+
+        <div v-else class="audio-panel__body">
+          <!-- BGM Track -->
+          <section class="audio-panel__section">
+            <h3 class="audio-panel__section-title">🎵 背景配乐 (BGM)</h3>
+            <div v-if="workAudioData.bgm" class="audio-track audio-track--bgm">
+              <button
+                type="button"
+                class="audio-track__play"
+                :class="{ 'audio-track__play--active': workAudioData.bgm.playing }"
+                @click="toggleAudioPlay(workAudioData.bgm)"
+              >
+                {{ workAudioData.bgm.playing ? '⏸' : '▶' }}
+              </button>
+              <div class="audio-track__info">
+                <span class="audio-track__title">{{ workAudioData.bgm.title }}</span>
+                <span class="audio-track__duration">{{ workAudioData.bgm.duration }}</span>
+              </div>
+              <div class="audio-track__wave">
+                <span v-for="i in 40" :key="i" class="audio-track__wave-bar"
+                  :class="{ 'audio-track__wave-bar--active': workAudioData.bgm.playing }"
+                  :style="{ height: (15 + Math.sin(i * 0.5) * 25 + Math.random() * 15) + '%' }"
+                ></span>
+              </div>
+            </div>
+            <div v-else class="audio-panel__none">暂无背景配乐</div>
+          </section>
+
+          <!-- Sound Effects -->
+          <section class="audio-panel__section">
+            <h3 class="audio-panel__section-title">🔔 音效 (SFX) <span class="audio-panel__count">{{ workAudioData.sfx.length }} 个</span></h3>
+            <div class="audio-sfx-list">
+              <div v-for="sfx in workAudioData.sfx" :key="sfx.id" class="audio-sfx-item">
+                <button
+                  type="button"
+                  class="audio-sfx__play"
+                  :class="{ 'audio-sfx__play--active': sfx.playing }"
+                  @click="toggleAudioPlay(sfx)"
+                >
+                  {{ sfx.playing ? '⏸' : '▶' }}
+                </button>
+                <span class="audio-sfx__title">{{ sfx.title }}</span>
+                <span class="audio-sfx__duration">{{ sfx.duration }}</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Voiceover -->
+          <section class="audio-panel__section">
+            <h3 class="audio-panel__section-title">🎙 旁白配音 (Voiceover)</h3>
+            <div v-if="workAudioData.voiceover" class="audio-track audio-track--vo">
+              <button
+                type="button"
+                class="audio-track__play"
+                :class="{ 'audio-track__play--active': workAudioData.voiceover.playing }"
+                @click="toggleAudioPlay(workAudioData.voiceover)"
+              >
+                {{ workAudioData.voiceover.playing ? '⏸' : '▶' }}
+              </button>
+              <div class="audio-track__info">
+                <span class="audio-track__title">{{ workAudioData.voiceover.title }}</span>
+                <span class="audio-track__duration">{{ workAudioData.voiceover.duration }}</span>
+              </div>
+              <div class="audio-track__wave">
+                <span v-for="i in 40" :key="i" class="audio-track__wave-bar audio-track__wave-bar--vo"
+                  :class="{ 'audio-track__wave-bar--active': workAudioData.voiceover.playing }"
+                  :style="{ height: (10 + Math.sin(i * 0.8) * 20 + Math.random() * 20) + '%' }"
+                ></span>
+              </div>
+            </div>
+            <div v-else class="audio-panel__none">暂无配音</div>
+          </section>
+        </div>
       </div>
     </div>
 
@@ -841,6 +994,284 @@ function onLogout() {
   display: flex;
   justify-content: flex-end;
   margin-top: 4px;
+}
+
+/* ===== Audio Panel ===== */
+.audio-panel {
+  margin-top: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  animation: audio-slide-in 250ms ease;
+}
+
+@keyframes audio-slide-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.audio-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, var(--bg-secondary)), var(--bg-secondary));
+  border-bottom: 1px solid var(--border);
+}
+
+.audio-panel__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.audio-panel__work-id {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: monospace;
+  padding: 2px 8px;
+  background: var(--bg-primary);
+  border-radius: 4px;
+}
+
+.audio-panel__close {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 180ms;
+}
+
+.audio-panel__close:hover {
+  color: var(--danger, #ef4444);
+  border-color: var(--danger, #ef4444);
+}
+
+.audio-panel__loading,
+.audio-panel__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.audio-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.audio-panel__section {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.audio-panel__section:last-child {
+  border-bottom: none;
+}
+
+.audio-panel__section-title {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.audio-panel__count {
+  font-size: 10px;
+  padding: 1px 6px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  border-radius: 999px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.audio-panel__none {
+  font-size: 12px;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  padding: 8px 0;
+}
+
+/* ===== Audio Track ===== */
+.audio-track {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.audio-track--bgm {
+  border-left: 3px solid var(--accent);
+}
+
+.audio-track--vo {
+  border-left: 3px solid #10b981;
+}
+
+.audio-track__play {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 200ms;
+}
+
+.audio-track__play:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.audio-track__play--active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.audio-track__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 140px;
+  flex-shrink: 0;
+}
+
+.audio-track__title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.audio-track__duration {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: monospace;
+}
+
+.audio-track__wave {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5px;
+  height: 32px;
+  overflow: hidden;
+}
+
+.audio-track__wave-bar {
+  flex: 1;
+  min-height: 2px;
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: 1px 1px 0 0;
+  transition: background 200ms;
+}
+
+.audio-track__wave-bar--vo {
+  background: color-mix(in srgb, #10b981 25%, transparent);
+}
+
+.audio-track__wave-bar--active {
+  background: var(--accent);
+  animation: audio-wave-bounce 500ms ease-in-out infinite alternate;
+}
+
+.audio-track__wave-bar--vo.audio-track__wave-bar--active {
+  background: #10b981;
+}
+
+@keyframes audio-wave-bounce {
+  0% { transform: scaleY(0.4); }
+  100% { transform: scaleY(1); }
+}
+
+/* ===== SFX List ===== */
+.audio-sfx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.audio-sfx-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 180ms;
+}
+
+.audio-sfx-item:hover {
+  border-color: var(--accent);
+}
+
+.audio-sfx__play {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 180ms;
+}
+
+.audio-sfx__play:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.audio-sfx__play--active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.audio-sfx__title {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.audio-sfx__duration {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: monospace;
 }
 
 @media (max-width: 768px) {

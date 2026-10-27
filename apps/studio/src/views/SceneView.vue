@@ -13,20 +13,56 @@
  *   5. 删除走真 API (软失败,降级本地)
  */
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { makeMockScenes } from '../data/studio-mock'
 import { SCENE_TEMPLATES_V2, getSceneTemplateMeta } from '../data/scene-templates-v2'
 import { STUDIO_THEMES, type StudioThemeId } from '../types/studio'
 import type { SceneV2, SceneTemplate, SceneSubScene } from '../types/scene'
-import { useSceneStore, SCENE_TYPE_META, type SceneType } from '../stores/sceneStore'
+import { useSceneStore, SCENE_TYPE_META, type SceneType, type SceneItem } from '../stores/sceneStore'
 import ScenePicker from '../components/scene/ScenePicker.vue'
 import SceneCard from '../components/scene/SceneCard.vue'
 import SceneForm from '../components/scene/SceneForm.vue'
+import { useTheme } from '../composables/useTheme'
 
 // ---------- 默认 project (L3.B 暂未接入项目选择) ----------
 const DEFAULT_PROJECT_ID = 'proj_default_001'
 
+// ---------- router ----------
+const router = useRouter()
+
+function editScene(id: string) {
+  router.push(`/scenes/${id}/edit`)
+}
+
 // ---------- store ----------
 const store = useSceneStore()
+
+// ---------- API → 本地类型转换 ----------
+function sceneItemToV2(item: SceneItem): SceneV2 {
+  return {
+    id: item.id,
+    name: item.name,
+    template: 'urban' as SceneTemplate,
+    parentId: null,
+    description: item.description || '',
+    assets: { imageUrl: null, thumbnailUrl: null },
+    lighting: {
+      timeOfDay: 'day',
+      lightDir: (item.light_direction || 'front'),
+      colorTemp: parseInt(item.light_color_temp || '5500', 10),
+      intensity: parseFloat(item.light_intensity || '1.0'),
+    },
+    tags: item.tags || [],
+    vector: [],
+    styleId: 'default',
+    themeId: 'dark-workshop',
+    reusable: true,
+    consistencyScore: 80,
+    relatedArchetypes: [],
+    createdAt: item.created_at ? new Date(item.created_at).getTime() : Date.now(),
+    updatedAt: item.updated_at ? new Date(item.updated_at).getTime() : Date.now(),
+  }
+}
 
 // ---------- 本地状态 (12 模板视图,保持 L2 功能) ----------
 const localScenes = ref<SceneV2[]>(makeMockScenes())
@@ -36,15 +72,14 @@ const activeSubSceneId = ref<string | null>(null)
 const searchQuery = ref('')
 const sceneTypeFilter = ref<SceneType | 'all'>('all')
 
-// 主题
-const themeId = ref<StudioThemeId>(
-  (localStorage.getItem('studio_theme') as StudioThemeId) ?? 'dark-workshop',
-)
+// 主题 (via useTheme composable)
+const { theme } = useTheme()
+const themeId = ref<StudioThemeId>(theme.value as StudioThemeId ?? 'dark-workshop')
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', themeId.value)
 }
 watch(themeId, t => {
-  localStorage.setItem('studio_theme', t)
+  theme.value = t as any // sync to composable (handles localStorage persistence)
   applyTheme()
 }, { immediate: true })
 
@@ -52,20 +87,25 @@ watch(themeId, t => {
 onMounted(async () => {
   applyTheme()
   // 拉真 API;失败回退 8 个本地场景(覆盖 8 种类型)
-  const mockTags = (() => {
-    const now = '0'
-    return [
-      { id: 'tag_001', name: '🏠 室内客厅',   color: 'amber',  count: 3 },
-      { id: 'tag_002', name: '🌳 室外林地',   color: 'green',  count: 5 },
-      { id: 'tag_003', name: '⚔️ 战斗擂场',   color: 'red',    count: 2 },
-      { id: 'tag_004', name: '🎓 校园教室',   color: 'cyan',   count: 4 },
-      { id: 'tag_005', name: '🏙️ 都市街道',   color: 'blue',   count: 6 },
-      { id: 'tag_006', name: '🏯 古代宫殿',   color: 'yellow', count: 2 },
-      { id: 'tag_007', name: '🚀 未来赛博城', color: 'purple', count: 3 },
-      { id: 'tag_008', name: '✨ 幻想幻境',   color: 'pink',   count: 4 },
-    ]
-  })()
+  const mockTags: SceneItem[] = [
+    { id: 'tag_001', project_id: DEFAULT_PROJECT_ID, name: '🏠 室内客厅',   scene_type: 'indoor'  },
+    { id: 'tag_002', project_id: DEFAULT_PROJECT_ID, name: '🌳 室外林地',   scene_type: 'outdoor' },
+    { id: 'tag_003', project_id: DEFAULT_PROJECT_ID, name: '⚔️ 战斗擂场',   scene_type: 'battle'  },
+    { id: 'tag_004', project_id: DEFAULT_PROJECT_ID, name: '🎓 校园教室',   scene_type: 'school'  },
+    { id: 'tag_005', project_id: DEFAULT_PROJECT_ID, name: '🏙️ 都市街道',   scene_type: 'urban'   },
+    { id: 'tag_006', project_id: DEFAULT_PROJECT_ID, name: '🏯 古代宫殿',   scene_type: 'ancient' },
+    { id: 'tag_007', project_id: DEFAULT_PROJECT_ID, name: '🚀 未来赛博城', scene_type: 'future'  },
+    { id: 'tag_008', project_id: DEFAULT_PROJECT_ID, name: '✨ 幻想幻境',   scene_type: 'fantasy' },
+  ]
   await store.load(DEFAULT_PROJECT_ID, mockTags)
+})
+
+// API 数据加载后同步到 localScenes
+watch(() => store.scenes, (items) => {
+  if (items.length > 0 && store.lastSource === 'api') {
+    localScenes.value = items.map(sceneItemToV2)
+    selectedId.value = localScenes.value[0]?.id ?? null
+  }
 })
 
 // ---------- 派生 (API 场景视图) ----------
@@ -79,7 +119,7 @@ const filteredApiScenes = computed(() => {
     const q = searchQuery.value.toLowerCase()
     list = list.filter(s =>
       s.name.toLowerCase().includes(q) ||
-      s.color.toLowerCase().includes(q),
+      (s.scene_type ?? '').toLowerCase().includes(q),
     )
   }
   return list
@@ -189,15 +229,31 @@ function onNew() {
   }
   localScenes.value.unshift(s)
   selectedId.value = id
+  // Persist to API in background
+  store.create({ name: s.name, description: s.description, tags: s.tags }).catch((e) => { console.warn('create scene failed:', e) })
 }
+
+// ---------- 删除确认 modal ----------
+const showDeleteModal = ref(false)
+const pendingDeleteScene = ref<{ id: string; name: string; isApi: boolean } | null>(null)
 
 function onDelete() {
   if (!selected.value) return
-  if (!confirm(`删除场景 "${selected.value.name}"?`)) return
-  const i = localScenes.value.findIndex(s => s.id === selected.value!.id)
-  if (i < 0) return
-  localScenes.value.splice(i, 1)
-  selectedId.value = localScenes.value[0]?.id ?? null
+  pendingDeleteScene.value = { id: selected.value.id, name: selected.value.name, isApi: false }
+  showDeleteModal.value = true
+}
+
+function confirmDeleteScene() {
+  if (!pendingDeleteScene.value) return
+  if (pendingDeleteScene.value.isApi) {
+    doDeleteApiScene(pendingDeleteScene.value.id)
+  } else {
+    const i = localScenes.value.findIndex(s => s.id === pendingDeleteScene.value!.id)
+    if (i >= 0) localScenes.value.splice(i, 1)
+    selectedId.value = localScenes.value[0]?.id ?? null
+  }
+  showDeleteModal.value = false
+  pendingDeleteScene.value = null
 }
 
 function onDuplicate() {
@@ -215,29 +271,36 @@ function onDuplicate() {
   selectedId.value = id
 }
 
-// ---------- API 场景操作 (L3.B 新增) ----------
-async function onCreateScene() {
-  const name = window.prompt('新场景名 (例: 🏙️ 都市夜景):', '🏙️ 新场景')
+// ---------- 新建场景 modal (替代 window.prompt) ----------
+const showNewSceneModal = ref(false)
+const newSceneForm = ref({ name: '', type: 'urban' as SceneType })
+const SCENE_TYPES: SceneType[] = ['indoor', 'outdoor', 'battle', 'school', 'urban', 'ancient', 'future', 'fantasy']
+
+function onCreateScene() {
+  newSceneForm.value = { name: '', type: 'urban' }
+  showNewSceneModal.value = true
+}
+
+async function submitNewScene() {
+  const name = newSceneForm.value.name.trim()
   if (!name) return
-  const typePick = window.prompt(
-    `选择场景类型 (indoor=室内 / outdoor=室外 / battle=战斗 / school=校园 / urban=都市 / ancient=古代 / future=未来 / fantasy=幻想):`,
-    'urban',
-  )
-  const validTypes: SceneType[] = ['indoor', 'outdoor', 'battle', 'school', 'urban', 'ancient', 'future', 'fantasy']
-  const type: SceneType = (validTypes as string[]).includes(typePick ?? '')
-    ? (typePick as SceneType)
-    : 'urban'
   try {
-    await store.create({ name, type })
+    await store.create({ name, scene_type: newSceneForm.value.type })
+    showNewSceneModal.value = false
   } catch {
     // 错误在 store.error
   }
 }
 
-async function onDeleteScene(tagId: string, name: string) {
-  if (!window.confirm(`删除场景 "${name}"?`)) return
+// ---------- API 场景删除 (走 modal) ----------
+function onDeleteScene(sceneId: string, name: string) {
+  pendingDeleteScene.value = { id: sceneId, name, isApi: true }
+  showDeleteModal.value = true
+}
+
+async function doDeleteApiScene(sceneId: string) {
   try {
-    await store.remove(tagId)
+    await store.remove(sceneId)
   } catch {
     // 错误在 store.error
   }
@@ -392,22 +455,22 @@ function getSceneTypeOf(name: string): SceneType {
               {{ SCENE_TYPE_META[getSceneTypeOf(s.name)].icon }} {{ SCENE_TYPE_META[getSceneTypeOf(s.name)].label }}
             </span>
             <span
-              v-if="s.count > 0"
+              v-if="store.countByType[getSceneTypeOf(s.name)] > 0"
               class="absolute right-2 top-2 rounded bg-white/90 px-1.5 py-0.5 text-[10px] font-mono text-gray-700 dark:bg-gray-800/90 dark:text-gray-200"
-            >{{ s.count }} 次</span>
+            >{{ store.countByType[getSceneTypeOf(s.name)] }} 次</span>
           </div>
           <div>
             <div class="truncate text-[12px] font-semibold text-gray-800 dark:text-gray-100" :title="s.name">
               {{ s.name }}
             </div>
             <p class="mt-0.5 line-clamp-2 text-[10px] text-gray-500 dark:text-gray-400">
-              标签色: {{ s.color }} · 关联 {{ s.count }} 个分镜
+              类型: {{ SCENE_TYPE_META[getSceneTypeOf(s.name)].label }} · 关联 {{ store.countByType[getSceneTypeOf(s.name)] }} 个镜头
             </p>
           </div>
           <div class="flex justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
             <button
               class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] hover:bg-gray-200 dark:bg-gray-800"
-              title="编辑 (TODO)"
+              title="编辑"
               disabled
             >✏️</button>
             <button
@@ -520,6 +583,11 @@ function getSceneTypeOf(name: string): SceneType {
           </h3>
           <div class="flex items-center gap-1">
             <button
+              class="rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300"
+              title="编辑"
+              @click="editScene(selected.id)"
+            >✏️ 编辑</button>
+            <button
               class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] hover:bg-gray-200 dark:bg-gray-800"
               title="复制"
               @click="onDuplicate"
@@ -541,6 +609,77 @@ function getSceneTypeOf(name: string): SceneType {
         </div>
       </aside>
     </div>
+
+    <!-- ════════════ 删除确认 Modal ════════════ -->
+    <Teleport to="body">
+      <div
+        v-if="showDeleteModal"
+        class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+        @click.self="showDeleteModal = false"
+      >
+        <div class="w-full max-w-xs rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-900 dark:ring-1 dark:ring-gray-700">
+          <h3 class="mb-2 text-base font-semibold text-gray-800 dark:text-gray-100">确认删除场景</h3>
+          <p class="mb-4 text-xs text-gray-500">
+            删除场景 <strong class="text-gray-700 dark:text-gray-300">{{ pendingDeleteScene?.name }}</strong>？
+          </p>
+          <div class="flex justify-end gap-2">
+            <button
+              class="rounded-lg border border-gray-300 px-4 py-1.5 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+              @click="showDeleteModal = false"
+            >取消</button>
+            <button
+              class="rounded-lg bg-red-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-600"
+              @click="confirmDeleteScene"
+            >确认删除</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ════════════ 新建场景 Modal ════════════ -->
+    <Teleport to="body">
+      <div
+        v-if="showNewSceneModal"
+        class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+        @click.self="showNewSceneModal = false"
+      >
+        <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-900 dark:ring-1 dark:ring-gray-700">
+          <h3 class="mb-4 text-base font-semibold text-gray-800 dark:text-gray-100">新建场景</h3>
+          <label class="mb-3 block">
+            <span class="mb-1 block text-[11px] font-medium text-gray-500">场景名称</span>
+            <input
+              v-model="newSceneForm.name"
+              type="text"
+              placeholder="例如: 🏙️ 都市夜景"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+              @keydown.enter="submitNewScene"
+            />
+          </label>
+          <label class="mb-4 block">
+            <span class="mb-1 block text-[11px] font-medium text-gray-500">场景类型</span>
+            <select
+              v-model="newSceneForm.type"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+            >
+              <option v-for="t in SCENE_TYPES" :key="t" :value="t">
+                {{ SCENE_TYPE_META[t].icon }} {{ SCENE_TYPE_META[t].label }}
+              </option>
+            </select>
+          </label>
+          <div class="flex justify-end gap-2">
+            <button
+              class="rounded-lg border border-gray-300 px-4 py-1.5 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+              @click="showNewSceneModal = false"
+            >取消</button>
+            <button
+              class="rounded-lg bg-blue-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-600 disabled:opacity-50"
+              :disabled="!newSceneForm.name.trim() || store.loading"
+              @click="submitNewScene"
+            >{{ store.loading ? '创建中…' : '确认创建' }}</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 

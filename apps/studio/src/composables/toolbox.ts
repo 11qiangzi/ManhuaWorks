@@ -3,7 +3,7 @@
 // 6 大类 × 24 工具，2.5s 超时回退本地 mock
 // =============================================================================
 
-import { ref, computed, type Ref } from 'vue'
+import { ref, computed, type Ref, type ComputedRef } from 'vue'
 
 // ---------- 类型 ----------
 export type ToolboxCategory =
@@ -13,17 +13,19 @@ export type ToolboxCategory =
   | 'dialogue'
   | 'world'
   | 'export'
+  | 'audio'
 
 export interface ToolDefinition {
   id: string
   name: string
   description: string
   category: ToolboxCategory
-  icon: string // SVG path id
+  icon: string // SVG path id or emoji
   estimatedCost: number // USD/次
   estimatedTime: number // 秒
   isNew?: boolean
   isHot?: boolean
+  comingSoon?: boolean
 }
 
 export interface ToolCategoryMeta {
@@ -86,6 +88,13 @@ export const TOOLBOX_CATEGORIES: ToolCategoryMeta[] = [
     icon: '📤',
     color: 'from-indigo-500 to-violet-500',
     description: '剧集、卡、脚本',
+  },
+  {
+    id: 'audio',
+    name: '音频工具',
+    icon: '🎧',
+    color: 'from-teal-500 to-cyan-500',
+    description: '作曲、编辑、配乐',
   },
 ]
 
@@ -317,11 +326,45 @@ export const TOOLBOX_TOOLS: ToolDefinition[] = [
   {
     id: 'exp-script',
     name: '视频脚本',
-    description: '导出分镜视频脚本',
+    description: '导出镜头视频脚本',
     category: 'export',
     icon: 'script',
     estimatedCost: 0.01,
     estimatedTime: 3,
+  },
+
+  // 音频工具 (3)
+  {
+    id: 'audio-compose',
+    name: 'AI 作曲',
+    description: '根据场景情绪自动生成原创背景音乐，支持多种风格（古风/电子/钢琴/管弦）',
+    category: 'audio',
+    icon: '🎵',
+    estimatedCost: 0.05,
+    estimatedTime: 10,
+    isNew: true,
+    comingSoon: true,
+  },
+  {
+    id: 'audio-edit',
+    name: '音频编辑',
+    description: '裁剪、淡入淡出、变速、降噪、混响等音频后期处理',
+    category: 'audio',
+    icon: '🎚️',
+    estimatedCost: 0.02,
+    estimatedTime: 5,
+    comingSoon: true,
+  },
+  {
+    id: 'audio-match',
+    name: '配乐匹配',
+    description: '智能分析画面情绪与节奏，从曲库中推荐最匹配的背景配乐',
+    category: 'audio',
+    icon: '🎶',
+    estimatedCost: 0.03,
+    estimatedTime: 8,
+    isHot: true,
+    comingSoon: true,
   },
 ]
 
@@ -333,8 +376,8 @@ export interface UseToolboxReturn {
   error: Ref<string | null>
   searchQuery: Ref<string>
   activeCategory: Ref<ToolboxCategory | 'all'>
-  filteredTools: ReturnType<typeof computed<ToolDefinition[]>>
-  toolCountByCategory: ReturnType<typeof computed<Record<string, number>>>
+  filteredTools: ComputedRef<ToolDefinition[]>
+  toolCountByCategory: ComputedRef<Record<string, number>>
   runTool: (toolId: string, input?: string) => Promise<ToolRunResult>
   refresh: () => Promise<void>
 }
@@ -356,15 +399,8 @@ export function useToolbox(projectId: Ref<string>): UseToolboxReturn {
    * 尝试从后端拉工具列表（API 还未实现 tools 端点，走 2.5s 超时回退）
    */
   async function fetchTools(): Promise<ToolDefinition[] | null> {
-    return await Promise.race([
-      new Promise<ToolDefinition[] | null>(resolve => {
-        // 后端尚无 /api/v1/tools 端点 — 模拟快速 404 走回退
-        setTimeout(() => resolve(null), 600)
-      }),
-      new Promise<ToolDefinition[] | null>(resolve => {
-        setTimeout(() => resolve(null), TOOLBOX_TIMEOUT_MS)
-      }),
-    ])
+    // Return local tool catalog (no API dependency)
+    return TOOLBOX_TOOLS.map(t => ({ ...t }))
   }
 
   /**
@@ -382,12 +418,23 @@ export function useToolbox(projectId: Ref<string>): UseToolboxReturn {
         error: '工具不存在',
       }
     }
+    if (t.comingSoon) {
+      return {
+        toolId,
+        ok: false,
+        output: '',
+        durationMs: 0,
+        costUsd: 0,
+        error: `「${t.name}」即将上线，敬请期待！`,
+      }
+    }
     const started = Date.now()
     try {
       // 真实 API 调用 (projects 端点，无 tools 子端点 → 抛错走回退)
       const result = await Promise.race([
-        new Promise<{ ok: true; output: string }>(resolve => {
-          setTimeout(() => resolve({ ok: true, output: 'API 暂未实现，回退到本地 mock' }), 800)
+        new Promise<{ ok: true; output: string }>((_, reject) => {
+          // 后端尚无 /api/v1/tools/{toolId} 端点 — 模拟 API 错误走回退
+          setTimeout(() => reject(new Error('API endpoint not implemented')), 800)
         }),
         new Promise<{ ok: false; error: string }>((_, reject) => {
           setTimeout(() => reject(new Error('timeout')), TOOLBOX_TIMEOUT_MS)
@@ -396,7 +443,7 @@ export function useToolbox(projectId: Ref<string>): UseToolboxReturn {
       return {
         toolId,
         ok: result.ok,
-        output: result.output,
+        output: result.ok ? result.output : result.error,
         durationMs: Date.now() - started,
         costUsd: t.estimatedCost,
       }

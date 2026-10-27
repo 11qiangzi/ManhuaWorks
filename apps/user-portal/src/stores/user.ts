@@ -1,6 +1,6 @@
 /**
  * user store — 用户档案状态管理
- * ManhuaWorks · W4 用户后台
+ * 千机工坊 · W4 用户后台
  *
  * 单一数据源：
  * - UserProfile（昵称/邮箱/头像/订阅/通知）
